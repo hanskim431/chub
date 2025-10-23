@@ -1,8 +1,12 @@
 package com.chub.service;
 
+import static com.chub.auth.util.CookieUtil.*;
+
 import com.chub.auth.dto.KakaoUserProfile;
 import com.chub.entity.User;
+import com.chub.exception.user.UserException;
 import com.chub.repository.UserRepository;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -34,6 +38,18 @@ public class UserServiceImpl implements UserService {
         log.info("Successfully registered new user: userId={}, sub={}", savedUser.getId(), sub);
 
         return savedUser.getId();
+    }
+
+    @Override
+    public User findById(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(UserException::userNotFound);
+    }
+
+    @Override
+    public void logout(Long userId, HttpServletResponse response) {
+        deleteRefreshTokenCookie(response);
+        deleteAccessTokenCookie(response);
     }
 
 }
