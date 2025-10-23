@@ -34,6 +34,12 @@ public enum ExceptionCode {
     REFRESH_TOKEN_EXPIRED(3007, "리프레시 토큰이 만료되었습니다.", HttpStatus.UNAUTHORIZED),
     TOKEN_GENERATION_FAILED(3008, "토큰 생성에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
 
+    // ==== 4000번대: Resume 관련 ====
+    RESUME_NOT_FOUND(4001, "이력서를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+    INVALID_FILE_TYPE(4002, "PDF 파일만 업로드 가능합니다.", HttpStatus.BAD_REQUEST),
+    FILE_SIZE_EXCEEDED(4003, "파일 크기는 10MB를 초과할 수 없습니다.", HttpStatus.BAD_REQUEST),
+    FILE_UPLOAD_FAILED(4004, "파일 업로드 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
+
     // ==== 9000번대: External API 관련 ====
     EXTERNAL_API_ERROR(9001, "외부 API 호출 중 오류가 발생했습니다.", HttpStatus.BAD_GATEWAY),
     EXTERNAL_API_TIMEOUT(9002, "외부 API 응답 시간이 초과되었습니다.", HttpStatus.GATEWAY_TIMEOUT),
