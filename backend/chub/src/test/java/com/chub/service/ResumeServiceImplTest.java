@@ -20,6 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.Optional;
 
+import static java.util.Optional.empty;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -79,7 +80,7 @@ class ResumeServiceImplTest {
         void getMyResume_ResumeNotFound() {
             // given
             given(resumeRepository.findTopByUserIdOrderByUploadedAtDesc(TEST_USER_ID))
-                    .willReturn(Optional.empty());
+                    .willReturn(empty());
 
             // when & then
             assertThatThrownBy(() -> resumeService.getMyResume(TEST_USER_ID))
@@ -95,7 +96,7 @@ class ResumeServiceImplTest {
 
         private static final String PDF_CONTENT_TYPE = "application/pdf";
         private static final long MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-        private byte[] testFileBytes = "test pdf content".getBytes();
+        private final byte[] testFileBytes = "test pdf content".getBytes();
 
         @Test
         @DisplayName("성공: 유효한 PDF 파일 업로드")
@@ -170,7 +171,7 @@ class ResumeServiceImplTest {
             given(file.isEmpty()).willReturn(false);
             given(file.getContentType()).willReturn(PDF_CONTENT_TYPE);
             given(file.getSize()).willReturn(1024L);
-            given(userRepository.findById(TEST_USER_ID)).willReturn(Optional.empty());
+            given(userRepository.findById(TEST_USER_ID)).willReturn(empty());
 
             // when & then
             assertThatThrownBy(() -> resumeService.uploadResume(TEST_USER_ID, file))
@@ -220,7 +221,7 @@ class ResumeServiceImplTest {
         void deleteMyResume_ResumeNotFound() {
             // given
             given(resumeRepository.findTopByUserIdOrderByUploadedAtDesc(TEST_USER_ID))
-                    .willReturn(Optional.empty());
+                    .willReturn(empty());
 
             // when & then
             assertThatThrownBy(() -> resumeService.deleteMyResume(TEST_USER_ID))
