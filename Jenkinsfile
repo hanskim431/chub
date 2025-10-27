@@ -36,6 +36,9 @@ pipeline {
                         env.BACKEND_CHANGED = 'true'
                     }
 
+                    // TODO: 프론트엔드 강제 빌드 (테스트 후 삭제)
+                    env.FRONTEND_CHANGED = 'true'
+
                     echo "=== 변경 감지 결과 ==="
                     echo "프론트엔드 변경: ${env.FRONTEND_CHANGED}"
                     echo "백엔드 변경: ${env.BACKEND_CHANGED}"
