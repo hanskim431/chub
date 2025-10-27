@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         FRONTEND_DIR = "${env.WORKSPACE}/frontend/chub"
-        FRONTEND_BUILD_DIR = "${FRONTEND_DIR}/build"
+        FRONTEND_BUILD_DIR = "${FRONTEND_DIR}/dist"
         FRONTEND_DEPLOY_DIR = "/var/www/html"
 
         BACKEND_DIR = "${env.WORKSPACE}/backend"
