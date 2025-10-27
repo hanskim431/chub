@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        FRONTEND_DIR = "${env.WORKSPACE}/frontend"
+        FRONTEND_DIR = "${env.WORKSPACE}/frontend/chub"
         FRONTEND_BUILD_DIR = "${FRONTEND_DIR}/build"
         FRONTEND_DEPLOY_DIR = "/var/www/html"
 
