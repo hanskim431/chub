@@ -60,7 +60,7 @@ pipeline {
                     npm --version
 
                     echo "의존성 설치..."
-                    npm ci
+                    npm install
 
                     echo "프로덕션 빌드..."
                     npm run build
