@@ -112,17 +112,13 @@ pipeline {
                 echo '=== 프론트엔드 배포 시작 ==='
                 sh """
                     echo "기존 파일 백업..."
-                    sudo cp -r ${FRONTEND_DEPLOY_DIR} ${FRONTEND_DEPLOY_DIR}.backup.${BUILD_TAG} || true
+                    cp -r ${FRONTEND_DEPLOY_DIR} ${FRONTEND_DEPLOY_DIR}.backup.${BUILD_TAG} || true
 
                     echo "새 파일 배포..."
-                    sudo rsync -avz --delete ${FRONTEND_BUILD_DIR}/ ${FRONTEND_DEPLOY_DIR}/
+                    rsync -avz --delete ${FRONTEND_BUILD_DIR}/ ${FRONTEND_DEPLOY_DIR}/
 
                     echo "파일 권한 설정..."
-                    sudo chown -R www-data:www-data ${FRONTEND_DEPLOY_DIR} || true
-                    sudo chmod -R 755 ${FRONTEND_DEPLOY_DIR}
-
-                    echo "Nginx 재시작..."
-                    sudo systemctl reload nginx
+                    chmod -R 755 ${FRONTEND_DEPLOY_DIR}
 
                     echo "배포 완료 확인:"
                     ls -la ${FRONTEND_DEPLOY_DIR}/ | head -10
@@ -245,8 +241,7 @@ pipeline {
                     sh """
                         if [ -d "${FRONTEND_DEPLOY_DIR}.backup.${BUILD_TAG}" ]; then
                             echo "프론트엔드 백업에서 복구 중..."
-                            sudo cp -r ${FRONTEND_DEPLOY_DIR}.backup.${BUILD_TAG}/* ${FRONTEND_DEPLOY_DIR}/ || true
-                            sudo systemctl reload nginx || true
+                            cp -r ${FRONTEND_DEPLOY_DIR}.backup.${BUILD_TAG}/* ${FRONTEND_DEPLOY_DIR}/ || true
                         fi
                     """
                 }
@@ -271,7 +266,7 @@ pipeline {
                 if (env.FRONTEND_CHANGED == 'true') {
                     sh """
                         cd ${FRONTEND_DEPLOY_DIR}/.. 2>/dev/null || true
-                        ls -dt html.backup.* 2>/dev/null | tail -n +4 | xargs -r sudo rm -rf || true
+                        ls -dt html.backup.* 2>/dev/null | tail -n +4 | xargs -r rm -rf || true
                     """
                 }
             }
