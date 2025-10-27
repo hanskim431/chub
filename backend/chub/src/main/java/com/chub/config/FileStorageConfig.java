@@ -34,13 +34,9 @@ public class FileStorageConfig implements WebMvcConfigurer {
 
             if (!Files.exists(uploadPath)) {
                 Files.createDirectories(uploadPath);
-                log.info("Created upload directory: {}", uploadPath);
-            } else {
-                log.info("Upload directory already exists: {}", uploadPath);
             }
 
         } catch (IOException e) {
-            log.error("Failed to create upload directory: {}", uploadDir, e);
             throw new RuntimeException("Could not create upload directory!", e);
         }
     }
@@ -57,7 +53,5 @@ public class FileStorageConfig implements WebMvcConfigurer {
         registry.addResourceHandler("/files/resumes/**")
                 .addResourceLocations(resourceLocation)
                 .setCachePeriod(0); // 캐싱 비활성화 (개발 환경용, 프로덕션에서는 조정 필요)
-
-        log.info("Registered resource handler: /files/resumes/** -> {}", resourceLocation);
     }
 }
