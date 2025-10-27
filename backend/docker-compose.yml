@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: chub-postgres
+    environment:
+      POSTGRES_DB: chub
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./chub
+      dockerfile: Dockerfile
+    container_name: chub-backend
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=chub
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DDL_AUTO=${DDL_AUTO:-create}
+      - FRONTEND_URL=${FRONTEND_URL:-https://chub.ai.kr}
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-https://chub.ai.kr,http://localhost:3000}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - JWT_ACCESS_TOKEN_MINUTE_TIME=${JWT_ACCESS_TOKEN_MINUTE_TIME:-60}
+      - JWT_REFRESH_TOKEN_MINUTE_TIME=${JWT_REFRESH_TOKEN_MINUTE_TIME:-10080}
+      - KAKAO_CLIENT_ID=${KAKAO_CLIENT_ID}
+      - KAKAO_CLIENT_SECRET=${KAKAO_CLIENT_SECRET}
+      - KAKAO_REDIRECT_URL=${KAKAO_REDIRECT_URL}
+      - KAKAO_TOKEN_URL=${KAKAO_TOKEN_URL:-https://kauth.kakao.com/oauth/token}
+      - GMS_API_KEY=${GMS_API_KEY}
+      - GMS_WHISPER_URL=${GMS_WHISPER_URL:-https://gms.ssafy.io/gmsapi/api.openai.com/v1/audio/transcriptions}
+      - GMS_GPT_URL=${GMS_GPT_URL:-https://gms.ssafy.io/gmsapi/api.openai.com/v1/chat/completions}
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

@@ -1,0 +1,82 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:postgres}:${DB_PORT:5432}/${DB_NAME:chub}
+    username: ${DB_USERNAME:chub_user}
+    password: ${DB_PASSWORD:chub_password}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 20000
+      idle-timeout: 300000
+      max-lifetime: 1200000
+
+  jpa:
+    hibernate:
+      ddl-auto: ${DDL_AUTO:create}
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        show_sql: false
+        format_sql: false
+        jdbc:
+          batch_size: 100
+        order_inserts: true
+        order_updates: true
+    open-in-view: false
+
+app:
+  frontend-url: ${FRONTEND_URL:https://chub.ai.kr}
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:https://chub.ai.kr,http://localhost:3000}
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+    enabled: true
+  api-docs:
+    path: /api-docs
+    enabled: true
+  default-consumes-media-type: application/json
+  default-produces-media-type: application/json
+  show-actuator: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    root: INFO
+    com.chub: INFO
+    org.hibernate.SQL: WARN
+
+server:
+  port: 8080
+  servlet:
+    context-path: /
+
+jwt:
+  secret-key: ${JWT_SECRET_KEY}
+  ACCESS_TOKEN_MINUTE_TIME: ${JWT_ACCESS_TOKEN_MINUTE_TIME:60}
+  REFRESH_TOKEN_MINUTE_TIME: ${JWT_REFRESH_TOKEN_MINUTE_TIME:10080}
+
+kakao:
+  client-id: ${KAKAO_CLIENT_ID}
+  redirect-url: ${KAKAO_REDIRECT_URL}
+  client-secret: ${KAKAO_CLIENT_SECRET}
+  token-url: ${KAKAO_TOKEN_URL:https://kauth.kakao.com/oauth/token}
+
+gms:
+  api-key: ${GMS_API_KEY}
+  whisper-url: ${GMS_WHISPER_URL:https://gms.ssafy.io/gmsapi/api.openai.com/v1/audio/transcriptions}
+  gpt-url: ${GMS_GPT_URL:https://gms.ssafy.io/gmsapi/api.openai.com/v1/chat/completions}
+
