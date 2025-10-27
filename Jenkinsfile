@@ -75,18 +75,28 @@ pipeline {
             }
             steps {
                 echo '=== 백엔드 Docker 이미지 빌드 ==='
-                sh """
-                    cd ${BACKEND_DIR}
+                withCredentials([
+                    string(credentialsId: 'db-username', variable: 'DB_USERNAME'),
+                    string(credentialsId: 'db-password', variable: 'DB_PASSWORD'),
+                    string(credentialsId: 'jwt-secret-key', variable: 'JWT_SECRET_KEY'),
+                    string(credentialsId: 'kakao-client-id', variable: 'KAKAO_CLIENT_ID'),
+                    string(credentialsId: 'kakao-client-secret', variable: 'KAKAO_CLIENT_SECRET'),
+                    string(credentialsId: 'kakao-redirect-url', variable: 'KAKAO_REDIRECT_URL'),
+                    string(credentialsId: 'gms-api-key', variable: 'GMS_API_KEY')
+                ]) {
+                    sh """
+                        cd ${BACKEND_DIR}
 
-                    echo "기존 컨테이너 중지..."
-                    docker-compose -f ${BACKEND_COMPOSE_FILE} down || true
+                        echo "기존 컨테이너 중지..."
+                        docker-compose -f ${BACKEND_COMPOSE_FILE} down || true
 
-                    echo "Docker 이미지 빌드 시작..."
-                    docker-compose -f ${BACKEND_COMPOSE_FILE} build --no-cache backend
+                        echo "Docker 이미지 빌드 시작..."
+                        docker-compose -f ${BACKEND_COMPOSE_FILE} build --no-cache backend
 
-                    echo "빌드된 이미지 확인:"
-                    docker images | grep chub
-                """
+                        echo "빌드된 이미지 확인:"
+                        docker images | grep chub
+                    """
+                }
                 echo '✅ 백엔드 빌드 완료'
             }
         }
@@ -124,25 +134,29 @@ pipeline {
             }
             steps {
                 echo '=== 백엔드 Docker Compose 실행 ==='
-                sh """
-                    cd ${BACKEND_DIR}
+                withCredentials([
+                    string(credentialsId: 'db-username', variable: 'DB_USERNAME'),
+                    string(credentialsId: 'db-password', variable: 'DB_PASSWORD'),
+                    string(credentialsId: 'jwt-secret-key', variable: 'JWT_SECRET_KEY'),
+                    string(credentialsId: 'kakao-client-id', variable: 'KAKAO_CLIENT_ID'),
+                    string(credentialsId: 'kakao-client-secret', variable: 'KAKAO_CLIENT_SECRET'),
+                    string(credentialsId: 'kakao-redirect-url', variable: 'KAKAO_REDIRECT_URL'),
+                    string(credentialsId: 'gms-api-key', variable: 'GMS_API_KEY')
+                ]) {
+                    sh """
+                        cd ${BACKEND_DIR}
 
-                    echo "환경변수 파일 확인..."
-                    if [ ! -f .env ]; then
-                        echo "⚠️  .env 파일이 없습니다!"
-                        exit 1
-                    fi
+                        echo "Docker Compose로 컨테이너 시작..."
+                        docker-compose -f ${BACKEND_COMPOSE_FILE} up -d
 
-                    echo "Docker Compose로 컨테이너 시작..."
-                    docker-compose -f ${BACKEND_COMPOSE_FILE} up -d
+                        echo "컨테이너 상태 확인..."
+                        docker-compose -f ${BACKEND_COMPOSE_FILE} ps
 
-                    echo "컨테이너 상태 확인..."
-                    docker-compose -f ${BACKEND_COMPOSE_FILE} ps
-
-                    echo "백엔드 로그 확인 (10초 대기)..."
-                    sleep 10
-                    docker logs chub-backend --tail 50
-                """
+                        echo "백엔드 로그 확인 (10초 대기)..."
+                        sleep 10
+                        docker logs chub-backend --tail 50
+                    """
+                }
                 echo '✅ 백엔드 배포 완료'
             }
         }

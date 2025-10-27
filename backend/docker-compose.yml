@@ -18,6 +18,7 @@ services:
     build:
       context: ./chub
       dockerfile: Dockerfile
+    image: chub-backend:latest
     container_name: chub-backend
     environment:
       - SPRING_PROFILES_ACTIVE=prod
