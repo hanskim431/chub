@@ -29,6 +29,9 @@ app:
   frontend-url: ${FRONTEND_URL:https://chub.ai.kr}
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:https://chub.ai.kr,http://localhost:3000}
+  file-storage:
+    upload-dir: ${FILE_UPLOAD_DIR:/app/uploads/resumes}
+    base-url: ${FILE_BASE_URL:https://chub.ai.kr/files/resumes}
 
 springdoc:
   swagger-ui:
