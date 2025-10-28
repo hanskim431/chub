@@ -65,6 +65,18 @@ public class InterviewerProfile extends BaseEntity {
     @Column(name = "available_time_slots", columnDefinition = "jsonb")
     private List<AvailableTimeSlotVo> availableTimeSlots;
 
+    @Column(name = "email")
+    private String email;
+
+    @Column(name = "field")
+    private String field;
+
+    @Column(name = "price")
+    private Integer price;
+
+    @Column(name = "interview_style", columnDefinition = "TEXT")
+    private String interviewStyle;
+
     @Builder
     private InterviewerProfile(User user, String company, String position) {
         this.user = user;
@@ -107,5 +119,21 @@ public class InterviewerProfile extends BaseEntity {
 
     public void updateAvailableTimeSlots(List<AvailableTimeSlotVo> availableTimeSlots) {
         this.availableTimeSlots = availableTimeSlots;
+    }
+
+    public void updateEmail(String email) {
+        this.email = email;
+    }
+
+    public void updateField(String field) {
+        this.field = field;
+    }
+
+    public void updatePrice(Integer price) {
+        this.price = price;
+    }
+
+    public void updateInterviewStyle(String interviewStyle) {
+        this.interviewStyle = interviewStyle;
     }
 }

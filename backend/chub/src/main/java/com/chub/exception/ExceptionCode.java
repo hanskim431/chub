@@ -40,6 +40,11 @@ public enum ExceptionCode {
     FILE_SIZE_EXCEEDED(4003, "파일 크기는 10MB를 초과할 수 없습니다.", HttpStatus.BAD_REQUEST),
     FILE_UPLOAD_FAILED(4004, "파일 업로드 중 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
 
+    // ==== 5000번대: InterviewerProfile 관련 ====
+    INTERVIEWER_PROFILE_NOT_FOUND(5001, "면접관 프로필을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+    INTERVIEWER_PROFILE_ALREADY_EXISTS(5002, "이미 면접관 프로필이 존재합니다.", HttpStatus.BAD_REQUEST),
+    INVALID_INTERVIEWER_PROFILE_DATA(5003, "유효하지 않은 면접관 프로필 데이터입니다.", HttpStatus.BAD_REQUEST),
+
     // ==== 9000번대: External API 관련 ====
     EXTERNAL_API_ERROR(9001, "외부 API 호출 중 오류가 발생했습니다.", HttpStatus.BAD_GATEWAY),
     EXTERNAL_API_TIMEOUT(9002, "외부 API 응답 시간이 초과되었습니다.", HttpStatus.GATEWAY_TIMEOUT),
