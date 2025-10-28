@@ -2,6 +2,8 @@ package com.chub.repository;
 
 import com.chub.entity.InterviewerProfile;
 import com.chub.entity.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -15,4 +17,6 @@ public interface InterviewerProfileRepository extends JpaRepository<InterviewerP
     Optional<InterviewerProfile> findByUserId(Long userId);
 
     boolean existsByUserId(Long userId);
+
+    Page<InterviewerProfile> findByDepartmentContaining(String department, Pageable pageable);
 }
