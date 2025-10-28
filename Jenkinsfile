@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    options {
+        gitLabConnection('GitLab SSAFY')
+    }
+
     environment {
         FRONTEND_DIR = "${env.WORKSPACE}/frontend/chub"
         FRONTEND_BUILD_DIR = "${FRONTEND_DIR}/dist"
@@ -16,6 +20,8 @@ pipeline {
         stage('🔍 변경 감지') {
             steps {
                 script {
+                    updateGitlabCommitStatus name: 'build', state: 'running'
+
                     echo '=== Git 변경사항 확인 ==='
 
                     // 변경된 파일 목록 확인
@@ -201,6 +207,8 @@ pipeline {
 
     post {
         success {
+            updateGitlabCommitStatus name: 'build', state: 'success'
+
             script {
                 def deployedServices = []
                 if (env.FRONTEND_CHANGED == 'true') deployedServices.add('프론트엔드')
@@ -222,6 +230,8 @@ pipeline {
         }
 
         failure {
+            updateGitlabCommitStatus name: 'build', state: 'failed'
+
             echo """
 ❌ 배포 실패!
 
@@ -243,6 +253,10 @@ pipeline {
                     """
                 }
             }
+        }
+
+        aborted {
+            updateGitlabCommitStatus name: 'build', state: 'canceled'
         }
 
         always {

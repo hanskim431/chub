@@ -40,11 +40,16 @@ services:
       - GMS_API_KEY=${GMS_API_KEY}
       - GMS_WHISPER_URL=${GMS_WHISPER_URL:-https://gms.ssafy.io/gmsapi/api.openai.com/v1/audio/transcriptions}
       - GMS_GPT_URL=${GMS_GPT_URL:-https://gms.ssafy.io/gmsapi/api.openai.com/v1/chat/completions}
+      - FILE_UPLOAD_DIR=${FILE_UPLOAD_DIR:-/app/uploads/resumes}
+      - FILE_BASE_URL=${FILE_BASE_URL:-https://chub.ai.kr/files/resumes}
     ports:
       - "8080:8080"
+    volumes:
+      - resume_uploads:/app/uploads/resumes
     depends_on:
       - postgres
     restart: unless-stopped
 
 volumes:
   postgres_data:
+  resume_uploads:

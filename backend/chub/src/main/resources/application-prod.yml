@@ -80,3 +80,7 @@ gms:
   whisper-url: ${GMS_WHISPER_URL:https://gms.ssafy.io/gmsapi/api.openai.com/v1/audio/transcriptions}
   gpt-url: ${GMS_GPT_URL:https://gms.ssafy.io/gmsapi/api.openai.com/v1/chat/completions}
 
+file-storage:
+  upload-dir: ${FILE_UPLOAD_DIR:/app/uploads/resumes}
+  base-url: ${FILE_BASE_URL:https://chub.ai.kr/files/resumes}
+
