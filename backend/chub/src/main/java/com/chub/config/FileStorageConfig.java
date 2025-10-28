@@ -1,7 +1,6 @@
 package com.chub.config;
 
 import jakarta.annotation.PostConstruct;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
@@ -17,7 +16,6 @@ import java.nio.file.Paths;
  * - 업로드 디렉토리 자동 생성
  * - 정적 리소스 핸들러 등록 (파일 다운로드용)
  */
-@Slf4j
 @Configuration
 public class FileStorageConfig implements WebMvcConfigurer {
 
@@ -44,6 +42,9 @@ public class FileStorageConfig implements WebMvcConfigurer {
     /**
      * 정적 리소스 핸들러 등록
      * /files/resumes/** 경로로 들어오는 요청을 실제 파일 시스템 경로로 매핑합니다.
+     *
+     * 주의: 배포 환경에서는 nginx가 정적 파일을 직접 서빙하므로 이 핸들러는 사용되지 않습니다.
+     * 로컬 개발 환경에서만 Spring Boot가 파일을 서빙합니다.
      */
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
@@ -52,6 +53,6 @@ public class FileStorageConfig implements WebMvcConfigurer {
 
         registry.addResourceHandler("/files/resumes/**")
                 .addResourceLocations(resourceLocation)
-                .setCachePeriod(0); // 캐싱 비활성화 (개발 환경용, 프로덕션에서는 조정 필요)
+                .setCachePeriod(0); // 캐싱 비활성화 (개발 환경용)
     }
 }
