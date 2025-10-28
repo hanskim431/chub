@@ -45,6 +45,12 @@ public enum ExceptionCode {
     INTERVIEWER_PROFILE_ALREADY_EXISTS(5002, "이미 면접관 프로필이 존재합니다.", HttpStatus.BAD_REQUEST),
     INVALID_INTERVIEWER_PROFILE_DATA(5003, "유효하지 않은 면접관 프로필 데이터입니다.", HttpStatus.BAD_REQUEST),
 
+    // ==== 6000번대: InterviewRequest 관련 ====
+    INTERVIEW_REQUEST_NOT_FOUND(6001, "면접 요청을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+    UNAUTHORIZED_REQUEST_ACCESS(6002, "요청에 대한 권한이 없습니다.", HttpStatus.FORBIDDEN),
+    DUPLICATE_INTERVIEW_REQUEST(6003, "이미 신청한 면접관입니다.", HttpStatus.BAD_REQUEST),
+    INVALID_REQUEST_STATUS(6004, "유효하지 않은 요청 상태입니다.", HttpStatus.BAD_REQUEST),
+
     // ==== 9000번대: External API 관련 ====
     EXTERNAL_API_ERROR(9001, "외부 API 호출 중 오류가 발생했습니다.", HttpStatus.BAD_GATEWAY),
     EXTERNAL_API_TIMEOUT(9002, "외부 API 응답 시간이 초과되었습니다.", HttpStatus.GATEWAY_TIMEOUT),
