@@ -1,6 +1,8 @@
 package com.chub.service;
 
 import com.chub.dto.request.CreateInterviewerProfileRequest;
+import com.chub.dto.response.InterviewerProfileListItemResponse;
+import com.chub.dto.response.InterviewerProfilePageResponse;
 import com.chub.dto.response.InterviewerProfileResponse;
 import com.chub.entity.InterviewerProfile;
 import com.chub.entity.User;
@@ -9,6 +11,10 @@ import com.chub.exception.user.UserException;
 import com.chub.repository.InterviewerProfileRepository;
 import com.chub.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -62,5 +68,31 @@ public class InterviewerProfileServiceImpl implements InterviewerProfileService 
 
         // 저장
         interviewerProfileRepository.save(profile);
+    }
+
+    @Override
+    public InterviewerProfilePageResponse getInterviewerProfiles(String department, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+
+        Page<InterviewerProfile> profilePage;
+        if (department != null && !department.isBlank()) {
+            profilePage = interviewerProfileRepository.findByDepartmentContaining(department, pageable);
+        } else {
+            profilePage = interviewerProfileRepository.findAll(pageable);
+        }
+
+        // Entity -> DTO 변환
+        Page<InterviewerProfileListItemResponse> responsePage = profilePage.map(InterviewerProfileListItemResponse::from);
+
+        return InterviewerProfilePageResponse.from(responsePage);
+    }
+
+    @Override
+    public InterviewerProfileResponse getInterviewerProfileById(Long id) {
+        InterviewerProfile profile = interviewerProfileRepository.findById(id)
+                .orElseThrow(InterviewerProfileException::notFound);
+
+        User user = profile.getUser();
+        return InterviewerProfileResponse.from(user, profile);
     }
 }

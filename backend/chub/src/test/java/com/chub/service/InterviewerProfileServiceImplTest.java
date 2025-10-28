@@ -2,6 +2,7 @@ package com.chub.service;
 
 import com.chub.dto.request.CreateInterviewerProfileRequest;
 import com.chub.dto.request.CreateInterviewerProfileRequest.ExperienceDto;
+import com.chub.dto.response.InterviewerProfilePageResponse;
 import com.chub.dto.response.InterviewerProfileResponse;
 import com.chub.entity.InterviewerProfile;
 import com.chub.entity.User;
@@ -17,6 +18,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 import java.util.List;
 import java.util.Optional;
@@ -300,6 +306,53 @@ class InterviewerProfileServiceImplTest {
 
             // then
             verifyProfileCreated();
+        }
+    }
+
+    @Nested
+    @DisplayName("getInterviewerProfiles 메서드")
+    class GetInterviewerProfilesTest {
+
+        @Test
+        @DisplayName("성공: 면접관 목록 조회")
+        void getInterviewerProfiles_Success() {
+            // given
+            Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "createdAt"));
+            Page<InterviewerProfile> profilePage = new PageImpl<>(List.of(testProfile));
+            given(interviewerProfileRepository.findAll(any(Pageable.class)))
+                    .willReturn(profilePage);
+
+            // when
+            InterviewerProfilePageResponse response =
+                    interviewerProfileService.getInterviewerProfiles(null, 0, 10);
+
+            // then
+            assertThat(response).isNotNull();
+            assertThat(response.profiles()).hasSize(1);
+            verify(interviewerProfileRepository, times(1)).findAll(any(Pageable.class));
+        }
+    }
+
+    @Nested
+    @DisplayName("getInterviewerProfileById 메서드")
+    class GetInterviewerProfileByIdTest {
+
+        @Test
+        @DisplayName("성공: 면접관 프로필 상세 조회")
+        void getInterviewerProfileById_Success() {
+            // given
+            given(interviewerProfileRepository.findById(1L))
+                    .willReturn(Optional.of(testProfile));
+
+            // when
+            InterviewerProfileResponse response =
+                    interviewerProfileService.getInterviewerProfileById(1L);
+
+            // then
+            assertThat(response).isNotNull();
+            assertThat(response.field()).isEqualTo(TEST_FIELD);
+            assertThat(response.company()).isEqualTo(TEST_COMPANY);
+            verify(interviewerProfileRepository, times(1)).findById(1L);
         }
     }
 }

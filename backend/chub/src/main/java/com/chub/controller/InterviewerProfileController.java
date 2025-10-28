@@ -3,9 +3,11 @@ package com.chub.controller;
 import com.chub.auth.annotation.LoginUser;
 import com.chub.common.CommonApiResponse;
 import com.chub.dto.request.CreateInterviewerProfileRequest;
+import com.chub.dto.response.InterviewerProfilePageResponse;
 import com.chub.dto.response.InterviewerProfileResponse;
 import com.chub.service.InterviewerProfileService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -49,5 +51,38 @@ public class InterviewerProfileController {
     ) {
         interviewerProfileService.createProfile(userId, request);
         return ResponseEntity.ok(CommonApiResponse.success());
+    }
+
+    @GetMapping
+    @Operation(
+            summary = "면접관 목록 조회",
+            description = "면접관 목록을 페이징 처리하여 조회합니다. department 필터를 통해 부서별 검색이 가능합니다."
+    )
+    @ApiResponse(responseCode = "200", description = "조회 성공")
+    public ResponseEntity<CommonApiResponse<InterviewerProfilePageResponse>> getInterviewerProfiles(
+            @Parameter(description = "부서 필터 (부분 일치 검색)", example = "백엔드")
+            @RequestParam(required = false) String department,
+            @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
+            @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "페이지 크기", example = "10")
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        InterviewerProfilePageResponse response = interviewerProfileService.getInterviewerProfiles(department, page, size);
+        return ResponseEntity.ok(CommonApiResponse.success(response));
+    }
+
+    @GetMapping("/{id}")
+    @Operation(
+            summary = "면접관 상세 조회",
+            description = "특정 면접관의 상세 프로필을 조회합니다."
+    )
+    @ApiResponse(responseCode = "200", description = "조회 성공")
+    @ApiResponse(responseCode = "404", description = "프로필 없음", content = @Content)
+    public ResponseEntity<CommonApiResponse<InterviewerProfileResponse>> getInterviewerProfile(
+            @Parameter(description = "면접관 프로필 ID", example = "1")
+            @PathVariable Long id
+    ) {
+        InterviewerProfileResponse response = interviewerProfileService.getInterviewerProfileById(id);
+        return ResponseEntity.ok(CommonApiResponse.success(response));
     }
 }

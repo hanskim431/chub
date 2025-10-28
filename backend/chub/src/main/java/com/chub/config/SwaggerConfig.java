@@ -26,7 +26,11 @@ public class SwaggerConfig {
         return GroupedOpenApi.builder()
                 .group("chub-api")
                 .pathsToMatch("/**")
-                .packagesToScan("com.chub.controller", "com.chub.auth.controller")
+                .packagesToScan(
+                        "com.chub.controller",
+                        "com.chub.auth.controller",
+                        "com.chub.dashboard.controller"
+                )
                 .build();
     }
 
