@@ -14,6 +14,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -37,6 +39,12 @@ public class InterviewRequest extends BaseEntity {
 
     @Column(name = "status")
     private String status;
+
+    @Column(name = "scheduled_at")
+    private LocalDateTime scheduledAt;
+
+    @Column(name = "duration")
+    private Integer duration;
 
     @Builder
     private InterviewRequest(User user, InterviewerProfile interviewerProfile, String message) {
@@ -64,5 +72,10 @@ public class InterviewRequest extends BaseEntity {
 
     public void complete() {
         this.status = "COMPLETED";
+    }
+
+    public void updateSchedule(LocalDateTime scheduledAt, Integer duration) {
+        this.scheduledAt = scheduledAt;
+        this.duration = duration;
     }
 }
