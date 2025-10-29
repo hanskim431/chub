@@ -110,17 +110,7 @@ pipeline {
 
         stage('🚀 프론트엔드 배포') {
             when {
-                allOf {
-                    expression { env.FRONTEND_CHANGED == 'true' }
-                    anyOf {
-                        branch 'develop'
-                        expression {
-                            // detached HEAD 상태에서도 develop 브랜치인지 확인
-                            def currentBranch = sh(script: 'git branch -r --contains HEAD | grep origin/develop', returnStdout: true).trim()
-                            return currentBranch.contains('origin/develop')
-                        }
-                    }
-                }
+                expression { env.FRONTEND_CHANGED == 'true' }
             }
             steps {
                 echo '=== 프론트엔드 배포 시작 ==='
@@ -143,17 +133,7 @@ pipeline {
 
         stage('🐳 백엔드 배포') {
             when {
-                allOf {
-                    expression { env.BACKEND_CHANGED == 'true' }
-                    anyOf {
-                        branch 'develop'
-                        expression {
-                            // detached HEAD 상태에서도 develop 브랜치인지 확인
-                            def currentBranch = sh(script: 'git branch -r --contains HEAD | grep origin/develop', returnStdout: true).trim()
-                            return currentBranch.contains('origin/develop')
-                        }
-                    }
-                }
+                expression { env.BACKEND_CHANGED == 'true' }
             }
             steps {
                 echo '=== 백엔드 Docker Compose 실행 ==='
@@ -186,16 +166,6 @@ pipeline {
         }
 
         stage('🏥 헬스체크') {
-            when {
-                anyOf {
-                    branch 'develop'
-                    expression {
-                        // detached HEAD 상태에서도 develop 브랜치인지 확인
-                        def currentBranch = sh(script: 'git branch -r --contains HEAD | grep origin/develop', returnStdout: true).trim()
-                        return currentBranch.contains('origin/develop')
-                    }
-                }
-            }
             steps {
                 echo '=== 서비스 헬스체크 시작 ==='
 
