@@ -88,7 +88,8 @@ pipeline {
                     string(credentialsId: 'kakao-client-id', variable: 'KAKAO_CLIENT_ID'),
                     string(credentialsId: 'kakao-client-secret', variable: 'KAKAO_CLIENT_SECRET'),
                     string(credentialsId: 'kakao-redirect-url', variable: 'KAKAO_REDIRECT_URL'),
-                    string(credentialsId: 'gms-api-key', variable: 'GMS_API_KEY')
+                    string(credentialsId: 'gms-api-key', variable: 'GMS_API_KEY'),
+                    string(credentialsId: 'mongodb-uri', variable: 'MONGODB_URI')
                 ]) {
                     sh """
                         cd ${BACKEND_DIR}
@@ -163,7 +164,8 @@ pipeline {
                     string(credentialsId: 'kakao-client-id', variable: 'KAKAO_CLIENT_ID'),
                     string(credentialsId: 'kakao-client-secret', variable: 'KAKAO_CLIENT_SECRET'),
                     string(credentialsId: 'kakao-redirect-url', variable: 'KAKAO_REDIRECT_URL'),
-                    string(credentialsId: 'gms-api-key', variable: 'GMS_API_KEY')
+                    string(credentialsId: 'gms-api-key', variable: 'GMS_API_KEY'),
+                    string(credentialsId: 'mongodb-uri', variable: 'MONGODB_URI')
                 ]) {
                     sh """
                         cd ${BACKEND_DIR}
