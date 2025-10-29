@@ -89,9 +89,6 @@ pipeline {
                     sh """
                         cd ${BACKEND_DIR}
 
-                        echo "기존 컨테이너 중지..."
-                        docker-compose -f ${BACKEND_COMPOSE_FILE} down || true
-
                         echo "Docker 이미지 빌드 시작..."
                         docker-compose -f ${BACKEND_COMPOSE_FILE} build --no-cache backend
 
