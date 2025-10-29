@@ -2,7 +2,10 @@ package com.chub.service;
 
 import com.chub.common.PageResponse;
 import com.chub.dto.request.CreateInterviewRequestRequest;
+import com.chub.dto.response.InterviewRequestListData;
 import com.chub.dto.response.InterviewRequestResponse;
+import com.chub.dto.response.ReceivedInterviewRequestListData;
+import com.chub.dto.response.ScheduledInterviewListData;
 import com.chub.dto.response.ScheduledInterviewResponse;
 import org.springframework.data.domain.Pageable;
 
@@ -24,7 +27,7 @@ public interface InterviewRequestService {
      * @param pageable 페이징 정보
      * @return 면접 신청 목록 페이지 응답
      */
-    PageResponse<List<InterviewRequestResponse>> getMyRequests(
+    PageResponse<InterviewRequestListData> getMyRequests(
             Long userId,
             String status,
             Pageable pageable
@@ -37,7 +40,7 @@ public interface InterviewRequestService {
      * @param pageable 페이징 정보
      * @return 면접 신청 목록 페이지 응답
      */
-    PageResponse<List<InterviewRequestResponse>> getReceivedRequests(
+    PageResponse<ReceivedInterviewRequestListData> getReceivedRequests(
             Long userId,
             Pageable pageable
     );
@@ -55,5 +58,5 @@ public interface InterviewRequestService {
      * @param userId 사용자 ID
      * @return 예정된 면접 목록
      */
-    List<ScheduledInterviewResponse> getScheduledInterviews(Long userId);
+    ScheduledInterviewListData getScheduledInterviews(Long userId);
 }
