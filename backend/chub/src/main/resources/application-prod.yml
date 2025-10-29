@@ -24,6 +24,9 @@ spring:
         order_inserts: true
         order_updates: true
     open-in-view: false
+  data:
+    mongodb:
+      uri: ${MONGODB_URI}
 
 app:
   frontend-url: ${FRONTEND_URL:https://chub.ai.kr}

@@ -88,7 +88,8 @@ pipeline {
                     string(credentialsId: 'kakao-client-id', variable: 'KAKAO_CLIENT_ID'),
                     string(credentialsId: 'kakao-client-secret', variable: 'KAKAO_CLIENT_SECRET'),
                     string(credentialsId: 'kakao-redirect-url', variable: 'KAKAO_REDIRECT_URL'),
-                    string(credentialsId: 'gms-api-key', variable: 'GMS_API_KEY')
+                    string(credentialsId: 'gms-api-key', variable: 'GMS_API_KEY'),
+                    string(credentialsId: 'mongodb-uri', variable: 'MONGODB_URI')
                 ]) {
                     sh """
                         cd ${BACKEND_DIR}
@@ -109,17 +110,7 @@ pipeline {
 
         stage('🚀 프론트엔드 배포') {
             when {
-                allOf {
-                    expression { env.FRONTEND_CHANGED == 'true' }
-                    anyOf {
-                        branch 'develop'
-                        expression {
-                            // detached HEAD 상태에서도 develop 브랜치인지 확인
-                            def currentBranch = sh(script: 'git branch -r --contains HEAD | grep origin/develop', returnStdout: true).trim()
-                            return currentBranch.contains('origin/develop')
-                        }
-                    }
-                }
+                expression { env.FRONTEND_CHANGED == 'true' }
             }
             steps {
                 echo '=== 프론트엔드 배포 시작 ==='
@@ -142,17 +133,7 @@ pipeline {
 
         stage('🐳 백엔드 배포') {
             when {
-                allOf {
-                    expression { env.BACKEND_CHANGED == 'true' }
-                    anyOf {
-                        branch 'develop'
-                        expression {
-                            // detached HEAD 상태에서도 develop 브랜치인지 확인
-                            def currentBranch = sh(script: 'git branch -r --contains HEAD | grep origin/develop', returnStdout: true).trim()
-                            return currentBranch.contains('origin/develop')
-                        }
-                    }
-                }
+                expression { env.BACKEND_CHANGED == 'true' }
             }
             steps {
                 echo '=== 백엔드 Docker Compose 실행 ==='
@@ -163,7 +144,8 @@ pipeline {
                     string(credentialsId: 'kakao-client-id', variable: 'KAKAO_CLIENT_ID'),
                     string(credentialsId: 'kakao-client-secret', variable: 'KAKAO_CLIENT_SECRET'),
                     string(credentialsId: 'kakao-redirect-url', variable: 'KAKAO_REDIRECT_URL'),
-                    string(credentialsId: 'gms-api-key', variable: 'GMS_API_KEY')
+                    string(credentialsId: 'gms-api-key', variable: 'GMS_API_KEY'),
+                    string(credentialsId: 'mongodb-uri', variable: 'MONGODB_URI')
                 ]) {
                     sh """
                         cd ${BACKEND_DIR}
@@ -184,16 +166,6 @@ pipeline {
         }
 
         stage('🏥 헬스체크') {
-            when {
-                anyOf {
-                    branch 'develop'
-                    expression {
-                        // detached HEAD 상태에서도 develop 브랜치인지 확인
-                        def currentBranch = sh(script: 'git branch -r --contains HEAD | grep origin/develop', returnStdout: true).trim()
-                        return currentBranch.contains('origin/develop')
-                    }
-                }
-            }
             steps {
                 echo '=== 서비스 헬스체크 시작 ==='
 

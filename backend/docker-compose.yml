@@ -42,6 +42,7 @@ services:
       - GMS_GPT_URL=${GMS_GPT_URL:-https://gms.ssafy.io/gmsapi/api.openai.com/v1/chat/completions}
       - FILE_UPLOAD_DIR=${FILE_UPLOAD_DIR:-/app/uploads/resumes}
       - FILE_BASE_URL=${FILE_BASE_URL:-https://chub.ai.kr/files/resumes}
+      - MONGODB_URI=${MONGODB_URI}
     ports:
       - "8080:8080"
     volumes:

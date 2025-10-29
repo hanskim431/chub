@@ -1,0 +1,153 @@
+pipeline {
+    agent any
+
+    options {
+        gitLabConnection('GitLab SSAFY')
+    }
+
+    environment {
+        FRONTEND_DIR = "${env.WORKSPACE}/frontend/chub"
+        BACKEND_DIR = "${env.WORKSPACE}/backend"
+        BACKEND_COMPOSE_FILE = "${BACKEND_DIR}/docker-compose.yml"
+    }
+
+    stages {
+        stage('🔍 변경 감지') {
+            steps {
+                script {
+                    updateGitlabCommitStatus name: 'build', state: 'running'
+
+                    echo '=== Git 변경사항 확인 ==='
+
+                    // 변경된 파일 목록 확인
+                    def changes = sh(
+                        script: 'git diff --name-only HEAD~1 HEAD || echo "all"',
+                        returnStdout: true
+                    ).trim()
+
+                    echo "변경된 파일들:\n${changes}"
+
+                    // 변경 여부 플래그 설정
+                    env.FRONTEND_CHANGED = changes.contains('frontend/') ? 'true' : 'false'
+                    env.BACKEND_CHANGED = changes.contains('backend/') ? 'true' : 'false'
+
+                    // 첫 빌드이거나 변경사항이 없으면 모두 빌드
+                    if (changes == 'all') {
+                        env.FRONTEND_CHANGED = 'true'
+                        env.BACKEND_CHANGED = 'true'
+                    }
+
+                    echo "=== 변경 감지 결과 ==="
+                    echo "프론트엔드 변경: ${env.FRONTEND_CHANGED}"
+                    echo "백엔드 변경: ${env.BACKEND_CHANGED}"
+                }
+            }
+        }
+
+        stage('💻 프론트엔드 빌드') {
+            when {
+                expression { env.FRONTEND_CHANGED == 'true' }
+            }
+            steps {
+                echo '=== 프론트엔드 빌드 시작 ==='
+                sh """
+                    cd ${FRONTEND_DIR}
+
+                    echo "Node.js 버전:"
+                    node --version
+                    npm --version
+
+                    echo "의존성 설치..."
+                    npm install
+
+                    echo "프로덕션 빌드..."
+                    npm run build
+
+                    echo "빌드 결과 확인:"
+                    ls -la ${FRONTEND_DIR}/dist/
+                """
+                echo '✅ 프론트엔드 빌드 완료'
+            }
+        }
+
+        stage('🐳 백엔드 빌드') {
+            when {
+                expression { env.BACKEND_CHANGED == 'true' }
+            }
+            steps {
+                echo '=== 백엔드 Docker 이미지 빌드 ==='
+                withCredentials([
+                    string(credentialsId: 'db-username', variable: 'DB_USERNAME'),
+                    string(credentialsId: 'db-password', variable: 'DB_PASSWORD'),
+                    string(credentialsId: 'jwt-secret-key', variable: 'JWT_SECRET_KEY'),
+                    string(credentialsId: 'kakao-client-id', variable: 'KAKAO_CLIENT_ID'),
+                    string(credentialsId: 'kakao-client-secret', variable: 'KAKAO_CLIENT_SECRET'),
+                    string(credentialsId: 'kakao-redirect-url', variable: 'KAKAO_REDIRECT_URL'),
+                    string(credentialsId: 'gms-api-key', variable: 'GMS_API_KEY'),
+                    string(credentialsId: 'mongodb-uri', variable: 'MONGODB_URI')
+                ]) {
+                    sh """
+                        cd ${BACKEND_DIR}
+
+                        echo "기존 컨테이너 중지..."
+                        docker-compose -f ${BACKEND_COMPOSE_FILE} down || true
+
+                        echo "Docker 이미지 빌드 시작..."
+                        docker-compose -f ${BACKEND_COMPOSE_FILE} build --no-cache backend
+
+                        echo "빌드된 이미지 확인:"
+                        docker images | grep chub
+                    """
+                }
+                echo '✅ 백엔드 빌드 완료'
+            }
+        }
+    }
+
+    post {
+        success {
+            updateGitlabCommitStatus name: 'build', state: 'success'
+
+            script {
+                def builtServices = []
+                if (env.FRONTEND_CHANGED == 'true') builtServices.add('프론트엔드')
+                if (env.BACKEND_CHANGED == 'true') builtServices.add('백엔드')
+
+                def message = """
+✅ CI 빌드 성공!
+
+빌드 번호: ${BUILD_NUMBER}
+빌드된 서비스: ${builtServices.join(', ')}
+
+MR이 merge되면 자동으로 배포됩니다.
+                """
+                echo message
+            }
+        }
+
+        failure {
+            updateGitlabCommitStatus name: 'build', state: 'failed'
+
+            echo """
+❌ CI 빌드 실패!
+
+일반적인 해결 방법:
+1. 컴파일 오류: 로컬에서 빌드 테스트
+2. 테스트 실패: 실패한 테스트 확인 및 수정
+3. 의존성 오류: build.gradle 또는 package.json 확인
+            """
+        }
+
+        aborted {
+            updateGitlabCommitStatus name: 'build', state: 'canceled'
+        }
+
+        always {
+            echo '=== 정리 작업 ==='
+            sh '''
+                echo "디스크 사용량:"
+                df -h
+            '''
+        }
+    }
+}
