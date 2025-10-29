@@ -1,10 +1,12 @@
+/// <reference types="vitest/config" />
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
+import tsconfigPaths from "vite-tsconfig-paths";
+import tailwindcss from "@tailwindcss/vite";
 
-// https://vite.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [tsconfigPaths(), react(), tailwindcss()],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
@@ -16,6 +18,13 @@ export default defineConfig({
       "@widgets": path.resolve(__dirname, "./src/widgets"),
       "@assets": path.resolve(__dirname, "./src/assets"),
       "@mocks": path.resolve(__dirname, "./src/mocks"),
+      "@tests": path.resolve(__dirname, "./src/test"),
     },
+  },
+  envPrefix: "VITE_",
+  test: {
+    globals: true,
+    environment: "jsdom",
+    setupFiles: ["./src/test/setup.ts"],
   },
 });

@@ -1,70 +1,97 @@
 @import "tailwindcss";
 
-:root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
+/* 공통 폰트 설정 */
+@font-face {
+  font-family: "Pretendard-Regular";
+  src: url("/PretendardVariable.woff2") format("woff2");
   font-weight: 400;
-
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  font-style: normal;
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
-
-body {
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
   margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
+  padding: 0;
+  background-color: #fbfbfb;
+  font-family: "PretendardVariable";
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+/* :root {
+  --color-point: #3384fa;
+  --color-background: #ffffff;
+  --color-text-white: #17171c;
+  --color-gray-1: #f2f3f6;
+  --color-logo-white: #111111;
+  --color-black-chat: #f9fafb;
+  --color-input-gray: #f2f3f6;
+  --color-primary-purple-100: #eae6ff;
+  --color-primary-purple-200: #c7bfff;
+  --color-primary-purple-300: #a38bff;
+  --color-primary-purple-400: #8663ff;
+  --color-primary-purple-500: #704eff;
 }
 
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+.dark {
+  --color-point: #3384fa;
+  --color-background: #17171c;
+  --color-text-white: #fbfbfb;
+  --color-gray-1: #2f3036;
+  --color-logo-white: #eae7e6;
+  --color-black-chat: #101014;
+  --color-input-gray: #272932;
+  --color-primary-purple-100: #a38bff;
+  --color-primary-purple-200: #8663ff;
+  --color-primary-purple-300: #704eff;
+  --color-primary-purple-400: #5c3aff;
+  --color-primary-purple-500: #4b32cc;
+} */
+
+@theme {
+  --color-point: #ee7900;
+  --color-background: #fbfbfb;
+  --color-text-black: #17171c;
+  --color-text-gray: #6b7280;
+  --color-text-white: #fbfbfb;
+  --color-gray-1: #2c2c35;
+  --color-logo-white: #eae7e6;
+  --color-black-chat: #101014;
+  --color-input-gray: #272932;
+  --color-point-100: #e3f0fe;
+  --color-point-200: #b3d6fc;
+  --color-point-300: #7bb8fa;
+  --color-point-400: #3384fa;
+  --color-point-500: #2563eb;
+  --color-hover-gray: #dbeafe;
+  --color-underline-gray: #e5e7eb;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  display: none;
+  -webkit-appearance: none;
+}
+
+input[type="date"]::-moz-calendar-picker-indicator {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }

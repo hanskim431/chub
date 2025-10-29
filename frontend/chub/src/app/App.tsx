@@ -1,10 +1,16 @@
+import AppRouter from "@/app/routes/AppRouter";
+import { BrowserRouter } from "react-router-dom";
+import { Toaster } from "sonner";
+import { QueryProvider } from "@/app/queryProvider/QueryProvider";
+
 function App() {
   return (
-    <>
-      <div>
-        <h1>Chub</h1>
-      </div>
-    </>
+    <QueryProvider>
+      <BrowserRouter>
+        <AppRouter />
+        <Toaster position="top-right" richColors />
+      </BrowserRouter>
+    </QueryProvider>
   );
 }
 

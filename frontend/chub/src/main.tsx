@@ -12,11 +12,9 @@ async function enableMocking() {
 }
 
 enableMocking().then(() => {
-  console.log("App 렌더링 시작!");
   createRoot(document.getElementById("root")!).render(
     <StrictMode>
       <App />
     </StrictMode>
   );
-  console.log("App 렌더링 완료!");
 });
