@@ -65,4 +65,5 @@ public class Interview extends BaseEntity {
     public void cancel() {
         this.status = "CANCELLED";
     }
+
 }
