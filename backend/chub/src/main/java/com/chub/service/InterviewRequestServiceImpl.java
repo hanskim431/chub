@@ -3,7 +3,11 @@ package com.chub.service;
 import com.chub.common.PageInfo;
 import com.chub.common.PageResponse;
 import com.chub.dto.request.CreateInterviewRequestRequest;
+import com.chub.dto.response.InterviewRequestListData;
 import com.chub.dto.response.InterviewRequestResponse;
+import com.chub.dto.response.ReceivedInterviewRequestListData;
+import com.chub.dto.response.ReceivedInterviewRequestResponse;
+import com.chub.dto.response.ScheduledInterviewListData;
 import com.chub.dto.response.ScheduledInterviewResponse;
 import com.chub.entity.InterviewRequest;
 import com.chub.entity.InterviewerProfile;
@@ -63,7 +67,7 @@ public class InterviewRequestServiceImpl implements InterviewRequestService {
     }
 
     @Override
-    public PageResponse<List<InterviewRequestResponse>> getMyRequests(
+    public PageResponse<InterviewRequestListData> getMyRequests(
             Long userId,
             String status,
             Pageable pageable
@@ -86,14 +90,17 @@ public class InterviewRequestServiceImpl implements InterviewRequestService {
                 .map(InterviewRequestResponse::from)
                 .collect(Collectors.toList());
 
+        // Wrapper로 감싸기
+        InterviewRequestListData data = InterviewRequestListData.of(responses);
+
         // PageInfo 생성
         PageInfo pageInfo = PageInfo.from(requestPage);
 
-        return PageResponse.success("내가 보낸 면접 신청 목록 조회 성공", responses, pageInfo);
+        return PageResponse.success("내가 보낸 면접 신청 목록 조회 성공", data, pageInfo);
     }
 
     @Override
-    public PageResponse<List<InterviewRequestResponse>> getReceivedRequests(
+    public PageResponse<ReceivedInterviewRequestListData> getReceivedRequests(
             Long userId,
             Pageable pageable
     ) {
@@ -108,15 +115,18 @@ public class InterviewRequestServiceImpl implements InterviewRequestService {
                 pageable
         );
 
-        // DTO 변환
-        List<InterviewRequestResponse> responses = requestPage.getContent().stream()
-                .map(InterviewRequestResponse::from)
+        // DTO 변환 - 신청자(User) 정보 표시
+        List<ReceivedInterviewRequestResponse> responses = requestPage.getContent().stream()
+                .map(ReceivedInterviewRequestResponse::from)
                 .collect(Collectors.toList());
+
+        // Wrapper로 감싸기
+        ReceivedInterviewRequestListData data = ReceivedInterviewRequestListData.of(responses);
 
         // PageInfo 생성
         PageInfo pageInfo = PageInfo.from(requestPage);
 
-        return PageResponse.success("받은 면접 신청 목록 조회 성공", responses, pageInfo);
+        return PageResponse.success("받은 면접 신청 목록 조회 성공", data, pageInfo);
     }
 
     @Override
@@ -141,7 +151,7 @@ public class InterviewRequestServiceImpl implements InterviewRequestService {
     }
 
     @Override
-    public List<ScheduledInterviewResponse> getScheduledInterviews(Long userId) {
+    public ScheduledInterviewListData getScheduledInterviews(Long userId) {
         // 사용자 존재 확인
         if (!userRepository.existsById(userId)) {
             throw UserException.userNotFound();
@@ -152,8 +162,11 @@ public class InterviewRequestServiceImpl implements InterviewRequestService {
                 .findScheduledInterviewsByUserId(userId, "APPROVED");
 
         // DTO 변환
-        return scheduledRequests.stream()
+        List<ScheduledInterviewResponse> interviews = scheduledRequests.stream()
                 .map(request -> ScheduledInterviewResponse.from(request, userId))
                 .collect(Collectors.toList());
+
+        // Wrapper로 감싸기
+        return ScheduledInterviewListData.of(interviews);
     }
 }

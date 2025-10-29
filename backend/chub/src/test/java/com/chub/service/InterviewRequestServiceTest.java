@@ -2,7 +2,10 @@ package com.chub.service;
 
 import com.chub.common.PageResponse;
 import com.chub.dto.request.CreateInterviewRequestRequest;
+import com.chub.dto.response.InterviewRequestListData;
 import com.chub.dto.response.InterviewRequestResponse;
+import com.chub.dto.response.ReceivedInterviewRequestListData;
+import com.chub.dto.response.ScheduledInterviewListData;
 import com.chub.dto.response.ScheduledInterviewResponse;
 import com.chub.entity.InterviewRequest;
 import com.chub.entity.InterviewerProfile;
@@ -152,10 +155,10 @@ class InterviewRequestServiceTest {
         when(interviewRequestRepository.findByUserId(userId, pageable)).thenReturn(requestPage);
 
         // when
-        PageResponse<List<InterviewRequestResponse>> response = interviewRequestService.getMyRequests(userId, null, pageable);
+        PageResponse<InterviewRequestListData> response = interviewRequestService.getMyRequests(userId, null, pageable);
 
         // then
-        assertThat(response.data()).hasSize(2);
+        assertThat(response.data().interviewRequests()).hasSize(2);
         assertThat(response.pageInfo().totalElements()).isEqualTo(2);
     }
 
@@ -172,8 +175,6 @@ class InterviewRequestServiceTest {
 
         InterviewerProfile profile = mock(InterviewerProfile.class);
         when(profile.getId()).thenReturn(2L);
-        when(profile.getUser()).thenReturn(interviewer);
-        when(profile.getField()).thenReturn("Software Engineering");
 
         InterviewRequest request1 = InterviewRequest.of(user1, profile, "message1");
         InterviewRequest request2 = InterviewRequest.of(user2, profile, "message2");
@@ -185,10 +186,10 @@ class InterviewRequestServiceTest {
                 .thenReturn(requestPage);
 
         // when
-        PageResponse<List<InterviewRequestResponse>> response = interviewRequestService.getReceivedRequests(userId, pageable);
+        PageResponse<ReceivedInterviewRequestListData> response = interviewRequestService.getReceivedRequests(userId, pageable);
 
         // then
-        assertThat(response.data()).hasSize(2);
+        assertThat(response.data().interviewRequests()).hasSize(2);
         assertThat(response.pageInfo().totalElements()).isEqualTo(2);
         verify(interviewRequestRepository, times(1))
                 .findByInterviewerProfileIdAndStatus(2L, "PENDING", pageable);
@@ -266,9 +267,9 @@ class InterviewRequestServiceTest {
                 .thenReturn(Arrays.asList(request1, request2));
 
         // when
-        List<ScheduledInterviewResponse> responses = interviewRequestService.getScheduledInterviews(userId);
+        ScheduledInterviewListData response = interviewRequestService.getScheduledInterviews(userId);
 
         // then
-        assertThat(responses).hasSize(2);
+        assertThat(response.interviews()).hasSize(2);
     }
 }
