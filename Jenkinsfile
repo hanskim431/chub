@@ -109,7 +109,10 @@ pipeline {
 
         stage('🚀 프론트엔드 배포') {
             when {
-                expression { env.FRONTEND_CHANGED == 'true' }
+                allOf {
+                    expression { env.FRONTEND_CHANGED == 'true' }
+                    branch 'develop'
+                }
             }
             steps {
                 echo '=== 프론트엔드 배포 시작 ==='
@@ -132,7 +135,10 @@ pipeline {
 
         stage('🐳 백엔드 배포') {
             when {
-                expression { env.BACKEND_CHANGED == 'true' }
+                allOf {
+                    expression { env.BACKEND_CHANGED == 'true' }
+                    branch 'develop'
+                }
             }
             steps {
                 echo '=== 백엔드 Docker Compose 실행 ==='
@@ -164,6 +170,9 @@ pipeline {
         }
 
         stage('🏥 헬스체크') {
+            when {
+                branch 'develop'
+            }
             steps {
                 echo '=== 서비스 헬스체크 시작 ==='
 
