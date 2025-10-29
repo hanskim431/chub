@@ -114,8 +114,9 @@ pipeline {
                     anyOf {
                         branch 'develop'
                         expression {
-                            // 수동 빌드 시에도 develop 브랜치면 배포
-                            return sh(script: 'git rev-parse --abbrev-ref HEAD', returnStdout: true).trim() == 'develop'
+                            // detached HEAD 상태에서도 develop 브랜치인지 확인
+                            def currentBranch = sh(script: 'git branch -r --contains HEAD | grep origin/develop', returnStdout: true).trim()
+                            return currentBranch.contains('origin/develop')
                         }
                     }
                 }
@@ -146,8 +147,9 @@ pipeline {
                     anyOf {
                         branch 'develop'
                         expression {
-                            // 수동 빌드 시에도 develop 브랜치면 배포
-                            return sh(script: 'git rev-parse --abbrev-ref HEAD', returnStdout: true).trim() == 'develop'
+                            // detached HEAD 상태에서도 develop 브랜치인지 확인
+                            def currentBranch = sh(script: 'git branch -r --contains HEAD | grep origin/develop', returnStdout: true).trim()
+                            return currentBranch.contains('origin/develop')
                         }
                     }
                 }
@@ -186,8 +188,9 @@ pipeline {
                 anyOf {
                     branch 'develop'
                     expression {
-                        // 수동 빌드 시에도 develop 브랜치면 헬스체크
-                        return sh(script: 'git rev-parse --abbrev-ref HEAD', returnStdout: true).trim() == 'develop'
+                        // detached HEAD 상태에서도 develop 브랜치인지 확인
+                        def currentBranch = sh(script: 'git branch -r --contains HEAD | grep origin/develop', returnStdout: true).trim()
+                        return currentBranch.contains('origin/develop')
                     }
                 }
             }
