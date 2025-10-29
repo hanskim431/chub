@@ -111,7 +111,13 @@ pipeline {
             when {
                 allOf {
                     expression { env.FRONTEND_CHANGED == 'true' }
-                    branch 'develop'
+                    anyOf {
+                        branch 'develop'
+                        expression {
+                            // 수동 빌드 시에도 develop 브랜치면 배포
+                            return sh(script: 'git rev-parse --abbrev-ref HEAD', returnStdout: true).trim() == 'develop'
+                        }
+                    }
                 }
             }
             steps {
@@ -137,7 +143,13 @@ pipeline {
             when {
                 allOf {
                     expression { env.BACKEND_CHANGED == 'true' }
-                    branch 'develop'
+                    anyOf {
+                        branch 'develop'
+                        expression {
+                            // 수동 빌드 시에도 develop 브랜치면 배포
+                            return sh(script: 'git rev-parse --abbrev-ref HEAD', returnStdout: true).trim() == 'develop'
+                        }
+                    }
                 }
             }
             steps {
@@ -171,7 +183,13 @@ pipeline {
 
         stage('🏥 헬스체크') {
             when {
-                branch 'develop'
+                anyOf {
+                    branch 'develop'
+                    expression {
+                        // 수동 빌드 시에도 develop 브랜치면 헬스체크
+                        return sh(script: 'git rev-parse --abbrev-ref HEAD', returnStdout: true).trim() == 'develop'
+                    }
+                }
             }
             steps {
                 echo '=== 서비스 헬스체크 시작 ==='
