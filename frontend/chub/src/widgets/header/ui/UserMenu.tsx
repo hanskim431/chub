@@ -17,6 +17,11 @@ function UserMenu() {
         <GoToLoginButton />
       ) : (
         <>
+          <img
+            src={data?.data?.avatar}
+            alt="user-avatar"
+            className="w-8 h-8 rounded-full border border-gray-300"
+          />
           <span className="text-sm font-bold text-gray-600">{nickname}님</span>
           <button
             onClick={handleLogout}
