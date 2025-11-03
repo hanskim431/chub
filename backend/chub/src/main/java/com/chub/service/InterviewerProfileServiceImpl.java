@@ -1,6 +1,7 @@
 package com.chub.service;
 
 import com.chub.dto.request.CreateInterviewerProfileRequest;
+import com.chub.dto.request.UpdateInterviewerProfileRequest;
 import com.chub.dto.response.InterviewerProfileListItemResponse;
 import com.chub.dto.response.InterviewerProfilePageResponse;
 import com.chub.dto.response.InterviewerProfileResponse;
@@ -68,6 +69,64 @@ public class InterviewerProfileServiceImpl implements InterviewerProfileService 
 
         // 저장
         interviewerProfileRepository.save(profile);
+    }
+
+    @Override
+    @Transactional
+    public void updateProfile(Long userId, UpdateInterviewerProfileRequest request) {
+        // 프로필 조회
+        InterviewerProfile profile = interviewerProfileRepository.findByUserId(userId)
+                .orElseThrow(InterviewerProfileException::notFound);
+
+        if (request.company() != null || request.position() != null) {
+            String company = request.company() != null ? request.company() : profile.getCompany();
+            String position = request.position() != null ? request.position() : profile.getPosition();
+            profile.updateBasicInfo(company, position, null, null);
+        }
+
+        if (request.email() != null) {
+            profile.updateEmail(request.email());
+        }
+
+        if (request.field() != null) {
+            profile.updateField(request.field());
+        }
+
+        if (request.price() != null) {
+            profile.updatePrice(request.price());
+        }
+
+        if (request.interviewStyle() != null) {
+            profile.updateInterviewStyle(request.interviewStyle());
+        }
+
+        if (request.bio() != null) {
+            profile.updateIntroduction(request.bio());
+        }
+
+        if (request.languages() != null || request.specialties() != null) {
+            profile.updateSkills(request.toLanguageVos(), request.toSpecialtyVos());
+        }
+
+        if (request.experiences() != null) {
+            profile.updateExperience(null, request.toExperienceVos());
+        }
+
+        if (request.education() != null) {
+            profile.updateEducations(request.toEducationVos());
+        }
+
+        if (request.certifications() != null) {
+            profile.updateCertifications(request.toCertificationVos());
+        }
+
+        if (request.availableTimeSlots() != null) {
+            profile.updateAvailableTimeSlots(request.toAvailableTimeSlotVos());
+        }
+
+        if (request.isActive() != null) {
+            profile.updateActivationStatus(request.isActive());
+        }
     }
 
     @Override

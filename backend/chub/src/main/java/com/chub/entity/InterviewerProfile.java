@@ -1,25 +1,29 @@
 package com.chub.entity;
 
+import static jakarta.persistence.FetchType.LAZY;
+import static jakarta.persistence.GenerationType.*;
+import static lombok.AccessLevel.*;
+import static org.hibernate.type.SqlTypes.JSON;
+
 import com.chub.common.BaseEntity;
 import com.chub.entity.vo.*;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 
 import java.util.List;
 
 @Entity
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@NoArgsConstructor(access = PROTECTED)
 public class InterviewerProfile extends BaseEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = IDENTITY)
     @Column(name = "interviewer_profile_id")
     private Long id;
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @OneToOne(fetch = LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
@@ -41,27 +45,27 @@ public class InterviewerProfile extends BaseEntity {
     @Column(name = "total_years_of_experience")
     private Integer totalYearsOfExperience;
 
-    @JdbcTypeCode(SqlTypes.JSON)
+    @JdbcTypeCode(JSON)
     @Column(name = "languages", columnDefinition = "jsonb")
     private List<LanguageVo> languages;
 
-    @JdbcTypeCode(SqlTypes.JSON)
+    @JdbcTypeCode(JSON)
     @Column(name = "specialties", columnDefinition = "jsonb")
     private List<SpecialtyVo> specialties;
 
-    @JdbcTypeCode(SqlTypes.JSON)
+    @JdbcTypeCode(JSON)
     @Column(name = "educations", columnDefinition = "jsonb")
     private List<EducationVo> educations;
 
-    @JdbcTypeCode(SqlTypes.JSON)
+    @JdbcTypeCode(JSON)
     @Column(name = "experiences", columnDefinition = "jsonb")
     private List<ExperienceVo> experiences;
 
-    @JdbcTypeCode(SqlTypes.JSON)
+    @JdbcTypeCode(JSON)
     @Column(name = "certifications", columnDefinition = "jsonb")
     private List<CertificationVo> certifications;
 
-    @JdbcTypeCode(SqlTypes.JSON)
+    @JdbcTypeCode(JSON)
     @Column(name = "available_time_slots", columnDefinition = "jsonb")
     private List<AvailableTimeSlotVo> availableTimeSlots;
 
@@ -77,11 +81,15 @@ public class InterviewerProfile extends BaseEntity {
     @Column(name = "interview_style", columnDefinition = "TEXT")
     private String interviewStyle;
 
+    @Column(name = "is_active", nullable = false)
+    private boolean isActive = true;
+
     @Builder
     private InterviewerProfile(User user, String company, String position) {
         this.user = user;
         this.company = company;
         this.position = position;
+        this.isActive = true;
     }
 
     public static InterviewerProfile of(User user, String company, String position) {
@@ -135,5 +143,11 @@ public class InterviewerProfile extends BaseEntity {
 
     public void updateInterviewStyle(String interviewStyle) {
         this.interviewStyle = interviewStyle;
+    }
+
+    public void updateActivationStatus(Boolean isActive) {
+        if (isActive != null) {
+            this.isActive = isActive;
+        }
     }
 }
