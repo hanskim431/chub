@@ -4,6 +4,7 @@ import com.chub.auth.annotation.LoginUser;
 import com.chub.common.CommonApiResponse;
 import com.chub.common.PageResponse;
 import com.chub.dto.request.CreateInterviewerProfileRequest;
+import com.chub.dto.request.UpdateInterviewerProfileRequest;
 import com.chub.dto.response.InterviewerProfileListData;
 import com.chub.dto.response.InterviewerProfileListItemResponse;
 import com.chub.dto.response.InterviewerProfilePageResponse;
@@ -53,6 +54,23 @@ public class InterviewerProfileController {
             @Valid @RequestBody CreateInterviewerProfileRequest request
     ) {
         interviewerProfileService.createProfile(userId, request);
+        return ResponseEntity.ok(CommonApiResponse.success());
+    }
+
+    @PatchMapping("/me")
+    @Operation(
+            summary = "면접관 프로필 수정",
+            description = "면접관 프로필을 부분 수정합니다. null이 아닌 필드만 업데이트되며, 나머지 필드는 기존 값을 유지합니다. " +
+                    "활성 상태만 변경하거나, 여러 필드를 동시에 수정할 수 있습니다."
+    )
+    @ApiResponse(responseCode = "200", description = "수정 성공")
+    @ApiResponse(responseCode = "404", description = "프로필 없음", content = @Content)
+    @ApiResponse(responseCode = "400", description = "유효하지 않은 데이터", content = @Content)
+    public ResponseEntity<CommonApiResponse<Void>> updateProfile(
+            @LoginUser Long userId,
+            @Valid @RequestBody UpdateInterviewerProfileRequest request
+    ) {
+        interviewerProfileService.updateProfile(userId, request);
         return ResponseEntity.ok(CommonApiResponse.success());
     }
 

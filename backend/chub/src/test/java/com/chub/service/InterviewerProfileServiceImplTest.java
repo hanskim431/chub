@@ -4,6 +4,8 @@ import com.chub.common.PageResponse;
 import com.chub.dto.request.CreateInterviewerProfileRequest;
 import com.chub.dto.request.CreateInterviewerProfileRequest.ExperienceDto;
 import com.chub.dto.response.InterviewerProfileListData;
+import com.chub.dto.request.UpdateInterviewerProfileRequest;
+import com.chub.dto.response.InterviewerProfilePageResponse;
 import com.chub.dto.response.InterviewerProfileResponse;
 import com.chub.entity.InterviewerProfile;
 import com.chub.entity.User;
@@ -355,6 +357,201 @@ class InterviewerProfileServiceImplTest {
             assertThat(response.field()).isEqualTo(TEST_FIELD);
             assertThat(response.company()).isEqualTo(TEST_COMPANY);
             verify(interviewerProfileRepository, times(1)).findById(1L);
+        }
+    }
+
+    @Nested
+    @DisplayName("updateProfile 메서드")
+    class UpdateProfileTest {
+
+        @Test
+        @DisplayName("성공: 활성 상태만 업데이트")
+        void updateProfile_UpdateActivationStatusOnly() {
+            // given
+            UpdateInterviewerProfileRequest request = new UpdateInterviewerProfileRequest(
+                    null, null, null, null, null, null, null,
+                    null, null, null, null, null, null, null, null,
+                    false
+            );
+            given(interviewerProfileRepository.findByUserId(TEST_USER_ID))
+                    .willReturn(Optional.of(testProfile));
+
+            // when
+            interviewerProfileService.updateProfile(TEST_USER_ID, request);
+
+            // then
+            verify(interviewerProfileRepository, times(1)).findByUserId(TEST_USER_ID);
+            verify(interviewerProfileRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("성공: 여러 필드 동시 업데이트")
+        void updateProfile_UpdateMultipleFields() {
+            // given
+            String newCompany = "카카오";
+            Integer newPrice = 100000;
+            Boolean newIsActive = true;
+
+            UpdateInterviewerProfileRequest request = new UpdateInterviewerProfileRequest(
+                    null, null, null, null,
+                    newCompany,
+                    null, null, null, null, null, null, null, null, null,
+                    newPrice,
+                    newIsActive
+            );
+            given(interviewerProfileRepository.findByUserId(TEST_USER_ID))
+                    .willReturn(Optional.of(testProfile));
+
+            // when
+            interviewerProfileService.updateProfile(TEST_USER_ID, request);
+
+            // then
+            verify(interviewerProfileRepository, times(1)).findByUserId(TEST_USER_ID);
+            verify(interviewerProfileRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("성공: 모든 필드 업데이트")
+        void updateProfile_UpdateAllFields() {
+            // given
+            UpdateInterviewerProfileRequest request = new UpdateInterviewerProfileRequest(
+                    "김철수",
+                    "chulsoo@example.com",
+                    "https://new-avatar.com/image.jpg",
+                    "프론트엔드",
+                    "토스",
+                    "리드 개발자",
+                    "15년 경력 개발자입니다.",
+                    emptyList(),
+                    List.of("React", "TypeScript"),
+                    emptyList(),
+                    emptyList(),
+                    List.of("한국어", "영어", "일본어"),
+                    "체계적인 면접 스타일",
+                    List.of("주말 오전"),
+                    120000,
+                    true
+            );
+            given(interviewerProfileRepository.findByUserId(TEST_USER_ID))
+                    .willReturn(Optional.of(testProfile));
+
+            // when
+            interviewerProfileService.updateProfile(TEST_USER_ID, request);
+
+            // then
+            verify(interviewerProfileRepository, times(1)).findByUserId(TEST_USER_ID);
+            verify(interviewerProfileRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("성공: 일부 필드만 업데이트 (나머지는 null)")
+        void updateProfile_PartialUpdate() {
+            // given
+            String newEmail = "newemail@example.com";
+            Integer newPrice = 90000;
+
+            UpdateInterviewerProfileRequest request = new UpdateInterviewerProfileRequest(
+                    null,
+                    newEmail,
+                    null, null, null, null, null, null, null, null, null, null, null, null,
+                    newPrice,
+                    null
+            );
+            given(interviewerProfileRepository.findByUserId(TEST_USER_ID))
+                    .willReturn(Optional.of(testProfile));
+
+            // when
+            interviewerProfileService.updateProfile(TEST_USER_ID, request);
+
+            // then
+            verify(interviewerProfileRepository, times(1)).findByUserId(TEST_USER_ID);
+            verify(interviewerProfileRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("성공: company만 업데이트 (position은 기존 값 유지)")
+        void updateProfile_UpdateCompanyOnly() {
+            // given
+            String newCompany = "라인";
+
+            UpdateInterviewerProfileRequest request = new UpdateInterviewerProfileRequest(
+                    null, null, null, null,
+                    newCompany,
+                    null,
+                    null, null, null, null, null, null, null, null, null, null
+            );
+            given(interviewerProfileRepository.findByUserId(TEST_USER_ID))
+                    .willReturn(Optional.of(testProfile));
+
+            // when
+            interviewerProfileService.updateProfile(TEST_USER_ID, request);
+
+            // then
+            verify(interviewerProfileRepository, times(1)).findByUserId(TEST_USER_ID);
+            verify(interviewerProfileRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("성공: 리스트 필드 업데이트")
+        void updateProfile_UpdateListFields() {
+            // given
+            List<String> newLanguages = List.of("Python", "Go");
+            List<String> newSpecialties = List.of("AI", "Machine Learning");
+
+            UpdateInterviewerProfileRequest request = new UpdateInterviewerProfileRequest(
+                    null, null, null, null, null, null, null, null,
+                    newSpecialties,
+                    null, null,
+                    newLanguages,
+                    null, null, null, null
+            );
+            given(interviewerProfileRepository.findByUserId(TEST_USER_ID))
+                    .willReturn(Optional.of(testProfile));
+
+            // when
+            interviewerProfileService.updateProfile(TEST_USER_ID, request);
+
+            // then
+            verify(interviewerProfileRepository, times(1)).findByUserId(TEST_USER_ID);
+            verify(interviewerProfileRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("실패: 프로필이 존재하지 않을 때 InterviewerProfileException 발생")
+        void updateProfile_ProfileNotFound() {
+            // given
+            UpdateInterviewerProfileRequest request = new UpdateInterviewerProfileRequest(
+                    null, null, null, null, null, null, null,
+                    null, null, null, null, null, null, null, null,
+                    false
+            );
+            given(interviewerProfileRepository.findByUserId(TEST_USER_ID))
+                    .willReturn(empty());
+
+            // when & then
+            assertThatThrownBy(() -> interviewerProfileService.updateProfile(TEST_USER_ID, request))
+                    .isInstanceOf(InterviewerProfileException.class);
+            verify(interviewerProfileRepository, times(1)).findByUserId(TEST_USER_ID);
+            verify(interviewerProfileRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("성공: 모든 필드가 null인 요청 (기존 값 전부 유지)")
+        void updateProfile_AllFieldsNull() {
+            // given
+            UpdateInterviewerProfileRequest request = new UpdateInterviewerProfileRequest(
+                    null, null, null, null, null, null, null,
+                    null, null, null, null, null, null, null, null, null
+            );
+            given(interviewerProfileRepository.findByUserId(TEST_USER_ID))
+                    .willReturn(Optional.of(testProfile));
+
+            // when
+            interviewerProfileService.updateProfile(TEST_USER_ID, request);
+
+            // then
+            verify(interviewerProfileRepository, times(1)).findByUserId(TEST_USER_ID);
+            verify(interviewerProfileRepository, never()).save(any());
         }
     }
 }
