@@ -102,18 +102,27 @@ public class InterviewRequestServiceImpl implements InterviewRequestService {
     @Override
     public PageResponse<ReceivedInterviewRequestListData> getReceivedRequests(
             Long userId,
+            String status,
             Pageable pageable
     ) {
         // 사용자의 면접관 프로필 조회
         InterviewerProfile interviewerProfile = interviewerProfileRepository.findByUserId(userId)
                 .orElseThrow(InterviewerProfileException::notFound);
 
-        // PENDING 상태만 조회
-        Page<InterviewRequest> requestPage = interviewRequestRepository.findByInterviewerProfileIdAndStatus(
-                interviewerProfile.getId(),
-                "PENDING",
-                pageable
-        );
+        // 상태 필터링 여부에 따라 조회
+        Page<InterviewRequest> requestPage;
+        if (status != null && !status.isBlank()) {
+            requestPage = interviewRequestRepository.findByInterviewerProfileIdAndStatus(
+                    interviewerProfile.getId(),
+                    status,
+                    pageable
+            );
+        } else {
+            requestPage = interviewRequestRepository.findByInterviewerProfileId(
+                    interviewerProfile.getId(),
+                    pageable
+            );
+        }
 
         // DTO 변환 - 신청자(User) 정보 표시
         List<ReceivedInterviewRequestResponse> responses = requestPage.getContent().stream()
@@ -151,22 +160,27 @@ public class InterviewRequestServiceImpl implements InterviewRequestService {
     }
 
     @Override
-    public ScheduledInterviewListData getScheduledInterviews(Long userId) {
+    public PageResponse<ScheduledInterviewListData> getScheduledInterviews(Long userId, Pageable pageable) {
         // 사용자 존재 확인
         if (!userRepository.existsById(userId)) {
             throw UserException.userNotFound();
         }
 
         // APPROVED 상태의 면접 요청 조회 (내가 신청자이거나 면접관인 경우)
-        List<InterviewRequest> scheduledRequests = interviewRequestRepository
-                .findScheduledInterviewsByUserId(userId, "APPROVED");
+        Page<InterviewRequest> scheduledRequestsPage = interviewRequestRepository
+                .findScheduledInterviewsByUserId(userId, "APPROVED", pageable);
 
         // DTO 변환
-        List<ScheduledInterviewResponse> interviews = scheduledRequests.stream()
+        List<ScheduledInterviewResponse> interviews = scheduledRequestsPage.getContent().stream()
                 .map(request -> ScheduledInterviewResponse.from(request, userId))
                 .collect(Collectors.toList());
 
         // Wrapper로 감싸기
-        return ScheduledInterviewListData.of(interviews);
+        ScheduledInterviewListData data = ScheduledInterviewListData.of(interviews);
+
+        // PageInfo 생성
+        PageInfo pageInfo = PageInfo.from(scheduledRequestsPage);
+
+        return PageResponse.success("예정된 면접 목록 조회 성공", data, pageInfo);
     }
 }

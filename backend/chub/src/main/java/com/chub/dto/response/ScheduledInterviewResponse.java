@@ -12,9 +12,6 @@ public record ScheduledInterviewResponse(
         @Schema(description = "신청 ID", example = "1")
         Long id,
 
-        @Schema(description = "신청 ID", example = "1")
-        Long requestId,
-
         @Schema(description = "신청 메시지", example = "히히면접")
         String requestMessage,
 
@@ -64,7 +61,6 @@ public record ScheduledInterviewResponse(
         String role = isInterviewer ? "interviewer" : "interviewee";
 
         return new ScheduledInterviewResponse(
-                request.getId(),
                 request.getId(),
                 request.getMessage(),
                 OpponentInfo.from(opponent),

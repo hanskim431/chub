@@ -1,8 +1,9 @@
 package com.chub.service;
 
+import com.chub.common.PageResponse;
 import com.chub.dto.request.CreateInterviewerProfileRequest;
 import com.chub.dto.request.CreateInterviewerProfileRequest.ExperienceDto;
-import com.chub.dto.response.InterviewerProfilePageResponse;
+import com.chub.dto.response.InterviewerProfileListData;
 import com.chub.dto.response.InterviewerProfileResponse;
 import com.chub.entity.InterviewerProfile;
 import com.chub.entity.User;
@@ -323,12 +324,13 @@ class InterviewerProfileServiceImplTest {
                     .willReturn(profilePage);
 
             // when
-            InterviewerProfilePageResponse response =
+            PageResponse<InterviewerProfileListData> response =
                     interviewerProfileService.getInterviewerProfiles(null, 0, 10);
 
             // then
             assertThat(response).isNotNull();
-            assertThat(response.profiles()).hasSize(1);
+            assertThat(response.data().profiles()).hasSize(1);
+            assertThat(response.pageInfo().totalElements()).isEqualTo(1);
             verify(interviewerProfileRepository, times(1)).findAll(any(Pageable.class));
         }
     }
