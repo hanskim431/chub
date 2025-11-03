@@ -1,9 +1,8 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import UserMenu from "@/widgets/header/ui/UserMenu";
 import MemoryRouterWrapped from "@/app/routes/MemoryRouterWrapped";
 import { server } from "@/test/setup";
 import { http, HttpResponse } from "msw";
-import { act } from "react";
 describe("UserMenu", () => {
   test("유저 메뉴가 렌더링된다.", () => {
     render(<MemoryRouterWrapped component={<UserMenu />} />);
