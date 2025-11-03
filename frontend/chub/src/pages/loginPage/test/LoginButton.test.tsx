@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from "@testing-library/react";
-import LoginButton from "../ui/LoginButton";
+import LoginButton from "@/pages/loginPage/ui/LoginButton";
 
 describe("LoginButton", () => {
   beforeEach(() => {
