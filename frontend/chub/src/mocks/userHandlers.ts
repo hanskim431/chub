@@ -8,7 +8,7 @@ export const userHandlers = [
     if (is_login) {
       return HttpResponse.json({
         success: true,
-        status: 0,
+        status: 200,
         data: {
           id: 0,
           name: "이찬",
@@ -18,7 +18,7 @@ export const userHandlers = [
     }
     return HttpResponse.json({
       success: false,
-      status: 0,
+      status: 401,
       data: null,
       errorCode: "UNAUTHORIZED",
       errorMessage: "Unauthorized",
@@ -27,7 +27,6 @@ export const userHandlers = [
   }),
   http.post(`${import.meta.env.VITE_API_URL}/auth/logout`, async () => {
     await new Promise((resolve) => setTimeout(resolve, 1000));
-    is_login = false;
     return HttpResponse.json({
       success: true,
       status: 200,
