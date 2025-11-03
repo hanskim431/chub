@@ -163,10 +163,11 @@ class InterviewRequestServiceTest {
     }
 
     @Test
-    @DisplayName("받은 면접 신청 목록 조회 성공 - PENDING만 조회")
+    @DisplayName("받은 면접 신청 목록 조회 성공 - status 필터 사용")
     void getReceivedRequests_success() {
         // given
         Long userId = 1L;
+        String status = "PENDING";
         Pageable pageable = PageRequest.of(0, 10);
 
         User interviewer = User.of("interviewer-sub", "interviewer");
@@ -182,17 +183,17 @@ class InterviewRequestServiceTest {
         Page<InterviewRequest> requestPage = new PageImpl<>(Arrays.asList(request1, request2), pageable, 2);
 
         when(interviewerProfileRepository.findByUserId(userId)).thenReturn(Optional.of(profile));
-        when(interviewRequestRepository.findByInterviewerProfileIdAndStatus(2L, "PENDING", pageable))
+        when(interviewRequestRepository.findByInterviewerProfileIdAndStatus(2L, status, pageable))
                 .thenReturn(requestPage);
 
         // when
-        PageResponse<ReceivedInterviewRequestListData> response = interviewRequestService.getReceivedRequests(userId, pageable);
+        PageResponse<ReceivedInterviewRequestListData> response = interviewRequestService.getReceivedRequests(userId, status, pageable);
 
         // then
         assertThat(response.data().interviewRequests()).hasSize(2);
         assertThat(response.pageInfo().totalElements()).isEqualTo(2);
         verify(interviewRequestRepository, times(1))
-                .findByInterviewerProfileIdAndStatus(2L, "PENDING", pageable);
+                .findByInterviewerProfileIdAndStatus(2L, status, pageable);
     }
 
     @Test
@@ -247,6 +248,7 @@ class InterviewRequestServiceTest {
     void getScheduledInterviews_success() {
         // given
         Long userId = 1L;
+        Pageable pageable = PageRequest.of(0, 10);
 
         User user = mock(User.class);
         User interviewer = mock(User.class);
@@ -261,15 +263,20 @@ class InterviewRequestServiceTest {
         when(request2.getInterviewerProfile()).thenReturn(profile);
         when(request1.getUser()).thenReturn(user);
         when(request2.getUser()).thenReturn(user);
+        when(request1.getId()).thenReturn(1L);
+        when(request2.getId()).thenReturn(2L);
+
+        Page<InterviewRequest> requestPage = new PageImpl<>(Arrays.asList(request1, request2), pageable, 2);
 
         when(userRepository.existsById(userId)).thenReturn(true);
-        when(interviewRequestRepository.findScheduledInterviewsByUserId(userId, "APPROVED"))
-                .thenReturn(Arrays.asList(request1, request2));
+        when(interviewRequestRepository.findScheduledInterviewsByUserId(userId, "APPROVED", pageable))
+                .thenReturn(requestPage);
 
         // when
-        ScheduledInterviewListData response = interviewRequestService.getScheduledInterviews(userId);
+        PageResponse<ScheduledInterviewListData> response = interviewRequestService.getScheduledInterviews(userId, pageable);
 
         // then
-        assertThat(response.interviews()).hasSize(2);
+        assertThat(response.data().interviews()).hasSize(2);
+        assertThat(response.pageInfo().totalElements()).isEqualTo(2);
     }
 }
