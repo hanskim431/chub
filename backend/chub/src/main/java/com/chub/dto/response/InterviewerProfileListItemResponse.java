@@ -5,7 +5,9 @@ import com.chub.entity.vo.ExperienceVo;
 import com.chub.entity.vo.SpecialtyVo;
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Schema(description = "면접관 목록 조회 응답")
 public record InterviewerProfileListItemResponse(
@@ -34,7 +36,7 @@ public record InterviewerProfileListItemResponse(
         List<ExperienceVo> experiences,
 
         @Schema(description = "전문 분야")
-        List<SpecialtyVo> specialties,
+        List<String> specialties,
 
         @Schema(description = "가격", example = "80000")
         Integer price
@@ -49,8 +51,17 @@ public record InterviewerProfileListItemResponse(
                 profile.getPosition(),
                 profile.getIntroduction(),
                 profile.getExperiences(),
-                profile.getSpecialties(),
+                convertSpecialties(profile.getSpecialties()),
                 profile.getPrice()
         );
+    }
+
+    private static List<String> convertSpecialties(List<SpecialtyVo> specialties) {
+        if (specialties == null) {
+            return Collections.emptyList();
+        }
+        return specialties.stream()
+                .map(SpecialtyVo::getSpecialty)
+                .collect(Collectors.toList());
     }
 }

@@ -35,13 +35,14 @@ public interface InterviewRequestService {
 
     /**
      * 받은 면접 신청 목록 조회 (면접관용)
-     * PENDING 상태의 신청만 조회합니다.
      * @param userId 사용자 ID (면접관)
+     * @param status 상태 필터 (선택)
      * @param pageable 페이징 정보
      * @return 면접 신청 목록 페이지 응답
      */
     PageResponse<ReceivedInterviewRequestListData> getReceivedRequests(
             Long userId,
+            String status,
             Pageable pageable
     );
 
@@ -54,9 +55,10 @@ public interface InterviewRequestService {
     void updateRequestStatus(Long requestId, Long userId, Boolean accepted);
 
     /**
-     * 예정된 면접 목록 조회
+     * 예정된 면접 목록 조회 (페이징)
      * @param userId 사용자 ID
-     * @return 예정된 면접 목록
+     * @param pageable 페이징 정보
+     * @return 예정된 면접 목록 페이지 응답
      */
-    ScheduledInterviewListData getScheduledInterviews(Long userId);
+    PageResponse<ScheduledInterviewListData> getScheduledInterviews(Long userId, Pageable pageable);
 }
