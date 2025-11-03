@@ -1,7 +1,10 @@
 package com.chub.service;
 
+import com.chub.common.PageInfo;
+import com.chub.common.PageResponse;
 import com.chub.dto.request.CreateInterviewerProfileRequest;
 import com.chub.dto.request.UpdateInterviewerProfileRequest;
+import com.chub.dto.response.InterviewerProfileListData;
 import com.chub.dto.response.InterviewerProfileListItemResponse;
 import com.chub.dto.response.InterviewerProfilePageResponse;
 import com.chub.dto.response.InterviewerProfileResponse;
@@ -18,6 +21,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -130,7 +136,7 @@ public class InterviewerProfileServiceImpl implements InterviewerProfileService 
     }
 
     @Override
-    public InterviewerProfilePageResponse getInterviewerProfiles(String department, int page, int size) {
+    public PageResponse<InterviewerProfileListData> getInterviewerProfiles(String department, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
         Page<InterviewerProfile> profilePage;
@@ -141,9 +147,17 @@ public class InterviewerProfileServiceImpl implements InterviewerProfileService 
         }
 
         // Entity -> DTO 변환
-        Page<InterviewerProfileListItemResponse> responsePage = profilePage.map(InterviewerProfileListItemResponse::from);
+        List<InterviewerProfileListItemResponse> profiles = profilePage.getContent().stream()
+                .map(InterviewerProfileListItemResponse::from)
+                .collect(Collectors.toList());
 
-        return InterviewerProfilePageResponse.from(responsePage);
+        // Wrapper로 감싸기
+        InterviewerProfileListData data = InterviewerProfileListData.of(profiles);
+
+        // PageInfo 생성
+        PageInfo pageInfo = PageInfo.from(profilePage);
+
+        return PageResponse.success("면접관 목록 조회 성공", data, pageInfo);
     }
 
     @Override

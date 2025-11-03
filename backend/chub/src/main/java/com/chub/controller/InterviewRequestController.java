@@ -80,12 +80,18 @@ public class InterviewRequestController {
     @GetMapping("/requests/received")
     @Operation(
             summary = "받은 면접 신청 목록 (면접관용)",
-            description = "면접관으로서 받은 면접 신청 목록을 조회합니다. PENDING 상태의 신청만 조회됩니다."
+            description = "면접관으로서 받은 면접 신청 목록을 조회합니다. status 파라미터를 생략하면 모든 상태의 신청을 조회합니다."
     )
     @ApiResponse(responseCode = "200", description = "조회 성공")
     @ApiResponse(responseCode = "404", description = "면접관 프로필 없음", content = @Content)
     public ResponseEntity<PageResponse<ReceivedInterviewRequestListData>> getReceivedRequests(
             @LoginUser Long userId,
+            @Parameter(
+                    description = "상태 필터 (선택, 생략 시 전체 조회)",
+                    example = "PENDING",
+                    required = false
+            )
+            @RequestParam(required = false) String status,
             @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
             @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "페이지 크기", example = "10")
@@ -93,7 +99,7 @@ public class InterviewRequestController {
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         PageResponse<ReceivedInterviewRequestListData> response =
-                interviewRequestService.getReceivedRequests(userId, pageable);
+                interviewRequestService.getReceivedRequests(userId, status, pageable);
         return ResponseEntity.ok(response);
     }
 
@@ -121,10 +127,15 @@ public class InterviewRequestController {
             description = "수락된(APPROVED) 예정된 면접 목록을 조회합니다. 면접관/면접대상자 모두 조회 가능합니다."
     )
     @ApiResponse(responseCode = "200", description = "조회 성공")
-    public ResponseEntity<CommonApiResponse<ScheduledInterviewListData>> getScheduledInterviews(
-            @LoginUser Long userId
+    public ResponseEntity<PageResponse<ScheduledInterviewListData>> getScheduledInterviews(
+            @LoginUser Long userId,
+            @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
+            @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "페이지 크기", example = "10")
+            @RequestParam(defaultValue = "10") int size
     ) {
-        ScheduledInterviewListData response = interviewRequestService.getScheduledInterviews(userId);
-        return ResponseEntity.ok(CommonApiResponse.success(response));
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        PageResponse<ScheduledInterviewListData> response = interviewRequestService.getScheduledInterviews(userId, pageable);
+        return ResponseEntity.ok(response);
     }
 }

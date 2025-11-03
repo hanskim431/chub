@@ -2,8 +2,11 @@ package com.chub.controller;
 
 import com.chub.auth.annotation.LoginUser;
 import com.chub.common.CommonApiResponse;
+import com.chub.common.PageResponse;
 import com.chub.dto.request.CreateInterviewerProfileRequest;
 import com.chub.dto.request.UpdateInterviewerProfileRequest;
+import com.chub.dto.response.InterviewerProfileListData;
+import com.chub.dto.response.InterviewerProfileListItemResponse;
 import com.chub.dto.response.InterviewerProfilePageResponse;
 import com.chub.dto.response.InterviewerProfileResponse;
 import com.chub.service.InterviewerProfileService;
@@ -77,7 +80,7 @@ public class InterviewerProfileController {
             description = "면접관 목록을 페이징 처리하여 조회합니다. department 필터를 통해 부서별 검색이 가능합니다."
     )
     @ApiResponse(responseCode = "200", description = "조회 성공")
-    public ResponseEntity<CommonApiResponse<InterviewerProfilePageResponse>> getInterviewerProfiles(
+    public ResponseEntity<PageResponse<InterviewerProfileListData>> getInterviewerProfiles(
             @Parameter(description = "부서 필터 (부분 일치 검색)", example = "백엔드")
             @RequestParam(required = false) String department,
             @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
@@ -85,8 +88,8 @@ public class InterviewerProfileController {
             @Parameter(description = "페이지 크기", example = "10")
             @RequestParam(defaultValue = "10") int size
     ) {
-        InterviewerProfilePageResponse response = interviewerProfileService.getInterviewerProfiles(department, page, size);
-        return ResponseEntity.ok(CommonApiResponse.success(response));
+        PageResponse<InterviewerProfileListData> response = interviewerProfileService.getInterviewerProfiles(department, page, size);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{id}")
