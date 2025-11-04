@@ -35,7 +35,7 @@ public class SecurityConfig {
      private String allowedOriginsString;
 
     private static final List<String> ALLOWED_METHODS = List.of(
-            "GET", "POST", "PUT", "DELETE", "OPTIONS"
+            "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"
     );
 
     private static final List<String> ALLOWED_HEADERS = List.of(
