@@ -64,7 +64,7 @@ class ChatRoomServiceImplTest {
     @Test
     @DisplayName("통과: 이미 있는 채팅방 생성(조회) 시 저장 없이 기존 방 ID 반환")
     void shouldReturnChatRoomId_WhenExist() {
-        when(chatRoomRepository.findById(chatRoomId))
+        when(chatRoomRepository.findByRoomIdContainingOrderByUpdatedAtDesc(chatRoomId))
                 .thenReturn(Optional.of(ChatRoom.builder().roomId(chatRoomId).build()));
 
         CreateChatRoomResponse response = chatRoomService.findOrCreateChatRoom(userId1, userId2);
