@@ -42,7 +42,7 @@ public class ChatRoom {
 
     @Field("participants")
     @Builder.Default
-    private Map<String, ParticipantInfo> participants = new HashMap<>();
+    private Map<Long, ParticipantInfo> participants = new HashMap<>();
 
     @Field("lastMessage")
     private String lastMessage;
