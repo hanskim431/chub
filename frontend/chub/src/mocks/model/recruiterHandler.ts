@@ -3,7 +3,7 @@ import { mockRecruiters } from "@mocks/model/constants";
 import type { Recruiter } from "@mocks/model/constants";
 export const recruiterHandlers = [
   http.get(
-    `${import.meta.env.VITE_API_URL}/api/profiles/recruiters`,
+    `${import.meta.env.VITE_API_URL}/api/profiles/interviewers`,
     async ({ params }) => {
       const { page, size } = params as {
         page: string;
