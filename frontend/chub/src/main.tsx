@@ -7,7 +7,7 @@ async function enableMocking() {
   if (import.meta.env.VITE_API_MOCK !== "true") {
     return;
   }
-  const { worker } = await import("@mocks/browser.ts");
+  const { worker } = await import("@/mocks/model/browser");
   await worker.start();
 }
 

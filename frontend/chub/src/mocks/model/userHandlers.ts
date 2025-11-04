@@ -4,7 +4,6 @@ let is_login = true;
 
 export const userHandlers = [
   http.get(`${import.meta.env.VITE_API_URL}/users/me`, async () => {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
     if (is_login) {
       return HttpResponse.json({
         success: true,
@@ -26,7 +25,6 @@ export const userHandlers = [
     });
   }),
   http.post(`${import.meta.env.VITE_API_URL}/auth/logout`, async () => {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
     return HttpResponse.json({
       success: true,
       status: 200,
