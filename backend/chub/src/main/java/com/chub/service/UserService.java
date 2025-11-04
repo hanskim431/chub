@@ -1,6 +1,7 @@
 package com.chub.service;
 
 import com.chub.auth.dto.KakaoUserProfile;
+import com.chub.dto.request.UserProfileUpdateRequest;
 import com.chub.entity.User;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -18,5 +19,7 @@ public interface UserService {
     User findById(Long userId);
 
     void logout(Long userId, HttpServletResponse response);
+
+    User updateUserProfile(Long userId, UserProfileUpdateRequest request);
 
 }

@@ -3,6 +3,7 @@ package com.chub.service;
 import static com.chub.auth.util.CookieUtil.*;
 
 import com.chub.auth.dto.KakaoUserProfile;
+import com.chub.dto.request.UserProfileUpdateRequest;
 import com.chub.entity.User;
 import com.chub.exception.user.UserException;
 import com.chub.repository.UserRepository;
@@ -50,6 +51,26 @@ public class UserServiceImpl implements UserService {
     public void logout(Long userId, HttpServletResponse response) {
         deleteRefreshTokenCookie(response);
         deleteAccessTokenCookie(response);
+    }
+
+    @Override
+    public User updateUserProfile(Long userId, UserProfileUpdateRequest request) {
+
+        User user = findById(userId);
+
+        if (request.username() != null) {
+            user.updateUsername(request.username());
+        }
+
+        if (request.email() != null) {
+            user.updateEmail(request.email());
+        }
+
+        if (request.bio() != null) {
+            user.updateBio(request.bio());
+        }
+
+        return userRepository.save(user);
     }
 
 }
