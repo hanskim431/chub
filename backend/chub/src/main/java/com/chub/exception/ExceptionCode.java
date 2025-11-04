@@ -54,7 +54,11 @@ public enum ExceptionCode {
     // ==== 9000번대: External API 관련 ====
     EXTERNAL_API_ERROR(9001, "외부 API 호출 중 오류가 발생했습니다.", HttpStatus.BAD_GATEWAY),
     EXTERNAL_API_TIMEOUT(9002, "외부 API 응답 시간이 초과되었습니다.", HttpStatus.GATEWAY_TIMEOUT),
-    EXTERNAL_API_SERVICE_UNAVAILABLE(9003, "외부 API 서비스를 사용할 수 없습니다.", HttpStatus.SERVICE_UNAVAILABLE);
+    EXTERNAL_API_SERVICE_UNAVAILABLE(9003, "외부 API 서비스를 사용할 수 없습니다.", HttpStatus.SERVICE_UNAVAILABLE),
+
+    // ===== 10000번대: Chat 관련 ====
+    SELF_CHAT_NOT_ALLOWED(10001, "자기 자신을 채팅 상대로 할 수 없습니다.", HttpStatus.BAD_REQUEST);
+
 
     private final int code;
     private final String message;
