@@ -30,6 +30,9 @@ public class User extends BaseEntity {
     @Column(name = "bio", columnDefinition = "TEXT")
     private String bio;
 
+    @Column(name = "email")
+    private String email;
+
     @Column(name = "is_deleted")
     private Boolean isDeleted;
 
@@ -51,6 +54,18 @@ public class User extends BaseEntity {
     public void updateProfile(String username, String avatarUrl, String bio) {
         this.username = username;
         this.avatarUrl = avatarUrl;
+        this.bio = bio;
+    }
+
+    public void updateUsername(String username) {
+        this.username = username;
+    }
+
+    public void updateEmail(String email) {
+        this.email = email;
+    }
+
+    public void updateBio(String bio) {
         this.bio = bio;
     }
 
