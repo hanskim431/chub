@@ -29,7 +29,8 @@ public class SwaggerConfig {
                 .packagesToScan(
                         "com.chub.controller",
                         "com.chub.auth.controller",
-                        "com.chub.dashboard.controller"
+                        "com.chub.dashboard.controller",
+                        "com.chub.chat.controller"
                 )
                 .build();
     }
