@@ -32,7 +32,6 @@ public class ChatRoomServiceImpl implements ChatRoomService {
 
         String chatRoomId = ChatUtil.generateChatRoomId(userId, opponent);
 
-        Optional<ChatRoom> byId = chatRoomRepository.findById(chatRoomId);
         Optional<ChatRoom> byId =
                 chatRoomRepository.findByRoomIdContainingOrderByUpdatedAtDesc(chatRoomId);
 
