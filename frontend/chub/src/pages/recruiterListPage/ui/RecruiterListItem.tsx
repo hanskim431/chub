@@ -1,11 +1,11 @@
-import type { recruiterOverview } from "@mocks/model/constants";
+import type { RecruiterOverview } from "@mocks/model/constants";
 import { Link } from "react-router-dom";
 import Card from "@/shared/ui/Card";
 import Pill from "@/shared/ui/Pill";
 function RecruiterListItem({
   recruiterOverview,
 }: {
-  recruiterOverview: recruiterOverview;
+  recruiterOverview: RecruiterOverview;
 }) {
   return (
     <Card
@@ -16,6 +16,7 @@ function RecruiterListItem({
       <Link
         to={`/interviewers/${recruiterOverview.id}`}
         className="absolute hover:cursor-pointer inset-0 z-0"
+        aria-label="면접관 상세 페이지 링크"
       />
       <div
         aria-label="RecruiterListItem"
@@ -28,18 +29,21 @@ function RecruiterListItem({
             aria-label={recruiterOverview.name}
             className="w-24 h-24 rounded-xl object-cover shrink-0 border-2 border-point-100"
           />
-          <div className="flex flex-col flex-1 items-start justify-start gap-3 min-w-0">
-            <div className="flex items-center justify-start gap-3 flex-wrap">
+          <div className="flex flex-col flex-1 w-full items-start justify-start gap-3 min-w-0">
+            <div className="flex items-center justify-between gap-3 flex-wrap w-full">
               <span className="text-xl font-bold text-text-black">
                 {recruiterOverview.name}
               </span>
-              <span className="text-sm text-text-gray font-medium px-2 py-0.5 rounded-md bg-gray-50">
-                {recruiterOverview.field}
-              </span>
+              <Pill color="gray">{recruiterOverview.field}</Pill>
             </div>
 
             <div className="flex flex-col items-start justify-start gap-2.5 w-full">
-              <span className="text-sm text-text-gray font-medium">
+              <span
+                aria-label={
+                  recruiterOverview.company + " " + recruiterOverview.position
+                }
+                className="text-sm text-text-gray font-medium"
+              >
                 {recruiterOverview.company + " · " + recruiterOverview.position}
               </span>
               <p className="text-sm text-text-black leading-relaxed line-clamp-2">
