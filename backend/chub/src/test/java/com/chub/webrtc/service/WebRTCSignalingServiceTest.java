@@ -3,9 +3,12 @@ package com.chub.webrtc.service;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
+import com.chub.interviewroom.manager.InterviewRoomManager;
 import com.chub.websocket.util.WebSocketHelper;
 import java.util.Map;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -18,13 +21,22 @@ public class WebRTCSignalingServiceTest {
     @Mock
     private WebSocketHelper webSocketHelper;
 
+    @Mock
+    private InterviewRoomManager interviewRoomManager;
+
     @InjectMocks
     private WebRTCSignalingServiceImpl webRTCSignalingService;
 
     private static final Long USER_ID = 1L;
+    private static final Long RECEIVER_ID = 2L;
     private static final String OFFER = "webrtc-offer";
     private static final String ANSWER = "webrtc-answer";
     private static final String ICE = "webrtc-ice";
+
+    @BeforeEach
+    void setUp() {
+        when(interviewRoomManager.getOpponentId(USER_ID)).thenReturn(RECEIVER_ID);
+    }
 
     @Test
     void sendOffer_Success() {
@@ -39,7 +51,7 @@ public class WebRTCSignalingServiceTest {
 
         // then
         verify(webSocketHelper, times(1)).sendPersonalMessage(
-                eq(USER_ID),
+                eq(RECEIVER_ID),
                 eq(OFFER),
                 eq(offerPayload)
         );
@@ -58,7 +70,7 @@ public class WebRTCSignalingServiceTest {
 
         // then
         verify(webSocketHelper, times(1)).sendPersonalMessage(
-                eq(USER_ID),
+                eq(RECEIVER_ID),
                 eq(ANSWER),
                 eq(answerPayload)
         );
@@ -78,58 +90,7 @@ public class WebRTCSignalingServiceTest {
 
         // then
         verify(webSocketHelper, times(1)).sendPersonalMessage(
-                eq(USER_ID),
-                eq(ICE),
-                eq(icePayload)
-        );
-    }
-
-    @Test
-    void sendOffer_WithDifferentUserId() {
-        // given
-        Long differentUserId = 2L;
-        Object offerPayload = Map.of("type", "offer");
-
-        // when
-        webRTCSignalingService.sendOffer(differentUserId, offerPayload);
-
-        // then
-        verify(webSocketHelper, times(1)).sendPersonalMessage(
-                eq(differentUserId),
-                eq(OFFER),
-                eq(offerPayload)
-        );
-    }
-
-    @Test
-    void sendAnswer_WithDifferentUserId() {
-        // given
-        Long differentUserId = 3L;
-        Object answerPayload = Map.of("type", "answer");
-
-        // when
-        webRTCSignalingService.sendAnswer(differentUserId, answerPayload);
-
-        // then
-        verify(webSocketHelper, times(1)).sendPersonalMessage(
-                eq(differentUserId),
-                eq(ANSWER),
-                eq(answerPayload)
-        );
-    }
-
-    @Test
-    void sendIceCandidate_WithDifferentUserId() {
-        // given
-        Long differentUserId = 4L;
-        Object icePayload = Map.of("candidate", "mock-candidate");
-
-        // when
-        webRTCSignalingService.sendIceCandidate(differentUserId, icePayload);
-
-        // then
-        verify(webSocketHelper, times(1)).sendPersonalMessage(
-                eq(differentUserId),
+                eq(RECEIVER_ID),
                 eq(ICE),
                 eq(icePayload)
         );
@@ -145,7 +106,7 @@ public class WebRTCSignalingServiceTest {
 
         // then
         verify(webSocketHelper, times(1)).sendPersonalMessage(
-                eq(USER_ID),
+                eq(RECEIVER_ID),
                 eq(OFFER),
                 eq(nullPayload)
         );
@@ -161,7 +122,7 @@ public class WebRTCSignalingServiceTest {
 
         // then
         verify(webSocketHelper, times(1)).sendPersonalMessage(
-                eq(USER_ID),
+                eq(RECEIVER_ID),
                 eq(ANSWER),
                 eq(nullPayload)
         );
@@ -177,7 +138,7 @@ public class WebRTCSignalingServiceTest {
 
         // then
         verify(webSocketHelper, times(1)).sendPersonalMessage(
-                eq(USER_ID),
+                eq(RECEIVER_ID),
                 eq(ICE),
                 eq(nullPayload)
         );

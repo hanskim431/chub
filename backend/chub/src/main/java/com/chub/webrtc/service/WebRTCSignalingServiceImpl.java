@@ -1,5 +1,6 @@
 package com.chub.webrtc.service;
 
+import com.chub.interviewroom.manager.InterviewRoomManager;
 import com.chub.websocket.util.WebSocketHelper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -9,6 +10,7 @@ import org.springframework.stereotype.Service;
 public class WebRTCSignalingServiceImpl implements WebRTCSignalingService {
 
     private final WebSocketHelper webSocketHelper;
+    private final InterviewRoomManager interviewRoomManager;
 
     private static final String OFFER = "webrtc-offer";
     private static final String ANSWER = "webrtc-answer";
@@ -37,8 +39,6 @@ public class WebRTCSignalingServiceImpl implements WebRTCSignalingService {
     }
 
     private Long getReceiverId(Long userId) {
-        // 임시로 자기 id 반환
-        // interviewRoomManager 구현 후 상대 id 반환 예정
-        return userId;
+        return interviewRoomManager.getOpponentId(userId);
     }
 }
