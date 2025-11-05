@@ -5,7 +5,6 @@ import com.chub.dto.request.CreateInterviewerProfileRequest;
 import com.chub.dto.request.CreateInterviewerProfileRequest.ExperienceDto;
 import com.chub.dto.response.InterviewerProfileListData;
 import com.chub.dto.request.UpdateInterviewerProfileRequest;
-import com.chub.dto.response.InterviewerProfilePageResponse;
 import com.chub.dto.response.InterviewerProfileResponse;
 import com.chub.entity.InterviewerProfile;
 import com.chub.entity.User;
@@ -99,8 +98,6 @@ class InterviewerProfileServiceImplTest {
         @DisplayName("성공: 면접관 프로필 조회")
         void getMyProfile_Success() {
             // given
-            given(userRepository.findById(TEST_USER_ID))
-                    .willReturn(Optional.of(testUser));
             given(interviewerProfileRepository.findByUserId(TEST_USER_ID))
                     .willReturn(Optional.of(testProfile));
 
@@ -114,37 +111,19 @@ class InterviewerProfileServiceImplTest {
             assertThat(response.company()).isEqualTo(TEST_COMPANY);
             assertThat(response.position()).isEqualTo(TEST_POSITION);
             assertThat(response.price()).isEqualTo(TEST_PRICE);
-            verify(userRepository, times(1)).findById(TEST_USER_ID);
             verify(interviewerProfileRepository, times(1)).findByUserId(TEST_USER_ID);
-        }
-
-        @Test
-        @DisplayName("실패: 사용자가 존재하지 않을 때 UserException 발생")
-        void getMyProfile_UserNotFound() {
-            // given
-            given(userRepository.findById(TEST_USER_ID))
-                    .willReturn(empty());
-
-            // when & then
-            assertThatThrownBy(() -> interviewerProfileService.getMyProfile(TEST_USER_ID))
-                    .isInstanceOf(UserException.class);
-            verify(userRepository, times(1)).findById(TEST_USER_ID);
-            verify(interviewerProfileRepository, never()).findByUserId(any());
         }
 
         @Test
         @DisplayName("실패: 면접관 프로필이 없을 때 InterviewerProfileException 발생")
         void getMyProfile_ProfileNotFound() {
             // given
-            given(userRepository.findById(TEST_USER_ID))
-                    .willReturn(Optional.of(testUser));
             given(interviewerProfileRepository.findByUserId(TEST_USER_ID))
                     .willReturn(empty());
 
             // when & then
             assertThatThrownBy(() -> interviewerProfileService.getMyProfile(TEST_USER_ID))
                     .isInstanceOf(InterviewerProfileException.class);
-            verify(userRepository, times(1)).findById(TEST_USER_ID);
             verify(interviewerProfileRepository, times(1)).findByUserId(TEST_USER_ID);
         }
     }

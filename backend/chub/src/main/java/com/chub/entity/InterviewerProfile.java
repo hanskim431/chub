@@ -103,6 +103,14 @@ public class InterviewerProfile extends BaseEntity {
         this.careerLevel = careerLevel;
     }
 
+    public void updateCompany(String company) {
+        this.company = company;
+    }
+
+    public void updatePosition(String position) {
+        this.position = position;
+    }
+
     public void updateIntroduction(String introduction) {
         this.introduction = introduction;
     }
@@ -114,6 +122,14 @@ public class InterviewerProfile extends BaseEntity {
 
     public void updateSkills(List<LanguageVo> languages, List<SpecialtyVo> specialties) {
         this.languages = languages;
+        this.specialties = specialties;
+    }
+
+    public void updateLanguages(List<LanguageVo> languages) {
+        this.languages = languages;
+    }
+
+    public void updateSpecialties(List<SpecialtyVo> specialties) {
         this.specialties = specialties;
     }
 

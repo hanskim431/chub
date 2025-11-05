@@ -8,7 +8,6 @@ import com.chub.dto.request.CreateInterviewerProfileRequest;
 import com.chub.dto.request.UpdateInterviewerProfileRequest;
 import com.chub.dto.response.InterviewerProfileListData;
 import com.chub.dto.response.InterviewerProfileListItemResponse;
-import com.chub.dto.response.InterviewerProfilePageResponse;
 import com.chub.dto.response.InterviewerProfileResponse;
 import com.chub.entity.InterviewerProfile;
 import com.chub.entity.User;
@@ -25,7 +24,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -38,13 +36,10 @@ public class InterviewerProfileServiceImpl implements InterviewerProfileService 
 
     @Override
     public InterviewerProfileResponse getMyProfile(Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(UserException::userNotFound);
-
         InterviewerProfile profile = interviewerProfileRepository.findByUserId(userId)
                 .orElseThrow(InterviewerProfileException::notFound);
 
-        return InterviewerProfileResponse.from(user, profile);
+        return InterviewerProfileResponse.from(profile.getUser(), profile);
     }
 
     @Override
@@ -87,11 +82,11 @@ public class InterviewerProfileServiceImpl implements InterviewerProfileService 
         InterviewerProfile profile = interviewerProfileRepository.findByUserId(userId)
                 .orElseThrow(InterviewerProfileException::notFound);
 
-        if (request.company() != null || request.position() != null) {
-            String company = request.company() != null ? request.company() : profile.getCompany();
-            String position = request.position() != null ? request.position() : profile.getPosition();
-            profile.updateBasicInfo(company, position, null, null);
-        }
+        ofNullable(request.company())
+                .ifPresent(profile::updateCompany);
+
+        ofNullable(request.position())
+                .ifPresent(profile::updatePosition);
 
         ofNullable(request.email())
                 .ifPresent(profile::updateEmail);
@@ -108,9 +103,11 @@ public class InterviewerProfileServiceImpl implements InterviewerProfileService 
         ofNullable(request.bio())
                 .ifPresent(profile::updateIntroduction);
 
-        if (request.languages() != null || request.specialties() != null) {
-            profile.updateSkills(request.toLanguageVos(), request.toSpecialtyVos());
-        }
+        ofNullable(request.languages())
+                .ifPresent(langs -> profile.updateLanguages(request.toLanguageVos()));
+
+        ofNullable(request.specialties())
+                .ifPresent(specs -> profile.updateSpecialties(request.toSpecialtyVos()));
 
         ofNullable(request.experiences())
                 .ifPresent(exp -> profile.updateExperience(null, request.toExperienceVos()));
