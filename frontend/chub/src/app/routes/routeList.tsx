@@ -12,12 +12,12 @@ export interface routeList {
 }
 
 const mainLayoutRoutes: readonly Route[] = [
-  { path: "/", element: <HomePage />, label: "Home" },
-  { path: "/login", element: <LoginPage />, label: "Login" },
+  { path: "/", element: <HomePage />, label: "home-page" },
+  { path: "/login", element: <LoginPage />, label: "login-page" },
   {
     path: "/interviewers",
     element: <RecruiterListPage />,
-    label: "Interviewers",
+    label: "recruiter-list-page",
   },
 ];
 
