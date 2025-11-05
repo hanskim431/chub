@@ -2,10 +2,11 @@ import { getRecruiters } from "@/pages/recruiterListPage/api/requests";
 import { useQuery } from "@tanstack/react-query";
 import { getMyRecruiterDetail } from "@/pages/recruiterListPage/api/requests";
 const THIRTY_MINUTES_IN_MS = 1000 * 60 * 30;
-export function useRecruiters() {
+
+export function useRecruiters(page: number, size: number, field: string) {
   const { data } = useQuery({
-    queryKey: ["recruiters"],
-    queryFn: getRecruiters,
+    queryKey: ["recruiters", page, size, field],
+    queryFn: () => getRecruiters({ page, size, field }),
     staleTime: 30 * 60 * 1000,
     refetchInterval: 30 * 60 * 1000,
     refetchIntervalInBackground: false,
