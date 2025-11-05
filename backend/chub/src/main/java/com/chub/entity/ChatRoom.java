@@ -11,6 +11,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,7 +37,8 @@ public class ChatRoom {
 
     @Indexed
     @Field("participantIds")
-    private List<Long> participantIds;
+    @Builder.Default
+    private List<Long> participantIds = new ArrayList<>();
 
     @Field("participants")
     @Builder.Default
