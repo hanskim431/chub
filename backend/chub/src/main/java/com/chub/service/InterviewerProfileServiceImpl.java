@@ -1,5 +1,7 @@
 package com.chub.service;
 
+import static java.util.Optional.*;
+
 import com.chub.common.PageInfo;
 import com.chub.common.PageResponse;
 import com.chub.dto.request.CreateInterviewerProfileRequest;
@@ -23,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -90,49 +93,39 @@ public class InterviewerProfileServiceImpl implements InterviewerProfileService 
             profile.updateBasicInfo(company, position, null, null);
         }
 
-        if (request.email() != null) {
-            profile.updateEmail(request.email());
-        }
+        ofNullable(request.email())
+                .ifPresent(profile::updateEmail);
 
-        if (request.field() != null) {
-            profile.updateField(request.field());
-        }
+        ofNullable(request.field())
+                .ifPresent(profile::updateField);
 
-        if (request.price() != null) {
-            profile.updatePrice(request.price());
-        }
+        ofNullable(request.price())
+                .ifPresent(profile::updatePrice);
 
-        if (request.interviewStyle() != null) {
-            profile.updateInterviewStyle(request.interviewStyle());
-        }
+        ofNullable(request.interviewStyle())
+                .ifPresent(profile::updateInterviewStyle);
 
-        if (request.bio() != null) {
-            profile.updateIntroduction(request.bio());
-        }
+        ofNullable(request.bio())
+                .ifPresent(profile::updateIntroduction);
 
         if (request.languages() != null || request.specialties() != null) {
             profile.updateSkills(request.toLanguageVos(), request.toSpecialtyVos());
         }
 
-        if (request.experiences() != null) {
-            profile.updateExperience(null, request.toExperienceVos());
-        }
+        ofNullable(request.experiences())
+                .ifPresent(exp -> profile.updateExperience(null, request.toExperienceVos()));
 
-        if (request.education() != null) {
-            profile.updateEducations(request.toEducationVos());
-        }
+        ofNullable(request.education())
+                .ifPresent(edu -> profile.updateEducations(request.toEducationVos()));
 
-        if (request.certifications() != null) {
-            profile.updateCertifications(request.toCertificationVos());
-        }
+        ofNullable(request.certifications())
+                .ifPresent(cert -> profile.updateCertifications(request.toCertificationVos()));
 
-        if (request.availableTimeSlots() != null) {
-            profile.updateAvailableTimeSlots(request.toAvailableTimeSlotVos());
-        }
+        ofNullable(request.availableTimeSlots())
+                .ifPresent(slots -> profile.updateAvailableTimeSlots(request.toAvailableTimeSlotVos()));
 
-        if (request.isActive() != null) {
-            profile.updateActivationStatus(request.isActive());
-        }
+        ofNullable(request.isActive())
+                .ifPresent(profile::updateActivationStatus);
     }
 
     @Override

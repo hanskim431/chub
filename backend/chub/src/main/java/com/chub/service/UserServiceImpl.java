@@ -1,6 +1,7 @@
 package com.chub.service;
 
 import static com.chub.auth.util.CookieUtil.*;
+import static java.util.Optional.*;
 
 import com.chub.auth.dto.KakaoUserProfile;
 import com.chub.dto.request.UserProfileUpdateRequest;
@@ -12,6 +13,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -58,17 +61,14 @@ public class UserServiceImpl implements UserService {
 
         User user = findById(userId);
 
-        if (request.username() != null) {
-            user.updateUsername(request.username());
-        }
+        ofNullable(request.username())
+                .ifPresent(user::updateUsername);
 
-        if (request.email() != null) {
-            user.updateEmail(request.email());
-        }
+        ofNullable(request.email())
+                .ifPresent(user::updateEmail);
 
-        if (request.bio() != null) {
-            user.updateBio(request.bio());
-        }
+        ofNullable(request.bio())
+                .ifPresent(user::updateBio);
 
         return userRepository.save(user);
     }
