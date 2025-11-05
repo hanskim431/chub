@@ -32,7 +32,8 @@ public class ChatRoomServiceImpl implements ChatRoomService {
 
         String chatRoomId = ChatUtil.generateChatRoomId(userId, opponent);
 
-        Optional<ChatRoom> byId = chatRoomRepository.findById(chatRoomId);
+        Optional<ChatRoom> byId =
+                chatRoomRepository.findByRoomIdContainingOrderByUpdatedAtDesc(chatRoomId);
 
         if (byId.isPresent()) {
             return CreateChatRoomResponse.from(byId.get());
@@ -48,10 +49,10 @@ public class ChatRoomServiceImpl implements ChatRoomService {
         String roomId = ChatUtil.generateChatRoomId(userId, opponent);
         List<Long> participantIds = ChatUtil.orderUserIds(userId, opponent);
 
-        Map<String, ChatRoom.ParticipantInfo> participants =
+        Map<Long, ChatRoom.ParticipantInfo> participants =
                 Map.of(
-                        String.valueOf(participantIds.getFirst()), generateParticipantInfo(),
-                        String.valueOf(participantIds.getLast()), generateParticipantInfo()
+                        participantIds.getFirst(), generateParticipantInfo(),
+                        participantIds.getLast(), generateParticipantInfo()
                 );
 
         return ChatRoom.builder()

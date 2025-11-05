@@ -1,9 +1,6 @@
 package com.chub.entity;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -21,6 +18,7 @@ import java.util.Map;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Getter
 @Builder
 @CompoundIndexes({
     @CompoundIndex(name = "room_id_updated_idx", def = "{'room_id': 1, 'updatedAt': -1}"),
@@ -42,7 +40,7 @@ public class ChatRoom {
 
     @Field("participants")
     @Builder.Default
-    private Map<String, ParticipantInfo> participants = new HashMap<>();
+    private Map<Long, ParticipantInfo> participants = new HashMap<>();
 
     @Field("lastMessage")
     private String lastMessage;
