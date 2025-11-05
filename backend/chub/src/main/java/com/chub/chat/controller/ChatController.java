@@ -2,6 +2,7 @@ package com.chub.chat.controller;
 
 import com.chub.auth.annotation.LoginUser;
 import com.chub.chat.dto.request.CreateChatRoomRequest;
+import com.chub.chat.dto.response.ChatRoomListResponse;
 import com.chub.chat.dto.response.CreateChatRoomResponse;
 import com.chub.chat.service.ChatRoomService;
 import com.chub.common.CommonApiResponse;
@@ -9,10 +10,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/chat")
@@ -35,4 +33,16 @@ public class ChatController {
         return ResponseEntity.ok(CommonApiResponse.success(response));
     }
 
+    @Operation(
+            summary = "채팅방 목록 조회",
+            description = "채팅방의 목록과 각 채팅방의 메타 데이터를 조회합니다. \n" +
+                    "채팅 상대, 마지막 메시지, 읽은 메시지 등을 확인할 수 있습니다."
+    )
+    @GetMapping("/rooms")
+    public ResponseEntity<CommonApiResponse<ChatRoomListResponse>> getChatRoom(
+            @LoginUser Long userId
+    ) {
+        ChatRoomListResponse response = chatRoomService.findAllChatRoom(userId);
+        return ResponseEntity.ok(CommonApiResponse.success(response));
+    }
 }
