@@ -1,5 +1,6 @@
 package com.chub.chat.service;
 
+import com.chub.chat.dto.response.ChatRoomListResponse;
 import com.chub.chat.dto.response.CreateChatRoomResponse;
 import com.chub.chat.util.ChatUtil;
 import com.chub.entity.ChatRoom;
@@ -10,10 +11,14 @@ import com.chub.repository.mongo.ChatRoomRepository;
 import com.chub.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 public class ChatRoomServiceImpl implements ChatRoomService {
@@ -43,6 +48,34 @@ public class ChatRoomServiceImpl implements ChatRoomService {
         chatRoomRepository.save(chatRoom);
 
         return CreateChatRoomResponse.from(chatRoom);
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public ChatRoomListResponse findAllChatRoom(Long userId) {
+        Optional<List<ChatRoom>> optionalChatRooms =
+                chatRoomRepository.findByParticipantIdsContainingOrderByUpdatedAtDesc(userId);
+
+        if (optionalChatRooms.isEmpty()) {
+            return ChatRoomListResponse.from(List.of(), userId, Map.of());
+        }
+
+        List<ChatRoom> chatRooms = optionalChatRooms.get();
+
+        Set<Long> opponentIds
+                = chatRooms.stream()
+                .flatMap(room -> room.getParticipantIds().stream())
+                .filter(id -> !id.equals(userId))
+                .collect(Collectors.toSet());
+
+
+        Map<Long, User> opponentMap =
+                userRepository.findAllById(opponentIds)
+                        .stream()
+                        .collect(Collectors
+                                .toMap(User::getId, Function.identity()));
+
+        return ChatRoomListResponse.from(chatRooms, userId, opponentMap);
     }
 
     private ChatRoom generateNewChatRoom(Long userId, Long opponent) {
