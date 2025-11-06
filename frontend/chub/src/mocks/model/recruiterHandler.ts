@@ -20,7 +20,7 @@ export const recruiterHandlers = [
         success: true,
         status: 200,
         data: {
-          recruiters: data
+          profiles: data
             .slice(
               (parseInt(page) - 1) * parseInt(size),
               parseInt(page) * parseInt(size)
@@ -37,19 +37,19 @@ export const recruiterHandlers = [
               specialties: recruiter.specialties,
               price: recruiter.price,
             })),
-          pageInfo: {
-            page: parseInt(page),
-            size: parseInt(size),
-            totalElements: data.length,
-            totalPages: Math.ceil(data.length / parseInt(size)),
-            first: page === "0",
-            last:
-              parseInt(page) ===
-              Math.ceil(
-                Math.ceil(data.length / parseInt(size)) / parseInt(size)
-              ) -
-                1,
-          },
+        },
+        pageInfo: {
+          page: parseInt(page),
+          size: parseInt(size),
+          totalElements: data.length,
+          totalPages: Math.ceil(data.length / parseInt(size)),
+          first: page === "0",
+          last:
+            parseInt(page) ===
+            Math.ceil(
+              Math.ceil(data.length / parseInt(size)) / parseInt(size)
+            ) -
+              1,
         },
       });
     }
