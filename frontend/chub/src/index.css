@@ -3,7 +3,7 @@
 /* 공통 폰트 설정 */
 @font-face {
   font-family: "Pretendard-Regular";
-  src: url("/PretendardVariable.woff2") format("woff2");
+  src: url("/PretendardVariable.woff2") format("font-woff2");
   font-weight: 400;
   font-style: normal;
 }
@@ -59,11 +59,11 @@ body,
   --color-logo-white: #eae7e6;
   --color-black-chat: #101014;
   --color-input-gray: #272932;
-  --color-point-100: #e3f0fe;
-  --color-point-200: #b3d6fc;
-  --color-point-300: #7bb8fa;
-  --color-point-400: #3384fa;
-  --color-point-500: #2563eb;
+  --color-point-100: #fff4e6;
+  --color-point-200: #ffe0b3;
+  --color-point-300: #ffc880;
+  --color-point-400: #ee7900;
+  --color-point-500: #d96a00;
   --color-hover-gray: #dbeafe;
   --color-underline-gray: #e5e7eb;
 }

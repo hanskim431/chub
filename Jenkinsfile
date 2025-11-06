@@ -65,9 +65,14 @@ pipeline {
                     echo "의존성 설치..."
                     npm install
 
+                    echo ".env 파일 생성..."
+                    touch .env
+                    echo 'VITE_API_URL=https://chub.ai.kr' >> .env
+                    echo 'VITE_API_MOCK=false' >> .env
+
                     echo "프로덕션 빌드..."
                     npm run build
-
+                    
                     echo "빌드 결과 확인:"
                     ls -la ${FRONTEND_BUILD_DIR}/
                 """

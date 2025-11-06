@@ -45,7 +45,6 @@ export const interviewHandlers = [
   http.post(
     `${import.meta.env.VITE_API_URL}/api/interviews/requests`,
     async () => {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
       return HttpResponse.json({
         success: true,
         status: 200,
@@ -57,7 +56,6 @@ export const interviewHandlers = [
   http.patch(
     `${import.meta.env.VITE_API_URL}/api/interviews/requests/:id/status`,
     async () => {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
       return HttpResponse.json({
         success: true,
         status: 200,
@@ -76,7 +74,6 @@ export const interviewHandlers = [
         size: string;
       };
 
-      await new Promise((resolve) => setTimeout(resolve, 1000));
       return HttpResponse.json({
         success: true,
         status: 200,
@@ -111,7 +108,6 @@ export const interviewHandlers = [
         size: string;
       };
 
-      await new Promise((resolve) => setTimeout(resolve, 1000));
       return HttpResponse.json({
         success: true,
         status: 200,
@@ -141,7 +137,6 @@ export const interviewHandlers = [
   http.get(
     `${import.meta.env.VITE_API_URL}/api/interviews/scheduled`,
     async () => {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
       return HttpResponse.json({
         success: true,
         status: 200,
