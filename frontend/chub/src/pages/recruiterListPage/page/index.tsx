@@ -19,8 +19,8 @@ function RecruiterListPage() {
   useEffect(() => {
     const preFetchRecruiters = () => {
       if (!recruiterOverviewResponse) return;
-      const nextPage = recruiterOverviewResponse.data.pageInfo.page + 1;
-      if (nextPage > recruiterOverviewResponse.data.pageInfo.totalPages) return;
+      const nextPage = recruiterOverviewResponse.pageInfo.page + 1;
+      if (nextPage > recruiterOverviewResponse.pageInfo.totalPages) return;
       queryClient.prefetchQuery({
         queryKey: ["recruiters", nextPage, 6, field || ""],
         queryFn: () => useRecruiters(nextPage, 6, field),
@@ -28,8 +28,8 @@ function RecruiterListPage() {
     };
     preFetchRecruiters();
   }, [recruiterOverviewResponse, currentPage, queryClient]);
-  const recruiters = recruiterOverviewResponse?.data?.recruiters;
-  const pageInfo = recruiterOverviewResponse?.data?.pageInfo;
+  const recruiters = recruiterOverviewResponse?.data?.profiles;
+  const pageInfo = recruiterOverviewResponse?.pageInfo;
   const totalPages = pageInfo?.totalPages;
 
   return (

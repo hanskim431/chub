@@ -5,11 +5,14 @@ export const recruiterHandlers = [
   http.get(
     `${import.meta.env.VITE_API_URL}/api/profiles/interviewers`,
     async ({ request }) => {
-      const data = mockManyRecruiters;
       const url = new URL(request.url);
       const page = url.searchParams.get("page");
       const size = url.searchParams.get("size");
       const field = url.searchParams.get("field");
+      const data = mockManyRecruiters.filter((recruiter: Recruiter) =>
+        field ? recruiter.field.includes(field) : true
+      );
+
       if (!page || !size) {
         return HttpResponse.error();
       }
@@ -17,10 +20,7 @@ export const recruiterHandlers = [
         success: true,
         status: 200,
         data: {
-          recruiters: data
-            .filter((recruiter: Recruiter) =>
-              field ? recruiter.field === field : true
-            )
+          profiles: data
             .slice(
               (parseInt(page) - 1) * parseInt(size),
               parseInt(page) * parseInt(size)
@@ -37,19 +37,19 @@ export const recruiterHandlers = [
               specialties: recruiter.specialties,
               price: recruiter.price,
             })),
-          pageInfo: {
-            page: parseInt(page),
-            size: parseInt(size),
-            totalElements: data.length,
-            totalPages: Math.ceil(data.length / parseInt(size)),
-            first: page === "0",
-            last:
-              parseInt(page) ===
-              Math.ceil(
-                Math.ceil(data.length / parseInt(size)) / parseInt(size)
-              ) -
-                1,
-          },
+        },
+        pageInfo: {
+          page: parseInt(page),
+          size: parseInt(size),
+          totalElements: data.length,
+          totalPages: Math.ceil(data.length / parseInt(size)),
+          first: page === "0",
+          last:
+            parseInt(page) ===
+            Math.ceil(
+              Math.ceil(data.length / parseInt(size)) / parseInt(size)
+            ) -
+              1,
         },
       });
     }
