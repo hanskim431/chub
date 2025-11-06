@@ -82,4 +82,20 @@ public interface InterviewRequestRepository extends JpaRepository<InterviewReque
             @Param("userId") Long userId,
             @Param("status") String status
     );
+
+    /**
+     * 예정된 면접 조회 (페이징): 특정 상태이면서 내가 관련된 요청들
+     * (내가 신청자이거나 면접관인 경우)
+     */
+    @Query("SELECT ir FROM InterviewRequest ir " +
+           "LEFT JOIN ir.user u " +
+           "LEFT JOIN ir.interviewerProfile ip " +
+           "LEFT JOIN ip.user ipu " +
+           "WHERE ir.status = :status " +
+           "AND (u.id = :userId OR ipu.id = :userId)")
+    Page<InterviewRequest> findScheduledInterviewsByUserId(
+            @Param("userId") Long userId,
+            @Param("status") String status,
+            Pageable pageable
+    );
 }

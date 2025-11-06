@@ -2,7 +2,11 @@ package com.chub.controller;
 
 import com.chub.auth.annotation.LoginUser;
 import com.chub.common.CommonApiResponse;
+import com.chub.common.PageResponse;
 import com.chub.dto.request.CreateInterviewerProfileRequest;
+import com.chub.dto.request.UpdateInterviewerProfileRequest;
+import com.chub.dto.response.InterviewerProfileListData;
+import com.chub.dto.response.InterviewerProfileListItemResponse;
 import com.chub.dto.response.InterviewerProfilePageResponse;
 import com.chub.dto.response.InterviewerProfileResponse;
 import com.chub.service.InterviewerProfileService;
@@ -53,13 +57,30 @@ public class InterviewerProfileController {
         return ResponseEntity.ok(CommonApiResponse.success());
     }
 
+    @PatchMapping("/me")
+    @Operation(
+            summary = "면접관 프로필 수정",
+            description = "면접관 프로필을 부분 수정합니다. null이 아닌 필드만 업데이트되며, 나머지 필드는 기존 값을 유지합니다. " +
+                    "활성 상태만 변경하거나, 여러 필드를 동시에 수정할 수 있습니다."
+    )
+    @ApiResponse(responseCode = "200", description = "수정 성공")
+    @ApiResponse(responseCode = "404", description = "프로필 없음", content = @Content)
+    @ApiResponse(responseCode = "400", description = "유효하지 않은 데이터", content = @Content)
+    public ResponseEntity<CommonApiResponse<Void>> updateProfile(
+            @LoginUser Long userId,
+            @Valid @RequestBody UpdateInterviewerProfileRequest request
+    ) {
+        interviewerProfileService.updateProfile(userId, request);
+        return ResponseEntity.ok(CommonApiResponse.success());
+    }
+
     @GetMapping
     @Operation(
             summary = "면접관 목록 조회",
             description = "면접관 목록을 페이징 처리하여 조회합니다. department 필터를 통해 부서별 검색이 가능합니다."
     )
     @ApiResponse(responseCode = "200", description = "조회 성공")
-    public ResponseEntity<CommonApiResponse<InterviewerProfilePageResponse>> getInterviewerProfiles(
+    public ResponseEntity<PageResponse<InterviewerProfileListData>> getInterviewerProfiles(
             @Parameter(description = "부서 필터 (부분 일치 검색)", example = "백엔드")
             @RequestParam(required = false) String department,
             @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
@@ -67,8 +88,8 @@ public class InterviewerProfileController {
             @Parameter(description = "페이지 크기", example = "10")
             @RequestParam(defaultValue = "10") int size
     ) {
-        InterviewerProfilePageResponse response = interviewerProfileService.getInterviewerProfiles(department, page, size);
-        return ResponseEntity.ok(CommonApiResponse.success(response));
+        PageResponse<InterviewerProfileListData> response = interviewerProfileService.getInterviewerProfiles(department, page, size);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{id}")

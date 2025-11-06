@@ -1,8 +1,10 @@
 package com.chub.service;
 
 import static com.chub.auth.util.CookieUtil.*;
+import static java.util.Optional.*;
 
 import com.chub.auth.dto.KakaoUserProfile;
+import com.chub.dto.request.UserProfileUpdateRequest;
 import com.chub.entity.User;
 import com.chub.exception.user.UserException;
 import com.chub.repository.UserRepository;
@@ -11,6 +13,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -50,6 +54,23 @@ public class UserServiceImpl implements UserService {
     public void logout(Long userId, HttpServletResponse response) {
         deleteRefreshTokenCookie(response);
         deleteAccessTokenCookie(response);
+    }
+
+    @Override
+    public User updateUserProfile(Long userId, UserProfileUpdateRequest request) {
+
+        User user = findById(userId);
+
+        ofNullable(request.username())
+                .ifPresent(user::updateUsername);
+
+        ofNullable(request.email())
+                .ifPresent(user::updateEmail);
+
+        ofNullable(request.bio())
+                .ifPresent(user::updateBio);
+
+        return userRepository.save(user);
     }
 
 }

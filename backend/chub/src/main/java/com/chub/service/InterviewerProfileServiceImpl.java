@@ -1,8 +1,13 @@
 package com.chub.service;
 
+import static java.util.Optional.*;
+
+import com.chub.common.PageInfo;
+import com.chub.common.PageResponse;
 import com.chub.dto.request.CreateInterviewerProfileRequest;
+import com.chub.dto.request.UpdateInterviewerProfileRequest;
+import com.chub.dto.response.InterviewerProfileListData;
 import com.chub.dto.response.InterviewerProfileListItemResponse;
-import com.chub.dto.response.InterviewerProfilePageResponse;
 import com.chub.dto.response.InterviewerProfileResponse;
 import com.chub.entity.InterviewerProfile;
 import com.chub.entity.User;
@@ -18,6 +23,9 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -28,13 +36,10 @@ public class InterviewerProfileServiceImpl implements InterviewerProfileService 
 
     @Override
     public InterviewerProfileResponse getMyProfile(Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(UserException::userNotFound);
-
         InterviewerProfile profile = interviewerProfileRepository.findByUserId(userId)
                 .orElseThrow(InterviewerProfileException::notFound);
 
-        return InterviewerProfileResponse.from(user, profile);
+        return InterviewerProfileResponse.from(profile.getUser(), profile);
     }
 
     @Override
@@ -71,7 +76,57 @@ public class InterviewerProfileServiceImpl implements InterviewerProfileService 
     }
 
     @Override
-    public InterviewerProfilePageResponse getInterviewerProfiles(String department, int page, int size) {
+    @Transactional
+    public void updateProfile(Long userId, UpdateInterviewerProfileRequest request) {
+        // 프로필 조회
+        InterviewerProfile profile = interviewerProfileRepository.findByUserId(userId)
+                .orElseThrow(InterviewerProfileException::notFound);
+
+        ofNullable(request.company())
+                .ifPresent(profile::updateCompany);
+
+        ofNullable(request.position())
+                .ifPresent(profile::updatePosition);
+
+        ofNullable(request.email())
+                .ifPresent(profile::updateEmail);
+
+        ofNullable(request.field())
+                .ifPresent(profile::updateField);
+
+        ofNullable(request.price())
+                .ifPresent(profile::updatePrice);
+
+        ofNullable(request.interviewStyle())
+                .ifPresent(profile::updateInterviewStyle);
+
+        ofNullable(request.bio())
+                .ifPresent(profile::updateIntroduction);
+
+        ofNullable(request.languages())
+                .ifPresent(langs -> profile.updateLanguages(request.toLanguageVos()));
+
+        ofNullable(request.specialties())
+                .ifPresent(specs -> profile.updateSpecialties(request.toSpecialtyVos()));
+
+        ofNullable(request.experiences())
+                .ifPresent(exp -> profile.updateExperience(null, request.toExperienceVos()));
+
+        ofNullable(request.education())
+                .ifPresent(edu -> profile.updateEducations(request.toEducationVos()));
+
+        ofNullable(request.certifications())
+                .ifPresent(cert -> profile.updateCertifications(request.toCertificationVos()));
+
+        ofNullable(request.availableTimeSlots())
+                .ifPresent(slots -> profile.updateAvailableTimeSlots(request.toAvailableTimeSlotVos()));
+
+        ofNullable(request.isActive())
+                .ifPresent(profile::updateActivationStatus);
+    }
+
+    @Override
+    public PageResponse<InterviewerProfileListData> getInterviewerProfiles(String department, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
         Page<InterviewerProfile> profilePage;
@@ -82,9 +137,17 @@ public class InterviewerProfileServiceImpl implements InterviewerProfileService 
         }
 
         // Entity -> DTO 변환
-        Page<InterviewerProfileListItemResponse> responsePage = profilePage.map(InterviewerProfileListItemResponse::from);
+        List<InterviewerProfileListItemResponse> profiles = profilePage.getContent().stream()
+                .map(InterviewerProfileListItemResponse::from)
+                .collect(Collectors.toList());
 
-        return InterviewerProfilePageResponse.from(responsePage);
+        // Wrapper로 감싸기
+        InterviewerProfileListData data = InterviewerProfileListData.of(profiles);
+
+        // PageInfo 생성
+        PageInfo pageInfo = PageInfo.from(profilePage);
+
+        return PageResponse.success("면접관 목록 조회 성공", data, pageInfo);
     }
 
     @Override
