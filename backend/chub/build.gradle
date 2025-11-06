@@ -58,6 +58,7 @@ dependencies {
 
     // MongoDB
     implementation ('org.springframework.boot:spring-boot-starter-data-mongodb')
+    testImplementation 'de.bwaldvogel:mongo-java-server:1.47.0'
 }
 
 tasks.named('test') {
