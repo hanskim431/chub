@@ -5,11 +5,14 @@ export const recruiterHandlers = [
   http.get(
     `${import.meta.env.VITE_API_URL}/api/profiles/interviewers`,
     async ({ request }) => {
-      const data = mockManyRecruiters;
       const url = new URL(request.url);
       const page = url.searchParams.get("page");
       const size = url.searchParams.get("size");
       const field = url.searchParams.get("field");
+      const data = mockManyRecruiters.filter((recruiter: Recruiter) =>
+        field ? recruiter.field.includes(field) : true
+      );
+
       if (!page || !size) {
         return HttpResponse.error();
       }
@@ -18,9 +21,6 @@ export const recruiterHandlers = [
         status: 200,
         data: {
           recruiters: data
-            .filter((recruiter: Recruiter) =>
-              field ? recruiter.field === field : true
-            )
             .slice(
               (parseInt(page) - 1) * parseInt(size),
               parseInt(page) * parseInt(size)
