@@ -1,6 +1,6 @@
 import HomePage from "@/pages/homePage/page";
 import LoginPage from "@/pages/loginPage/page";
-//import RecruiterListPage from "@/pages/recruiterListPage/page";
+import RecruiterListPage from "@/pages/recruiterListPage/page";
 export interface Route {
   path: string;
   element: React.ReactNode;
