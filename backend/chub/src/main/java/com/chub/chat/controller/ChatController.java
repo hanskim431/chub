@@ -4,13 +4,18 @@ import com.chub.auth.annotation.LoginUser;
 import com.chub.chat.dto.request.CreateChatRoomRequest;
 import com.chub.chat.dto.response.ChatRoomListResponse;
 import com.chub.chat.dto.response.CreateChatRoomResponse;
+import com.chub.chat.dto.response.MessageListResponse;
 import com.chub.chat.service.ChatRoomService;
+import com.chub.chat.service.MessageService;
 import com.chub.common.CommonApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping("/chat")
@@ -19,6 +24,11 @@ public class ChatController {
 
     @Autowired
     private ChatRoomService chatRoomService;
+
+    @Autowired
+    private MessageService messageService;
+
+    private final static String PAGE_SIZE = "20";
 
     @Operation(
             summary = "새로운 채팅방 생성",
@@ -43,6 +53,25 @@ public class ChatController {
             @LoginUser Long userId
     ) {
         ChatRoomListResponse response = chatRoomService.findAllChatRoom(userId);
+        return ResponseEntity.ok(CommonApiResponse.success(response));
+    }
+
+    @Operation(
+            summary = "메시지 목록 조회",
+            description = "채팅방에서 나눈 메시지의 내역을 조회합니다. \n" +
+                    "페이지 네이션 기능을 제공합니다."
+    )
+    @GetMapping("/rooms/{roomId}/messages")
+    public ResponseEntity<CommonApiResponse<MessageListResponse>> getMessageByRoomId(
+            @PathVariable String roomId,
+            @RequestParam(required = false)
+            @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'")
+            LocalDateTime cursor,
+            @RequestParam(required = false, defaultValue = PAGE_SIZE) Integer pageSize
+    ) {
+        MessageListResponse response = messageService.findByRoomIdBeforeDate(
+                roomId, cursor, pageSize
+        );
         return ResponseEntity.ok(CommonApiResponse.success(response));
     }
 }
