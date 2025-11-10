@@ -31,7 +31,8 @@ public class InterviewRoomManager {
 
         joinedRoom.remove(userId);
 
-        updateRoomStatus(interviewRequestId, WAITING);
+        //TODO : 상태 업데이트 로직 수정 예정
+        //updateRoomStatus(interviewRequestId, WAITING);
 
         removeRoomIfBothExit(interviewRequestId);
     }
@@ -104,6 +105,7 @@ public class InterviewRoomManager {
 
         joinedRoom.put(userId, interviewRequestId);
 
-        updateRoomStatus(interviewRequestId, READY);
+        //TODO : 상태 업데이트 로직 수정 예정
+        //updateRoomStatus(interviewRequestId, READY);
     }
 }
