@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @Getter
 public class ChatRoomDto {
     private String roomId;
-    private OpponentDto opponent;
+    private ParticipantDto opponent;
     private LastMessageDto lastMessage;
     private int unreadCount;
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'")
@@ -37,9 +37,9 @@ public class ChatRoomDto {
                 .build();
     }
 
-    private static OpponentDto mapOpponentDto(User opponent) {
-        return OpponentDto.builder()
-                .userId(opponent.getId())
+    private static ParticipantDto mapOpponentDto(User opponent) {
+        return ParticipantDto.builder()
+                .id(opponent.getId())
                 .name(opponent.getUsername())
                 .avatar(opponent.getAvatarUrl())
                 .build();
