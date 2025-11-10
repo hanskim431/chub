@@ -57,7 +57,8 @@ public enum ExceptionCode {
     EXTERNAL_API_SERVICE_UNAVAILABLE(9003, "외부 API 서비스를 사용할 수 없습니다.", HttpStatus.SERVICE_UNAVAILABLE),
 
     // ===== 10000번대: Chat 관련 ====
-    SELF_CHAT_NOT_ALLOWED(10001, "자기 자신을 채팅 상대로 할 수 없습니다.", HttpStatus.BAD_REQUEST);
+    SELF_CHAT_NOT_ALLOWED(10001, "자기 자신을 채팅 상대로 할 수 없습니다.", HttpStatus.BAD_REQUEST),
+    CHAT_ROOM_NOT_FOUND(10002, "채팅방을 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
 
 
     private final int code;
