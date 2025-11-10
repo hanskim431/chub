@@ -37,9 +37,9 @@ class ChatRoomRepositoryTest extends AcceptanceTestWithMongo {
     }
 
     @Test
-    void findByRoomIdContainingOrderByUpdatedAtDesc() {
+    void findByRoomId() {
         Optional<ChatRoom> result = chatRoomRepository
-                .findByRoomIdContainingOrderByUpdatedAtDesc("room_1_2");
+                .findByRoomId("room_1_2");
 
         assertTrue(result.isPresent());
         assertEquals("room_1_2", result.get().getRoomId());
