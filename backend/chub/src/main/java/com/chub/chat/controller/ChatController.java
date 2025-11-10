@@ -58,8 +58,12 @@ public class ChatController {
 
     @Operation(
             summary = "메시지 목록 조회",
-            description = "채팅방에서 나눈 메시지의 내역을 조회합니다. \n" +
-                    "페이지 네이션 기능을 제공합니다."
+            description = """
+                    채팅방에서 나눈 메시지의 내역을 조회합니다.\s
+                    cursor-based 페이지네이션 기능을 제공합니다.\s
+                    처음 요청 시 cursor 파라미터는 생략하면 최신 메시지부터 조회됩니다.\s
+                    더 이전 메시지를 조회하려면 응답의 nextCursor 값을 다음 요청의 cursor 파라미터로 전달하세요.
+                    """
     )
     @GetMapping("/rooms/{roomId}/messages")
     public ResponseEntity<CommonApiResponse<MessageListResponse>> getMessageByRoomId(
