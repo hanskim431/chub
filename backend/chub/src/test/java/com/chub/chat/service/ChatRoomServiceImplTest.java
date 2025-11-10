@@ -72,7 +72,7 @@ class ChatRoomServiceImplTest {
         @Test
         @DisplayName("통과: 이미 있는 채팅방 생성(조회) 시 저장 없이 기존 방 ID 반환")
         void shouldReturnChatRoomId_WhenExist() {
-            when(chatRoomRepository.findByRoomIdContainingOrderByUpdatedAtDesc(chatRoomId))
+            when(chatRoomRepository.findByRoomId(chatRoomId))
                     .thenReturn(Optional.of(ChatRoom.builder().roomId(chatRoomId).build()));
 
             CreateChatRoomResponse response = chatRoomService.findOrCreateChatRoom(userId1, userId2);
@@ -203,9 +203,9 @@ class ChatRoomServiceImplTest {
 
             assertNotNull(response);
             assertEquals(1, response.getRooms().size());
-            assertNotNull(response.getRooms().get(0).getOpponent());
-            assertEquals(opponentId1, response.getRooms().get(0).getOpponent().userId());
-            assertEquals("opponent1", response.getRooms().get(0).getOpponent().name());
+            assertNotNull(response.getRooms().getFirst().getOpponent());
+            assertEquals(opponentId1, response.getRooms().getFirst().getOpponent().id());
+            assertEquals("opponent1", response.getRooms().getFirst().getOpponent().name());
         }
 
         @Test
@@ -233,8 +233,8 @@ class ChatRoomServiceImplTest {
 
             assertNotNull(response);
             assertEquals(2, response.getRooms().size());
-            assertEquals(opponentId1, response.getRooms().get(0).getOpponent().userId());
-            assertEquals(opponentId2, response.getRooms().get(1).getOpponent().userId());
+            assertEquals(opponentId1, response.getRooms().get(0).getOpponent().id());
+            assertEquals(opponentId2, response.getRooms().get(1).getOpponent().id());
         }
 
         @Test
@@ -259,7 +259,7 @@ class ChatRoomServiceImplTest {
 
             assertNotNull(response);
             assertEquals(1, response.getRooms().size());
-            assertEquals(3, response.getRooms().get(0).getUnreadCount());
+            assertEquals(3, response.getRooms().getFirst().getUnreadCount());
         }
 
         @Test
@@ -281,7 +281,7 @@ class ChatRoomServiceImplTest {
 
             assertNotNull(response);
             assertEquals(1, response.getRooms().size());
-            assertEquals(0, response.getRooms().get(0).getUnreadCount());
+            assertEquals(0, response.getRooms().getFirst().getUnreadCount());
         }
 
     }
