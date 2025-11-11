@@ -18,6 +18,8 @@ class InterviewRoomManagerTest {
     private static final Long INTERVIEWER_ID = 1L;
     private static final Long INTERVIEWEE_ID = 2L;
     private static final Long INTERVIEW_REQUEST_ID = 100L;
+    private static final String INTERVIEWER_NICKNAME = "interviewer";
+    private static final String INTERVIEWEE_NICKNAME = "interviewee";
 
     @BeforeEach
     void setUp() {
@@ -139,7 +141,8 @@ class InterviewRoomManagerTest {
         InterviewRoomState roomState1 = createRoomState();
         InterviewRoomState roomState2 = InterviewRoomState.builder()
                 .interviewRequestId(200L)
-                .participants(new Participants(INTERVIEWER_ID, 3L))
+                .participants(new Participants(INTERVIEWER_ID, INTERVIEWER_NICKNAME,
+                                               3L, "anotherInterviewee"))
                 .chatHistory(new ArrayList<>())
                 .status(RoomStatus.WAITING)
                 .startTime(null)
@@ -157,7 +160,8 @@ class InterviewRoomManagerTest {
     private InterviewRoomState createRoomState() {
         return InterviewRoomState.builder()
                 .interviewRequestId(INTERVIEW_REQUEST_ID)
-                .participants(new Participants(INTERVIEWER_ID, INTERVIEWEE_ID))
+                .participants(new Participants(INTERVIEWER_ID, INTERVIEWER_NICKNAME,
+                                               INTERVIEWEE_ID, INTERVIEWEE_NICKNAME))
                 .chatHistory(new ArrayList<>())
                 .status(RoomStatus.WAITING)
                 .startTime(null)

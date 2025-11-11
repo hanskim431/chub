@@ -14,6 +14,7 @@ import com.chub.exception.interview.InterviewRequestException;
 import com.chub.interviewroom.domain.InterviewRoomState;
 import com.chub.interviewroom.manager.InterviewRoomManager;
 import com.chub.repository.InterviewRequestRepository;
+import com.chub.websocket.util.WebSocketHelper;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,6 +30,9 @@ class InterviewRoomServiceTest {
 
     @Mock
     private InterviewRequestRepository interviewRequestRepository;
+
+    @Mock
+    private WebSocketHelper webSocketHelper;
 
     @InjectMocks
     private InterviewRoomServiceImpl interviewRoomService;
