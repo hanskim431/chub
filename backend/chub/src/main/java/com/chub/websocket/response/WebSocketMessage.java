@@ -1,5 +1,6 @@
 package com.chub.websocket.response;
 
+import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -8,9 +9,9 @@ import lombok.Getter;
 public class WebSocketMessage {
     private String type;
     private Object data;
-    private Long timestamp;
+    private LocalDateTime timestamp;
 
     public static WebSocketMessage of(String type, Object data) {
-        return new WebSocketMessage(type, data, System.currentTimeMillis());
+        return new WebSocketMessage(type, data, LocalDateTime.now());
     }
 }

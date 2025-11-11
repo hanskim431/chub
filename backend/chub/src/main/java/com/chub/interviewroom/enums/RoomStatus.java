@@ -27,8 +27,10 @@ public enum RoomStatus {
     }
 
     public boolean canTransitionTo(RoomStatus target) {
-        Set<RoomStatus> allowedTargets = TRANSITIONS.get(this);
-        return allowedTargets != null && allowedTargets.contains(target);
+        //TODO : 임시로 TRUE 반환
+        return true;
+        //Set<RoomStatus> allowedTargets = TRANSITIONS.get(this);
+        //return allowedTargets != null && allowedTargets.contains(target);
     }
 
     public String getStatus() {

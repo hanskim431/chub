@@ -6,10 +6,12 @@ import static com.chub.interviewroom.enums.RoomStatus.WAITING;
 import static java.util.Optional.ofNullable;
 
 import com.chub.exception.interview.InterviewRequestException;
+import com.chub.interviewroom.domain.InterviewRoomChatMessage;
 import com.chub.interviewroom.domain.InterviewRoomState;
 import com.chub.interviewroom.domain.Participants;
 import com.chub.interviewroom.enums.RoomStatus;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import org.springframework.stereotype.Component;
 
@@ -32,7 +34,7 @@ public class InterviewRoomManager {
         joinedRoom.remove(userId);
 
         //TODO : 상태 업데이트 로직 수정 예정
-        //updateRoomStatus(interviewRequestId, WAITING);
+        updateRoomStatus(interviewRequestId, WAITING);
 
         removeRoomIfBothExit(interviewRequestId);
     }
@@ -60,6 +62,53 @@ public class InterviewRoomManager {
         roomState.changeStatus(newStatus);
     }
 
+    public String getNickname(Long userId) {
+        Long interviewRequestId = ofNullable(joinedRoom.get(userId))
+                .orElseThrow(InterviewRequestException::notFound);
+
+        return interviewRoomInfo.get(interviewRequestId).getParticipants().getNickname(userId);
+    }
+
+    public boolean isUserInRoom(Long userId, Long interviewRequestId) {
+
+        Long currentRoomId = joinedRoom.get(userId);
+
+        return interviewRequestId.equals(currentRoomId);
+    }
+
+    public void addChatMessage(Long interviewRequestId, InterviewRoomChatMessage message) {
+
+        // InterviewRoomState roomState = ofNullable(interviewRoomInfo.get(interviewRequestId))
+        //        .orElseThrow(InterviewRequestException::notFound);
+
+        InterviewRoomState roomState = interviewRoomInfo.get(interviewRequestId);
+        if (roomState == null) {
+            return;
+        }
+
+        roomState.getChatHistory().add(message);
+    }
+
+    public Optional<Long> joinedRoomId(Long userId) {
+        return ofNullable(joinedRoom.get(userId));
+    }
+
+    public boolean isInterviewer(Long userId, Long interviewRequestId) {
+        InterviewRoomState roomState = interviewRoomInfo.get(interviewRequestId);
+        if (roomState == null) {
+            return false;
+        }
+        return userId.equals(roomState.getParticipants().interviewerId());
+    }
+
+    public boolean isInterviewee(Long userId, Long interviewRequestId) {
+        InterviewRoomState roomState = interviewRoomInfo.get(interviewRequestId);
+        if (roomState == null) {
+            return false;
+        }
+        return userId.equals(roomState.getParticipants().intervieweeId());
+    }
+
     private void removeRoomIfBothExit(Long interviewRequestId) {
         interviewRoomInfo.computeIfPresent(interviewRequestId, (id, interviewRoomState) -> {
 
@@ -79,7 +128,7 @@ public class InterviewRoomManager {
         Participants participants = interviewRoomState.getParticipants();
         Long interviewRequestId = interviewRoomState.getInterviewRequestId();
 
-        participants.toList().forEach(id -> {
+        participants.idsToList().forEach(id -> {
             joinedRoom.computeIfPresent(id, (userId, requestId) -> {
                 if (requestId.equals(interviewRequestId)) {
                     return null;
@@ -106,6 +155,6 @@ public class InterviewRoomManager {
         joinedRoom.put(userId, interviewRequestId);
 
         //TODO : 상태 업데이트 로직 수정 예정
-        //updateRoomStatus(interviewRequestId, READY);
+        updateRoomStatus(interviewRequestId, READY);
     }
 }

@@ -25,7 +25,7 @@ public class InterviewRoomState {
     public void changeStatus(RoomStatus newStatus) {
         if (!this.status.canTransitionTo(newStatus)) {
             throw new IllegalStateException(
-                    format("Cannot transition from %s to %s", status, newStatus)
+                    format("%s에서 %s로 변경할 수 없습니다.", status, newStatus)
             );
         }
         this.status = newStatus;
