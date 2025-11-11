@@ -5,4 +5,9 @@ export const NAVIGATION_BAR_LINKS = Object.freeze({
     text: "면접관 찾기",
     label: "recruiter-list-page",
   },
+  myPage: {
+    path: "/my",
+    text: "마이페이지",
+    label: "my-page",
+  },
 });
