@@ -1,6 +1,8 @@
 package com.chub.chat.service;
 
 import com.chub.chat.dto.response.MessageListResponse;
+import com.chub.chat.dto.websocket.ChatMessageRequest;
+import com.chub.chat.dto.websocket.ChatMessageResponse;
 import com.chub.entity.ChatRoom;
 import com.chub.entity.Message;
 import com.chub.entity.User;
@@ -8,6 +10,8 @@ import com.chub.exception.chat.ChatException;
 import com.chub.repository.UserRepository;
 import com.chub.repository.mongo.ChatRoomRepository;
 import com.chub.repository.mongo.MessageRepository;
+import com.chub.websocket.util.WebSocketHelper;
+import org.bson.types.ObjectId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -25,10 +29,10 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("ChatRoomService 테스트")
+@DisplayName("MessageService 테스트")
 class MessageServiceImplTest {
 
     @Mock
@@ -39,6 +43,12 @@ class MessageServiceImplTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private ChatRoomService chatRoomService;
+
+    @Mock
+    private WebSocketHelper webSocketHelper;
 
     @InjectMocks
     private MessageServiceImpl messageService;
@@ -178,6 +188,83 @@ class MessageServiceImplTest {
                     () -> assertFalse(response.pagination().hasNext(), "더 이상의 데이터가 없어야 함"),
                     () -> assertNull(response.pagination().nextCursor(), "다음 cursor가 null이어야 함")
             );
+        }
+    }
+
+
+    @Nested
+    @DisplayName("메시지 전송 테스트")
+    class SendMessageTest {
+
+        private final String ROOM_ID = "1:2";
+        private final Long SENDER_ID = 1L;
+        private final String MESSAGE_CONTENT = "test message";
+
+        @Test
+        @DisplayName("메시지를 저장소에 저장한다")
+        void shouldSaveMessageToRepository() {
+            // Given
+            ChatMessageRequest request = new ChatMessageRequest(ROOM_ID, MESSAGE_CONTENT);
+            Message savedMessage = Message.of(ROOM_ID, SENDER_ID, MESSAGE_CONTENT);
+            savedMessage.setId(new ObjectId());
+            savedMessage.setCreatedAt(LocalDateTime.now());
+
+            when(messageRepository.save(any(Message.class))).thenReturn(savedMessage);
+            when(chatRoomService.getParticipantsByRoomIdsExcludeSender(ROOM_ID, SENDER_ID))
+                    .thenReturn(List.of());
+
+            // When
+            messageService.sendMessage(request, SENDER_ID);
+
+            // Then
+            verify(messageRepository, times(1)).save(any(Message.class));
+        }
+    }
+
+    @Nested
+    @DisplayName("수신자 알림")
+    class NotifyMessageRecipientsTest {
+
+        private final String ROOM_ID = "1:2";
+        private final Long USER_ID_1 = 1L;
+        private final Long USER_ID_2 = 2L;
+        private final String MESSAGE_CONTENT = "test message";
+
+        ChatMessageRequest request;
+        @BeforeEach
+        void setup() {
+            Message savedMessage = Message.of(ROOM_ID, USER_ID_1, MESSAGE_CONTENT);
+            savedMessage.setId(new ObjectId());
+            savedMessage.setCreatedAt(LocalDateTime.now());
+            request = new ChatMessageRequest(ROOM_ID, MESSAGE_CONTENT);
+
+            when(messageRepository.save(any(Message.class))).thenReturn(savedMessage);
+            when(chatRoomService.getParticipantsByRoomIdsExcludeSender(ROOM_ID, USER_ID_1))
+                    .thenReturn(List.of(USER_ID_2));
+        }
+
+        @Test
+        @DisplayName("발신자를 제외한 수신자에게 개별 알림을 전송한다")
+        void shouldSendPersonalMessageToRecipients() {
+            // Given
+            // When
+            messageService.sendMessage(request, USER_ID_1);
+
+            // Then
+            verify(webSocketHelper, times(1))
+                    .sendPersonalMessage(eq(USER_ID_2), eq("message.received"), any(ChatMessageResponse.class));
+        }
+
+        @Test
+        @DisplayName("채팅방 전체에 브로드캐스팅을 전송한다")
+        void shouldBroadcastMessageToRoom() {
+            // Given
+            // When
+            messageService.sendMessage(request, USER_ID_1);
+
+            // Then
+            verify(webSocketHelper, times(1))
+                    .broadcastMessage(eq("/chat/rooms/" + ROOM_ID), eq("message.received"), any(ChatMessageResponse.class));
         }
     }
 }
