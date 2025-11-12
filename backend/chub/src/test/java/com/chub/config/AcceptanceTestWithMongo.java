@@ -5,11 +5,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
+import org.springframework.test.context.ActiveProfiles;
 
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @EnableMongoTestServer
-@EnableMongoRepositories("com.inmemorymongodbfortest.inmemorymongodbfortest.repository")
+@ActiveProfiles("test")
 public abstract class AcceptanceTestWithMongo {
 
     @Autowired
