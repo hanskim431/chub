@@ -78,6 +78,19 @@ public class ChatRoomServiceImpl implements ChatRoomService {
         return ChatRoomListResponse.from(chatRooms, userId, opponentMap);
     }
 
+    @Override
+    public List<Long> getParticipantsByRoomIdsExcludeSender(String roomId, Long senderId) {
+        Optional<ChatRoom> byRoomId = chatRoomRepository.findByRoomId(roomId);
+
+        if (byRoomId.isEmpty()) {
+            throw ChatException.chatRoomNotFound();
+        }
+
+        return byRoomId.get().getParticipantIds().stream()
+                .filter(participantId -> !participantId.equals(senderId))
+                .toList();
+    }
+
     private ChatRoom generateNewChatRoom(Long userId, Long opponent) {
         String roomId = ChatUtil.generateChatRoomId(userId, opponent);
         List<Long> participantIds = ChatUtil.orderUserIds(userId, opponent);

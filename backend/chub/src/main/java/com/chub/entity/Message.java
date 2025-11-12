@@ -40,4 +40,8 @@ public class Message {
     @CreatedDate
     @Field("created_at")
     private LocalDateTime createdAt;
+
+    public static Message of(String roomId, Long messageFrom, String content) {
+        return new Message(null, roomId, messageFrom, content, null);
+    }
 }

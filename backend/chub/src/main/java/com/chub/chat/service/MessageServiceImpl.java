@@ -3,6 +3,8 @@ package com.chub.chat.service;
 import com.chub.chat.dto.response.MessageDto;
 import com.chub.chat.dto.response.*;
 import com.chub.chat.dto.response.PaginationDto;
+import com.chub.chat.dto.websocket.ChatMessageResponse;
+import com.chub.chat.dto.websocket.ChatMessageRequest;
 import com.chub.entity.ChatRoom;
 import com.chub.entity.Message;
 import com.chub.entity.User;
@@ -16,6 +18,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.chub.websocket.util.WebSocketHelper;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +28,9 @@ import java.util.stream.Collectors;
 @Service
 public class MessageServiceImpl implements MessageService {
 
+    private static final String ROOM_DESTINATION = "/chat/rooms/";
+    private static final String MESSAGE_RECEIVED = "message.received";
+
     @Autowired
     private MessageRepository messageRepository;
 
@@ -33,6 +39,12 @@ public class MessageServiceImpl implements MessageService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private ChatRoomService chatRoomService;
+
+    @Autowired
+    private WebSocketHelper webSocketHelper;
 
     @Transactional(readOnly = true)
     @Override
@@ -52,6 +64,27 @@ public class MessageServiceImpl implements MessageService {
         PaginationDto paginationDto = createPaginationDto(messages, pageSize);
 
         return MessageListResponse.of(roomId, messageDtos, participantDtoMap, paginationDto);
+    }
+
+    @Override
+    public void sendMessage(ChatMessageRequest chatMessageRequest, Long userId) {
+        String roomId = chatMessageRequest.roomId();
+
+        Message message = Message.of(roomId, userId, chatMessageRequest.content());
+        Message save = messageRepository.save(message);
+        ChatMessageResponse response = ChatMessageResponse.from(save);
+
+        notifyMessageRecipients(roomId, userId, response);
+    }
+
+    private void notifyMessageRecipients(String roomId, Long senderId, ChatMessageResponse response) {
+        List<Long> recipientIds = chatRoomService.getParticipantsByRoomIdsExcludeSender(roomId, senderId);
+
+        recipientIds.forEach(receiverId ->
+                webSocketHelper.sendPersonalMessage(receiverId, MESSAGE_RECEIVED, response)
+        );
+
+        webSocketHelper.broadcastMessage(ROOM_DESTINATION + roomId, MESSAGE_RECEIVED, response);
     }
 
     private ChatRoom getChatRoom(String roomId) {

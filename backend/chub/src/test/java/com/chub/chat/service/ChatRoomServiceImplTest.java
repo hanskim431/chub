@@ -1,5 +1,6 @@
 package com.chub.chat.service;
 
+import com.chub.chat.dto.response.ChatRoomListResponse;
 import com.chub.chat.dto.response.CreateChatRoomResponse;
 import com.chub.entity.ChatRoom;
 import com.chub.entity.User;
@@ -17,7 +18,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import com.chub.chat.dto.response.ChatRoomListResponse;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -38,7 +38,6 @@ class ChatRoomServiceImplTest {
 
     @InjectMocks
     private ChatRoomServiceImpl chatRoomService;
-
 
     @Nested
     @DisplayName("채팅방 조회/생성 로직 테스트")
@@ -284,5 +283,44 @@ class ChatRoomServiceImplTest {
             assertEquals(0, response.getRooms().getFirst().getUnreadCount());
         }
 
+    }
+
+    @Nested
+    @DisplayName("채팅방 수신자 목록 조회 로직 테스트")
+    class GetParticipantsByRoomIdsExcludeSenderTest {
+
+        @BeforeEach
+        void beforeEach() {
+            ChatRoom room = ChatRoom.builder()
+                    .roomId("1:2")
+                    .participantIds(List.of(1L, 2L))
+                    .build();
+            lenient().when(chatRoomRepository.findByRoomId("1:2"))
+                    .thenReturn(Optional.of(room));
+        }
+
+        @Test
+        @DisplayName("통과: 채팅방 ID 를 통해 수신 대상자가 정상적으로 반환된다.")
+        void shouldReturnIdsExcludeSender_WhenGetParticipantsByRoomId() {
+            // Given
+            // When
+            List<Long> list = chatRoomService.getParticipantsByRoomIdsExcludeSender("1:2", 1L);
+
+            // Then
+            assertEquals(1, list.size());
+            assertEquals(2L, list.getFirst());
+        }
+
+        @Test
+        @DisplayName("예외: 존재 하지 않는 채팅방에 메시지를 전송할 경우 예외를 던진다.")
+        void shouldThrowsException_WhenGetParticipantsByNonExistRoom() {
+            // Given
+            // When
+            // Then
+            assertThrowsExactly(ChatException.class,
+                    () -> chatRoomService.getParticipantsByRoomIdsExcludeSender("Not-Exist", -1L),
+                    "채팅방을 찾을 수 없습니다."
+            );
+        }
     }
 }
