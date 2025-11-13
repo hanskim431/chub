@@ -69,10 +69,13 @@ public class MessageServiceImpl implements MessageService {
     @Override
     public void sendMessage(ChatMessageRequest chatMessageRequest, Long userId) {
         String roomId = chatMessageRequest.roomId();
+        String content = chatMessageRequest.content();
 
-        Message message = Message.of(roomId, userId, chatMessageRequest.content());
+        Message message = Message.of(roomId, userId, content);
         Message save = messageRepository.save(message);
         ChatMessageResponse response = ChatMessageResponse.from(save);
+
+        chatRoomRepository.updateLastMessage(roomId, content, LocalDateTime.now());
 
         notifyMessageRecipients(roomId, userId, response);
     }
