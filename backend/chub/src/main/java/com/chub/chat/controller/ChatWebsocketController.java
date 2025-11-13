@@ -1,6 +1,7 @@
 package com.chub.chat.controller;
 
 import com.chub.chat.dto.websocket.ChatMessageRequest;
+import com.chub.chat.dto.websocket.ReadReceiptRequest;
 import com.chub.chat.service.MessageService;
 import com.chub.exception.user.UserException;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,15 @@ public class ChatWebsocketController {
     ) {
         Long userId = getUserId(headerAccessor);
         messageService.sendMessage(message, userId);
+    }
+
+    @MessageMapping("/chat/mark-read")
+    public void readMessage(
+            ReadReceiptRequest request,
+            SimpMessageHeaderAccessor headerAccessor
+    ) {
+        Long userId = getUserId(headerAccessor);
+        messageService.markReadReceipt(request, userId);
     }
 
     private Long getUserId(SimpMessageHeaderAccessor headerAccessor) {
