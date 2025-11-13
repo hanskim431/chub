@@ -12,6 +12,7 @@ import com.chub.entity.InterviewerProfile;
 import com.chub.entity.User;
 import com.chub.exception.interview.InterviewRequestException;
 import com.chub.interviewroom.domain.InterviewRoomState;
+import com.chub.interviewroom.dto.JoinRoomDto;
 import com.chub.interviewroom.manager.InterviewRoomManager;
 import com.chub.repository.InterviewRequestRepository;
 import com.chub.websocket.util.WebSocketHelper;
@@ -34,6 +35,9 @@ class InterviewRoomServiceTest {
     @Mock
     private WebSocketHelper webSocketHelper;
 
+    @Mock
+    private com.chub.Interview.manager.InterviewManager interviewManager;
+
     @InjectMocks
     private InterviewRoomServiceImpl interviewRoomService;
 
@@ -47,6 +51,10 @@ class InterviewRoomServiceTest {
         InterviewRequest interviewRequest = createApprovedInterviewRequest();
         when(interviewRequestRepository.findById(INTERVIEW_REQUEST_ID))
                 .thenReturn(Optional.of(interviewRequest));
+        when(interviewRoomManager.joinRoom(any(), any(), any()))
+                .thenAnswer(invocation -> invocation.getArgument(2, InterviewRoomState.class));
+        when(interviewManager.getLastQuestion(any()))
+                .thenReturn(Optional.empty());
 
         // when
         interviewRoomService.joinRoom(USER_ID, INTERVIEW_REQUEST_ID);
