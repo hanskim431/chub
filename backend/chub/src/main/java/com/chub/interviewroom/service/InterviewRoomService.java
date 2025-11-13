@@ -1,10 +1,11 @@
 package com.chub.interviewroom.service;
 
 import com.chub.interviewroom.domain.InterviewRoomChatMessage;
+import com.chub.interviewroom.dto.JoinRoomDto;
 
 public interface InterviewRoomService {
 
-    void joinRoom(Long userId, Long interviewRequestId);
+    JoinRoomDto joinRoom(Long userId, Long interviewRequestId);
 
     void exitRoom(Long userId, Long interviewRequestId);
 

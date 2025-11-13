@@ -1,6 +1,7 @@
 package com.chub.Interview.dto;
 
 import com.chub.entity.Interview;
+import com.chub.interviewroom.dto.OpponentDto;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
@@ -23,16 +24,16 @@ public class InterviewRecordListItemDto {
 
         // 상대방 정보
         OpponentDto opponent = isInterviewer
-            ? OpponentDto.builder()
+                ? OpponentDto.builder()
                 .id(interview.getResume().getUser().getId())
                 .name(interview.getResume().getUser().getUsername())
                 .avatar(interview.getResume().getUser().getAvatarUrl())
                 .build()
-            : OpponentDto.builder()
-                .id(interview.getInterviewerProfile().getUser().getId())
-                .name(interview.getInterviewerProfile().getUser().getUsername())
-                .avatar(interview.getInterviewerProfile().getUser().getAvatarUrl())
-                .build();
+                : OpponentDto.builder()
+                        .id(interview.getInterviewerProfile().getUser().getId())
+                        .name(interview.getInterviewerProfile().getUser().getUsername())
+                        .avatar(interview.getInterviewerProfile().getUser().getAvatarUrl())
+                        .build();
 
         // 면접 소요 시간 계산
         Long duration = null;

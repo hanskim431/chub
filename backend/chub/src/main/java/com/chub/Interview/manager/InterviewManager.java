@@ -51,4 +51,13 @@ public class InterviewManager {
         interviews.remove(roomId);
         interviewQuestions.remove(roomId);
     }
+
+    public Optional<String> getLastQuestion(Long roomId) {
+        List<QuestionAnswerDto> questions = interviewQuestions.get(roomId);
+        if (questions == null || questions.isEmpty()) {
+            return Optional.empty();
+        }
+        QuestionAnswerDto lastQuestion = questions.get(questions.size() - 1);
+        return Optional.ofNullable(lastQuestion.getQuestion());
+    }
 }

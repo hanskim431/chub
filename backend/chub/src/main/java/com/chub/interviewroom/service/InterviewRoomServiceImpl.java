@@ -9,6 +9,8 @@ import com.chub.exception.interview.InterviewRequestException;
 import com.chub.interviewroom.domain.InterviewRoomChatMessage;
 import com.chub.interviewroom.domain.InterviewRoomState;
 import com.chub.interviewroom.domain.Participants;
+import com.chub.interviewroom.dto.JoinRoomDto;
+import com.chub.interviewroom.dto.OpponentDto;
 import com.chub.interviewroom.enums.RoomStatus;
 import com.chub.interviewroom.manager.InterviewRoomManager;
 import com.chub.repository.InterviewRequestRepository;
@@ -27,12 +29,13 @@ public class InterviewRoomServiceImpl implements InterviewRoomService {
     private final InterviewRoomManager interviewRoomManager;
     private final InterviewRequestRepository interviewRequestRepository;
     private final WebSocketHelper webSocketHelper;
+    private final com.chub.Interview.manager.InterviewManager interviewManager;
 
     private static final String APPROVED = "APPROVED";
     private static final String INTERVIEW_PREFIX = "/interview/";
 
     @Override
-    public void joinRoom(Long userId, Long interviewRequestId) {
+    public JoinRoomDto joinRoom(Long userId, Long interviewRequestId) {
         // 비즈니스 로직: DB 조회 및 검증
         InterviewRequest interviewRequest = getInterviewRequest(interviewRequestId);
         validateApproved(interviewRequest);
@@ -41,14 +44,20 @@ public class InterviewRoomServiceImpl implements InterviewRoomService {
         InterviewRoomState roomState = createRoomState(interviewRequestId, interviewRequest);
 
         // 상태 관리: Manager에 위임
-        interviewRoomManager.joinRoom(userId, interviewRequestId, roomState);
+        roomState = interviewRoomManager.joinRoom(userId, interviewRequestId, roomState);
 
         sendJoinEvent(userId, interviewRequestId);
+
+        OpponentDto opponent = createOpponentDto(userId, interviewRequest);
+
+        String currentQuestion = interviewManager.getLastQuestion(interviewRequestId).orElse(null);
+
+        return JoinRoomDto.of(userId, roomState, opponent, currentQuestion);
     }
 
     @Override
     public void exitRoom(Long userId, Long interviewRequestId) {
-        
+
         interviewRoomManager.exitRoom(userId, interviewRequestId);
 
         sendLeaveEvent(userId, interviewRequestId);
@@ -152,5 +161,26 @@ public class InterviewRoomServiceImpl implements InterviewRoomService {
                 .build();
 
         sendChat(interviewRequestId, chatMessage);
+    }
+
+    private OpponentDto createOpponentDto(Long userId, InterviewRequest interviewRequest) {
+
+        boolean isInterviewer = userId.equals(interviewRequest.getInterviewerProfile().getUser().getId());
+
+        if (isInterviewer) {
+            // 면접관이 접속 -> opponent는 면접자
+            return OpponentDto.builder()
+                    .id(interviewRequest.getUser().getId())
+                    .name(interviewRequest.getUser().getUsername())
+                    .avatar(interviewRequest.getUser().getAvatarUrl())
+                    .build();
+        } else {
+            // 면접자가 접속 -> opponent는 면접관
+            return OpponentDto.builder()
+                    .id(interviewRequest.getInterviewerProfile().getUser().getId())
+                    .name(interviewRequest.getInterviewerProfile().getUser().getUsername())
+                    .avatar(interviewRequest.getInterviewerProfile().getUser().getAvatarUrl())
+                    .build();
+        }
     }
 }

@@ -1,4 +1,4 @@
-package com.chub.Interview.dto;
+package com.chub.interviewroom.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

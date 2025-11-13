@@ -21,12 +21,15 @@ public class InterviewRoomManager {
     private final Map<Long, InterviewRoomState> interviewRoomInfo = new ConcurrentHashMap<>();
     private final Map<Long, Long> joinedRoom = new ConcurrentHashMap<>();
 
-    public void joinRoom(Long userId, Long interviewRequestId, InterviewRoomState roomState) {
+    public InterviewRoomState joinRoom(Long userId, Long interviewRequestId, InterviewRoomState roomState) {
         // 상태 관리: 방 정보 저장
         interviewRoomInfo.putIfAbsent(interviewRequestId, roomState);
 
         // 상태 관리: 참가자 검증 및 입장
         joinRoomIfParticipate(userId, interviewRequestId);
+
+        // 실제로 저장된 roomState 반환 (기존 것 or 새로운 것)
+        return interviewRoomInfo.get(interviewRequestId);
     }
 
     public void exitRoom(Long userId, Long interviewRequestId) {
