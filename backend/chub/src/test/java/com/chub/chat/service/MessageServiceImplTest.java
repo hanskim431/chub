@@ -3,6 +3,8 @@ package com.chub.chat.service;
 import com.chub.chat.dto.response.MessageListResponse;
 import com.chub.chat.dto.websocket.ChatMessageRequest;
 import com.chub.chat.dto.websocket.ChatMessageResponse;
+import com.chub.chat.dto.websocket.ReadReceiptRequest;
+import com.chub.chat.dto.websocket.ReadReceiptResponse;
 import com.chub.entity.ChatRoom;
 import com.chub.entity.Message;
 import com.chub.entity.User;
@@ -293,5 +295,45 @@ class MessageServiceImplTest {
                     eq(request.roomId()), eq(request.content()), any(LocalDateTime.class));
 
         }
+    }
+
+
+    @Nested
+    @DisplayName("메시지 읽음 요청 테스트")
+    class MessageReadReceiptTest {
+
+        private final String ROOM_ID = "1:2";
+        private final Long USER_ID_1 = 1L;
+
+        ReadReceiptRequest request;
+
+        @BeforeEach
+        void beforeEach() {
+            request = new ReadReceiptRequest(ROOM_ID);
+        }
+
+        @Test
+        @DisplayName("읽었음 요청시 안읽은 개수와 마지막으로 읽은 시간이 0과 현재시간으로 갱신된다.")
+        void shouldUpdateUnreadCountAndLastReadAt() {
+            // Given
+            // When
+            messageService.markReadReceipt(request, USER_ID_1);
+            // Then
+            verify(chatRoomRepository, times(1))
+                    .updateReadReceipt(eq(ROOM_ID), eq(USER_ID_1), any(LocalDateTime.class));
+        }
+
+        @Test
+        @DisplayName("읽었음 요청 시 채팅방 전체에 브로드캐스팅된다")
+        void shouldBroadcastReadReceipt() {
+            // Given
+            // When
+            messageService.markReadReceipt(request, USER_ID_1);
+            // Then
+            verify(webSocketHelper, times(1))
+                    .broadcastMessage(eq("/chat/rooms/" + ROOM_ID), eq("read.receipt"), any(ReadReceiptResponse.class));
+
+        }
+
     }
 }
