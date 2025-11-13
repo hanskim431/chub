@@ -30,7 +30,9 @@ public class SwaggerConfig {
                         "com.chub.controller",
                         "com.chub.auth.controller",
                         "com.chub.dashboard.controller",
-                        "com.chub.chat.controller"
+                        "com.chub.chat.controller",
+                        "com.chub.interview.controller",
+                        "com.chub.interviewroom.controller"
                 )
                 .build();
     }
@@ -51,7 +53,8 @@ public class SwaggerConfig {
                                 .scheme("bearer")
                                 .bearerFormat("JWT")
                                 .in(SecurityScheme.In.HEADER)
-                                .description("JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"")
+                                .description(
+                                        "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"")
                         )
                 );
     }
