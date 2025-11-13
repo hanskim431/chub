@@ -60,7 +60,7 @@ public class ChatRoom {
         @Field("unreadCount")
         private Integer unreadCount;
 
-        @Field("lastReadMessageId")
-        private ObjectId lastReadMessageId;
+        @Field("lastReadAt")
+        private LocalDateTime lastReadAt;
     }
 }
