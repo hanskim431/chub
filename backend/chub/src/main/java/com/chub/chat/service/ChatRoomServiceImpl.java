@@ -59,21 +59,10 @@ public class ChatRoomServiceImpl implements ChatRoomService {
         if (optionalChatRooms.isEmpty()) {
             return ChatRoomListResponse.from(List.of(), userId, Map.of());
         }
-
         List<ChatRoom> chatRooms = optionalChatRooms.get();
 
-        Set<Long> opponentIds
-                = chatRooms.stream()
-                .flatMap(room -> room.getParticipantIds().stream())
-                .filter(id -> !id.equals(userId))
-                .collect(Collectors.toSet());
-
-
-        Map<Long, User> opponentMap =
-                userRepository.findAllById(opponentIds)
-                        .stream()
-                        .collect(Collectors
-                                .toMap(User::getId, Function.identity()));
+        Set<Long> opponentIds = extractUserIdsFromChatRooms(chatRooms, userId);
+        Map<Long, User> opponentMap = createUserInfoMap(opponentIds);
 
         return ChatRoomListResponse.from(chatRooms, userId, opponentMap);
     }
@@ -89,6 +78,20 @@ public class ChatRoomServiceImpl implements ChatRoomService {
         return byRoomId.get().getParticipantIds().stream()
                 .filter(participantId -> !participantId.equals(senderId))
                 .toList();
+    }
+
+    private Map<Long, User> createUserInfoMap(Set<Long> opponentIds) {
+        return userRepository.findAllById(opponentIds)
+                .stream()
+                .collect(Collectors
+                        .toMap(User::getId, Function.identity()));
+    }
+
+    private Set<Long> extractUserIdsFromChatRooms(List<ChatRoom> chatRooms, Long userId) {
+        return chatRooms.stream()
+                .flatMap(room -> room.getParticipantIds().stream())
+                .filter(id -> !id.equals(userId))
+                .collect(Collectors.toSet());
     }
 
     private ChatRoom generateNewChatRoom(Long userId, Long opponent) {
