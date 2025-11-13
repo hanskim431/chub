@@ -5,6 +5,8 @@ import com.chub.chat.dto.response.*;
 import com.chub.chat.dto.response.PaginationDto;
 import com.chub.chat.dto.websocket.ChatMessageResponse;
 import com.chub.chat.dto.websocket.ChatMessageRequest;
+import com.chub.chat.dto.websocket.ReadReceiptRequest;
+import com.chub.chat.dto.websocket.ReadReceiptResponse;
 import com.chub.entity.ChatRoom;
 import com.chub.entity.Message;
 import com.chub.entity.User;
@@ -30,6 +32,7 @@ public class MessageServiceImpl implements MessageService {
 
     private static final String ROOM_DESTINATION = "/chat/rooms/";
     private static final String MESSAGE_RECEIVED = "message.received";
+    private static final String READ_RECEIPT = "read.receipt";
 
     @Autowired
     private MessageRepository messageRepository;
@@ -78,6 +81,21 @@ public class MessageServiceImpl implements MessageService {
         chatRoomRepository.updateLastMessage(roomId, content, LocalDateTime.now());
 
         notifyMessageRecipients(roomId, userId, response);
+    }
+
+    @Override
+    public void markReadReceipt(ReadReceiptRequest request, Long userId) {
+        String roomId = request.roomId();
+        LocalDateTime lastReadAt = LocalDateTime.now();
+
+        chatRoomRepository.updateReadReceipt(roomId, userId, lastReadAt);
+
+        notifyMessageReceipt(roomId, userId, lastReadAt);
+    }
+
+    private void notifyMessageReceipt(String roomId, Long readerId, LocalDateTime lastReadAt) {
+        ReadReceiptResponse response = ReadReceiptResponse.of(readerId, lastReadAt);
+        webSocketHelper.broadcastMessage(ROOM_DESTINATION + roomId, READ_RECEIPT, response);
     }
 
     private void notifyMessageRecipients(String roomId, Long senderId, ChatMessageResponse response) {
