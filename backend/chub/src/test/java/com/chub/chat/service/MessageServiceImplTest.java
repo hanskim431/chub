@@ -231,6 +231,7 @@ class MessageServiceImplTest {
         private final String MESSAGE_CONTENT = "test message";
 
         ChatMessageRequest request;
+
         @BeforeEach
         void setup() {
             Message savedMessage = Message.of(ROOM_ID, USER_ID_1, MESSAGE_CONTENT);
@@ -265,6 +266,32 @@ class MessageServiceImplTest {
             // Then
             verify(webSocketHelper, times(1))
                     .broadcastMessage(eq("/chat/rooms/" + ROOM_ID), eq("message.received"), any(ChatMessageResponse.class));
+        }
+
+        @Test
+        @DisplayName("메시지를 DB에 저장한다.")
+        void shouldSaveMessageToDatabase() {
+            // Given
+            Message savedMessage = Message.of(ROOM_ID, USER_ID_1, MESSAGE_CONTENT);
+            // When
+            messageService.sendMessage(request, USER_ID_1);
+
+            // Then
+            verify(messageRepository, times(1))
+                    .save(eq(savedMessage));
+        }
+
+        @Test
+        @DisplayName("채팅방 메타 데이터의 마지막 메시지 내용을 수정한다.")
+        void shouldUpdateLastMessageContentAtChatRoomMetaData() {
+            // Given
+            // When
+            messageService.sendMessage(request, USER_ID_1);
+
+            // Then
+            verify(chatRoomRepository, times(1)).updateLastMessage(
+                    eq(request.roomId()), eq(request.content()), any(LocalDateTime.class));
+
         }
     }
 }
