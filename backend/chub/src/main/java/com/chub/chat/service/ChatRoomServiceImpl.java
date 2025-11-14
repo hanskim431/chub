@@ -15,10 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -79,7 +76,8 @@ public class ChatRoomServiceImpl implements ChatRoomService {
         LocalDateTime countedAt = chatRoom.getParticipants().get(userId).getCountedAt();
 
         if (messageUpdatedAt.isBefore(lastReadAt) || messageUpdatedAt.isBefore(countedAt)) {
-            return chatRoom.getParticipants().get(userId).getUnreadCount();
+            Integer unreadCount = chatRoom.getParticipants().get(userId).getUnreadCount();
+            return Objects.requireNonNullElse(unreadCount, 0);
         }
 
         String roomId = chatRoom.getRoomId();
