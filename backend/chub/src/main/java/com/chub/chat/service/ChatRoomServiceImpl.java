@@ -9,10 +9,12 @@ import com.chub.exception.chat.ChatException;
 import com.chub.exception.user.UserException;
 import com.chub.repository.mongo.ChatRoomRepository;
 import com.chub.repository.UserRepository;
+import com.chub.repository.mongo.MessageRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -27,6 +29,9 @@ public class ChatRoomServiceImpl implements ChatRoomService {
 
     @Autowired
     private ChatRoomRepository chatRoomRepository;
+
+    @Autowired
+    private MessageRepository messageRepository;
 
     @Autowired
     private UserRepository userRepository;
@@ -59,12 +64,38 @@ public class ChatRoomServiceImpl implements ChatRoomService {
         if (optionalChatRooms.isEmpty()) {
             return ChatRoomListResponse.from(List.of(), userId, Map.of());
         }
-        List<ChatRoom> chatRooms = optionalChatRooms.get();
+        List<ChatRoom> chatRooms = countUnreadMessages(
+                List.copyOf(optionalChatRooms.get()), userId);
 
         Set<Long> opponentIds = extractUserIdsFromChatRooms(chatRooms, userId);
         Map<Long, User> opponentMap = createUserInfoMap(opponentIds);
 
         return ChatRoomListResponse.from(chatRooms, userId, opponentMap);
+    }
+
+    private int countAndUpdateUnread(ChatRoom chatRoom, Long userId) {
+        LocalDateTime messageUpdatedAt = chatRoom.getUpdatedAt();
+        LocalDateTime lastReadAt = chatRoom.getParticipants().get(userId).getLastReadAt();
+        LocalDateTime countedAt = chatRoom.getParticipants().get(userId).getCountedAt();
+
+        if (messageUpdatedAt.isBefore(lastReadAt) || messageUpdatedAt.isBefore(countedAt)) {
+            return chatRoom.getParticipants().get(userId).getUnreadCount();
+        }
+
+        String roomId = chatRoom.getRoomId();
+
+        int unreadAmount =
+                messageRepository.countByRoomIdAndCreatedAtGreaterThan(roomId, lastReadAt);
+        chatRoomRepository.updateUnreadCount(roomId, userId, unreadAmount, LocalDateTime.now());
+        return unreadAmount;
+    }
+
+    private List<ChatRoom> countUnreadMessages(List<ChatRoom> chatRooms, Long userId) {
+         return chatRooms.stream().map(chatRoom -> {
+            int unread = countAndUpdateUnread(chatRoom, userId);
+            chatRoom.getParticipants().get(userId).setUnreadCount(unread);
+            return chatRoom;
+        }).toList();
     }
 
     @Override
