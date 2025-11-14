@@ -136,9 +136,16 @@ class ChatRoomServiceImplTest {
 
         User opponent1;
         User opponent2;
+        ChatRoom.ParticipantInfo dummyParticipantInfo;
 
         @BeforeEach
         void setup() {
+            dummyParticipantInfo = ChatRoom.ParticipantInfo.builder()
+                    .lastReadAt(LocalDateTime.now())
+                    .countedAt(LocalDateTime.now())
+                    .unreadCount(0)
+                    .build();
+
             opponent1 = User.builder().sub("opponent1").username("opponent1").build();
             ReflectionTestUtils.setField(opponent1, "id", opponentId1);
 
@@ -165,12 +172,14 @@ class ChatRoomServiceImplTest {
             LocalDateTime now = LocalDateTime.now();
             ChatRoom room1 = ChatRoom.builder()
                     .roomId("room_1_2")
+                    .participants(Map.of(1L, dummyParticipantInfo))
                     .participantIds(List.of(userId, opponentId1))
                     .updatedAt(now.minusHours(2))
                     .build();
 
             ChatRoom room2 = ChatRoom.builder()
                     .roomId("room_1_3")
+                    .participants(Map.of(1L, dummyParticipantInfo))
                     .participantIds(List.of(userId, opponentId2))
                     .updatedAt(now)
                     .build();
@@ -193,6 +202,7 @@ class ChatRoomServiceImplTest {
         void shouldMapOpponentInfo_Correctly() {
             ChatRoom room = ChatRoom.builder()
                     .roomId("room_1_2")
+                    .participants(Map.of(1L, dummyParticipantInfo))
                     .participantIds(List.of(userId, opponentId1))
                     .updatedAt(LocalDateTime.now())
                     .build();
@@ -217,12 +227,14 @@ class ChatRoomServiceImplTest {
             LocalDateTime now = LocalDateTime.now();
             ChatRoom room1 = ChatRoom.builder()
                     .roomId("room_1_2")
+                    .participants(Map.of(1L, dummyParticipantInfo))
                     .participantIds(List.of(userId, opponentId1))
                     .updatedAt(now)
                     .build();
 
             ChatRoom room2 = ChatRoom.builder()
                     .roomId("room_1_3")
+                    .participants(Map.of(1L, dummyParticipantInfo))
                     .participantIds(List.of(userId, opponentId2))
                     .updatedAt(now.minusHours(1))
                     .build();
@@ -247,10 +259,17 @@ class ChatRoomServiceImplTest {
                     .roomId("room_1_2")
                     .participantIds(List.of(userId, opponentId1))
                     .participants(Map.of(
-                            userId, ChatRoom.ParticipantInfo.builder().unreadCount(3).build(),
-                            opponentId1, ChatRoom.ParticipantInfo.builder().unreadCount(0).build()
+                            userId,
+                            ChatRoom.ParticipantInfo.builder()
+                                    .lastReadAt(LocalDateTime.now())
+                                    .countedAt(LocalDateTime.now())
+                                    .unreadCount(3).build(),
+                            opponentId1, ChatRoom.ParticipantInfo.builder()
+                                    .lastReadAt(LocalDateTime.now())
+                                    .countedAt(LocalDateTime.now())
+                                    .unreadCount(0).build()
                     ))
-                    .updatedAt(LocalDateTime.now())
+                    .updatedAt(LocalDateTime.now().minusHours(1))
                     .build();
 
             when(chatRoomRepository.findByParticipantIdsContainingOrderByUpdatedAtDesc(userId))
@@ -271,8 +290,11 @@ class ChatRoomServiceImplTest {
             ChatRoom room = ChatRoom.builder()
                     .roomId("room_1_2")
                     .participantIds(List.of(userId, opponentId1))
-                    .participants(new HashMap<>())
-                    .updatedAt(LocalDateTime.now())
+                    .participants(Map.of(1L, ChatRoom.ParticipantInfo.builder()
+                            .lastReadAt(LocalDateTime.now())
+                            .countedAt(LocalDateTime.now())
+                            .build()))
+                    .updatedAt(LocalDateTime.now().minusHours(1))
                     .build();
 
             when(chatRoomRepository.findByParticipantIdsContainingOrderByUpdatedAtDesc(userId))
