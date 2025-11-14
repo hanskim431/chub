@@ -19,9 +19,11 @@ public interface ChatRoomRepository extends MongoRepository<ChatRoom, String> {
     @Update("{ '$set': { 'lastMessage': ?1, 'updatedAt' : ?2 } }")
     void updateLastMessage(String roomId, String lastMessage, LocalDateTime updateAt);
 
-    @Query("{ 'room_id': ?0, 'participants.userId': ?1 }")
-    @Update("{ '$set': { 'participants.$.unreadCount': 0, 'lastReadAt': ?2 } }")
+    @Query("{ 'room_id': ?0 }")
+    @Update("{ '$set': { 'participants.?1.unreadCount': 0, 'participants.?1.lastReadAt': ?2 } }")
     void updateReadReceipt(String roomId, Long userId, LocalDateTime lastReadAt);
 
-
+    @Query("{ 'room_id': ?0 }")
+    @Update("{ '$set': { 'participants.?1.unreadCount': ?2, 'participants.?1.countedAt': ?3 } }")
+    void updateUnreadCount(String roomId, Long userId, Integer unreadAmount, LocalDateTime countedAt);
 }

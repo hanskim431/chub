@@ -13,4 +13,6 @@ public interface MessageRepository extends MongoRepository<Message, String> {
             String roomId, LocalDateTime cursorDate, Pageable pageable
     );
 
+    int countByRoomIdAndCreatedAtGreaterThan(String roomId, LocalDateTime lastReadAt);
+
 }
