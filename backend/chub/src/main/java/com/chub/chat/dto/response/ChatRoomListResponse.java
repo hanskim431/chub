@@ -24,7 +24,8 @@ public class ChatRoomListResponse {
                                     .filter(id -> !id.equals(userId))
                                     .findFirst()
                                     .orElse(null);
-                            return ChatRoomDto.from(chatRoom, userId, opponents.get(opponentId));
+                            int unreadCount = chatRoom.getParticipants().get(userId).getUnreadCount();
+                            return ChatRoomDto.from(chatRoom, userId, opponents.get(opponentId), unreadCount);
                         }).toList()
         );
     }
