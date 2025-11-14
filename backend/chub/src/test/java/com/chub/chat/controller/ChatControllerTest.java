@@ -175,4 +175,43 @@ class ChatControllerTest {
         SecurityContextHolder.getContext().setAuthentication(authentication);
     }
 
+    @Nested
+    @DisplayName("상대가 마지막으로 읽은 시간 조회 테스트")
+    class GetOpponentLastReadTest {
+
+        private final LocalDateTime OPPONENT_LAST_READ_TIME = LocalDateTime.of(2025, 1, 2, 10, 30, 45);
+
+        @Test
+        @DisplayName("상대가 마지막으로 읽은 시간을 조회한다")
+        void shouldReturnOpponentLastReadTime() throws Exception {
+            // Given
+            OpponentLastReadResponse response = new OpponentLastReadResponse(CHAT_ROOM_ID, OPPONENT_LAST_READ_TIME);
+            when(messageService.findOpponentLastReadTime(USER_ID, CHAT_ROOM_ID))
+                    .thenReturn(response);
+
+            // When & Then
+            mockMvc.perform(get("/chat/rooms/{roomId}/messages/opponent-last-read", CHAT_ROOM_ID)
+                    .param("roomId", CHAT_ROOM_ID))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.success", is(true)))
+                    .andExpect(jsonPath("$.data.roomId", is(CHAT_ROOM_ID)))
+                    .andExpect(jsonPath("$.data.lastReadAt", notNullValue()));
+        }
+
+        @Test
+        @DisplayName("lastReadAt이 null인 경우도 정상 응답한다")
+        void shouldReturnOpponentLastReadTime_WhenLastReadAtIsNull() throws Exception {
+            // Given: 상대가 아직 메시지를 읽지 않은 경우
+            OpponentLastReadResponse response = new OpponentLastReadResponse(CHAT_ROOM_ID, null);
+            when(messageService.findOpponentLastReadTime(USER_ID, CHAT_ROOM_ID))
+                    .thenReturn(response);
+
+            // When & Then
+            mockMvc.perform(get("/chat/rooms/{roomId}/messages/opponent-last-read", CHAT_ROOM_ID)
+                    .param("roomId", CHAT_ROOM_ID))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.success", is(true)))
+                    .andExpect(jsonPath("$.data.roomId", is(CHAT_ROOM_ID)));
+        }
+    }
 }

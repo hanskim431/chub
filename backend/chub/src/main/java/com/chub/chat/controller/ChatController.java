@@ -5,6 +5,7 @@ import com.chub.chat.dto.request.CreateChatRoomRequest;
 import com.chub.chat.dto.response.ChatRoomListResponse;
 import com.chub.chat.dto.response.CreateChatRoomResponse;
 import com.chub.chat.dto.response.MessageListResponse;
+import com.chub.chat.dto.response.OpponentLastReadResponse;
 import com.chub.chat.service.ChatRoomService;
 import com.chub.chat.service.MessageService;
 import com.chub.common.CommonApiResponse;
@@ -78,4 +79,21 @@ public class ChatController {
         );
         return ResponseEntity.ok(CommonApiResponse.success(response));
     }
+
+    @Operation(
+            summary = "상대가 마지막으로 읽은 시간 조회",
+            description = """
+                    상대가 해당 채팅방에서의 마지막 메시지를 읽은 시간을 조회합니다.
+                    해당 시간으로 각 메시지의 읽음/안 읽음 여부를 판단할 수 있습니다.
+                    """
+    )
+    @GetMapping("/rooms/{roomId}/messages/opponent-last-read")
+    public ResponseEntity<CommonApiResponse<OpponentLastReadResponse>> getOpponentLastRead(
+            @LoginUser Long userId,
+            @RequestParam("roomId") String roomId
+    ) {
+        OpponentLastReadResponse response = messageService.findOpponentLastReadTime(userId, roomId);
+        return ResponseEntity.ok(CommonApiResponse.success(response));
+    }
+
 }

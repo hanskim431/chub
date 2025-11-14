@@ -336,4 +336,149 @@ class MessageServiceImplTest {
         }
 
     }
+
+    @Nested
+    @DisplayName("상대가 마지막으로 읽은 시간 조회 테스트")
+    class FindOpponentLastReadTimeTest {
+
+        private final String ROOM_ID = "1:2";
+        private final Long USER_ID_1 = 1L;
+        private final Long USER_ID_2 = 2L;
+        private final LocalDateTime OPPONENT_LAST_READ_TIME = LocalDateTime.of(2025, 1, 2, 15, 30, 45);
+
+        @BeforeEach
+        void setup() {
+            // ChatRoom 생성 (2명의 참여자, 상대방의 마지막 읽음 시간 설정)
+            ChatRoom.ParticipantInfo participant1 = ChatRoom.ParticipantInfo.builder()
+                    .unreadCount(0)
+                    .lastReadAt(LocalDateTime.of(2025, 1, 2, 10, 0, 0))
+                    .countedAt(LocalDateTime.of(2025, 1, 2, 10, 0, 0))
+                    .build();
+
+            ChatRoom.ParticipantInfo participant2 = ChatRoom.ParticipantInfo.builder()
+                    .unreadCount(3)
+                    .lastReadAt(OPPONENT_LAST_READ_TIME)
+                    .countedAt(LocalDateTime.of(2025, 1, 2, 15, 30, 45))
+                    .build();
+
+            ChatRoom chatRoom = ChatRoom.builder()
+                    .roomId(ROOM_ID)
+                    .participantIds(List.of(USER_ID_1, USER_ID_2))
+                    .participants(java.util.Map.of(
+                            USER_ID_1, participant1,
+                            USER_ID_2, participant2
+                    ))
+                    .updatedAt(LocalDateTime.now())
+                    .build();
+
+            lenient().when(chatRoomRepository.findByRoomId(ROOM_ID))
+                    .thenReturn(Optional.of(chatRoom));
+        }
+
+        @Test
+        @DisplayName("통과: 상대가 마지막으로 읽은 시간을 조회한다")
+        void shouldReturnOpponentLastReadTime() {
+            // When: USER_ID_1이 상대(USER_ID_2)의 마지막 읽음 시간 조회
+            var response = messageService.findOpponentLastReadTime(USER_ID_1, ROOM_ID);
+
+            // Then
+            assertAll("OpponentLastReadResponse 검증",
+                    () -> assertEquals(ROOM_ID, response.roomId(), "roomId가 일치해야 함"),
+                    () -> assertEquals(OPPONENT_LAST_READ_TIME, response.lastReadAt(), "마지막 읽음 시간이 일치해야 함")
+            );
+        }
+
+        @Test
+        @DisplayName("통과: 반대 방향 조회도 정상 작동한다 (USER_ID_2가 USER_ID_1의 마지막 읽음 시간 조회)")
+        void shouldReturnOpponentLastReadTime_ReverseDirection() {
+            // When: USER_ID_2가 상대(USER_ID_1)의 마지막 읽음 시간 조회
+            var response = messageService.findOpponentLastReadTime(USER_ID_2, ROOM_ID);
+
+            // Then
+            assertAll("OpponentLastReadResponse 검증",
+                    () -> assertEquals(ROOM_ID, response.roomId(), "roomId가 일치해야 함"),
+                    () -> assertEquals(LocalDateTime.of(2025, 1, 2, 10, 0, 0), response.lastReadAt(), "마지막 읽음 시간이 일치해야 함")
+            );
+        }
+
+        @Test
+        @DisplayName("통과: 상대가 아직 메시지를 읽지 않은 경우 lastReadAt은 null이다")
+        void shouldReturnNull_WhenOpponentHasNotReadMessages() {
+            // Given: 상대가 아직 읽지 않은 상태
+            ChatRoom.ParticipantInfo participant1 = ChatRoom.ParticipantInfo.builder()
+                    .unreadCount(5)
+                    .lastReadAt(null)
+                    .countedAt(LocalDateTime.of(2025, 1, 2, 10, 0, 0))
+                    .build();
+
+            ChatRoom.ParticipantInfo participant2 = ChatRoom.ParticipantInfo.builder()
+                    .unreadCount(0)
+                    .lastReadAt(OPPONENT_LAST_READ_TIME)
+                    .countedAt(LocalDateTime.of(2025, 1, 2, 15, 30, 45))
+                    .build();
+
+            ChatRoom chatRoom = ChatRoom.builder()
+                    .roomId(ROOM_ID)
+                    .participantIds(List.of(USER_ID_1, USER_ID_2))
+                    .participants(java.util.Map.of(
+                            USER_ID_1, participant1,
+                            USER_ID_2, participant2
+                    ))
+                    .updatedAt(LocalDateTime.now())
+                    .build();
+
+            when(chatRoomRepository.findByRoomId(ROOM_ID))
+                    .thenReturn(Optional.of(chatRoom));
+
+            // When: USER_ID_2가 USER_ID_1의 마지막 읽음 시간 조회
+            var response = messageService.findOpponentLastReadTime(USER_ID_2, ROOM_ID);
+
+            // Then
+            assertAll("OpponentLastReadResponse 검증",
+                    () -> assertEquals(ROOM_ID, response.roomId(), "roomId가 일치해야 함"),
+                    () -> assertNull(response.lastReadAt(), "마지막 읽음 시간이 null이어야 함")
+            );
+        }
+
+        @Test
+        @DisplayName("예외: ChatRoom이 존재하지 않으면 ChatException을 throw한다")
+        void shouldThrowChatException_WhenChatRoomNotFound() {
+            // Given: 존재하지 않는 roomId
+            String nonExistentRoomId = "non-existent";
+            when(chatRoomRepository.findByRoomId(nonExistentRoomId))
+                    .thenReturn(Optional.empty());
+
+            // When & Then: ChatException이 throw되는지 확인
+            assertThrows(ChatException.class,
+                    () -> messageService.findOpponentLastReadTime(USER_ID_1, nonExistentRoomId),
+                    "ChatRoom이 없으면 ChatException을 throw해야 함"
+            );
+        }
+
+        @Test
+        @DisplayName("예외: 참여자 중 자신이 아닌 사용자가 없으면 ChatException을 throw한다")
+        void shouldThrowChatException_WhenOpponentNotFound() {
+            // Given: 참여자가 자신 하나뿐인 경우 (비정상 상태)
+            ChatRoom chatRoom = ChatRoom.builder()
+                    .roomId(ROOM_ID)
+                    .participantIds(List.of(USER_ID_1))
+                    .participants(java.util.Map.of(
+                            USER_ID_1, ChatRoom.ParticipantInfo.builder()
+                                    .unreadCount(0)
+                                    .lastReadAt(LocalDateTime.now())
+                                    .build()
+                    ))
+                    .updatedAt(LocalDateTime.now())
+                    .build();
+
+            when(chatRoomRepository.findByRoomId(ROOM_ID))
+                    .thenReturn(Optional.of(chatRoom));
+
+            // When & Then: ChatException이 throw되는지 확인
+            assertThrows(ChatException.class,
+                    () -> messageService.findOpponentLastReadTime(USER_ID_1, ROOM_ID),
+                    "상대 참여자가 없으면 ChatException을 throw해야 함"
+            );
+        }
+    }
 }

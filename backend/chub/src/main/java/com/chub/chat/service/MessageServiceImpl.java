@@ -93,6 +93,25 @@ public class MessageServiceImpl implements MessageService {
         notifyMessageReceipt(roomId, userId, lastReadAt);
     }
 
+    @Override
+    public OpponentLastReadResponse findOpponentLastReadTime(Long userId, String roomId) {
+        Optional<ChatRoom> byRoomId = chatRoomRepository.findByRoomId(roomId);
+        if (byRoomId.isEmpty()) {
+            throw ChatException.chatRoomNotFound();
+        }
+
+        Map<Long, ChatRoom.ParticipantInfo> participants = byRoomId.get().getParticipants();
+
+        Long opponentId = participants.keySet().stream()
+                .filter(id -> !id.equals(userId))
+                .findFirst()
+                .orElseThrow(ChatException::chatRoomNotFound);
+
+        ChatRoom.ParticipantInfo opponentInfo = participants.get(opponentId);
+
+        return OpponentLastReadResponse.of(roomId, opponentInfo.getLastReadAt());
+    }
+
     private void notifyMessageReceipt(String roomId, Long readerId, LocalDateTime lastReadAt) {
         ReadReceiptResponse response = ReadReceiptResponse.of(readerId, lastReadAt);
         webSocketHelper.broadcastMessage(ROOM_DESTINATION + roomId, READ_RECEIPT, response);
