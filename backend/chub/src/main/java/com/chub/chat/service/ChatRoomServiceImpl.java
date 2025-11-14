@@ -9,14 +9,13 @@ import com.chub.exception.chat.ChatException;
 import com.chub.exception.user.UserException;
 import com.chub.repository.mongo.ChatRoomRepository;
 import com.chub.repository.UserRepository;
+import com.chub.repository.mongo.MessageRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.time.LocalDateTime;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -27,6 +26,9 @@ public class ChatRoomServiceImpl implements ChatRoomService {
 
     @Autowired
     private ChatRoomRepository chatRoomRepository;
+
+    @Autowired
+    private MessageRepository messageRepository;
 
     @Autowired
     private UserRepository userRepository;
@@ -59,23 +61,39 @@ public class ChatRoomServiceImpl implements ChatRoomService {
         if (optionalChatRooms.isEmpty()) {
             return ChatRoomListResponse.from(List.of(), userId, Map.of());
         }
+        List<ChatRoom> chatRooms = countUnreadMessages(
+                List.copyOf(optionalChatRooms.get()), userId);
 
-        List<ChatRoom> chatRooms = optionalChatRooms.get();
-
-        Set<Long> opponentIds
-                = chatRooms.stream()
-                .flatMap(room -> room.getParticipantIds().stream())
-                .filter(id -> !id.equals(userId))
-                .collect(Collectors.toSet());
-
-
-        Map<Long, User> opponentMap =
-                userRepository.findAllById(opponentIds)
-                        .stream()
-                        .collect(Collectors
-                                .toMap(User::getId, Function.identity()));
+        Set<Long> opponentIds = extractUserIdsFromChatRooms(chatRooms, userId);
+        Map<Long, User> opponentMap = createUserInfoMap(opponentIds);
 
         return ChatRoomListResponse.from(chatRooms, userId, opponentMap);
+    }
+
+    private int countAndUpdateUnread(ChatRoom chatRoom, Long userId) {
+        LocalDateTime messageUpdatedAt = chatRoom.getUpdatedAt();
+        LocalDateTime lastReadAt = chatRoom.getParticipants().get(userId).getLastReadAt();
+        LocalDateTime countedAt = chatRoom.getParticipants().get(userId).getCountedAt();
+
+        if (messageUpdatedAt.isBefore(lastReadAt) || messageUpdatedAt.isBefore(countedAt)) {
+            Integer unreadCount = chatRoom.getParticipants().get(userId).getUnreadCount();
+            return Objects.requireNonNullElse(unreadCount, 0);
+        }
+
+        String roomId = chatRoom.getRoomId();
+
+        int unreadAmount =
+                messageRepository.countByRoomIdAndCreatedAtGreaterThan(roomId, lastReadAt);
+        chatRoomRepository.updateUnreadCount(roomId, userId, unreadAmount, LocalDateTime.now());
+        return unreadAmount;
+    }
+
+    private List<ChatRoom> countUnreadMessages(List<ChatRoom> chatRooms, Long userId) {
+         return chatRooms.stream().map(chatRoom -> {
+            int unread = countAndUpdateUnread(chatRoom, userId);
+            chatRoom.getParticipants().get(userId).setUnreadCount(unread);
+            return chatRoom;
+        }).toList();
     }
 
     @Override
@@ -89,6 +107,20 @@ public class ChatRoomServiceImpl implements ChatRoomService {
         return byRoomId.get().getParticipantIds().stream()
                 .filter(participantId -> !participantId.equals(senderId))
                 .toList();
+    }
+
+    private Map<Long, User> createUserInfoMap(Set<Long> opponentIds) {
+        return userRepository.findAllById(opponentIds)
+                .stream()
+                .collect(Collectors
+                        .toMap(User::getId, Function.identity()));
+    }
+
+    private Set<Long> extractUserIdsFromChatRooms(List<ChatRoom> chatRooms, Long userId) {
+        return chatRooms.stream()
+                .flatMap(room -> room.getParticipantIds().stream())
+                .filter(id -> !id.equals(userId))
+                .collect(Collectors.toSet());
     }
 
     private ChatRoom generateNewChatRoom(Long userId, Long opponent) {
@@ -112,7 +144,7 @@ public class ChatRoomServiceImpl implements ChatRoomService {
     private ChatRoom.ParticipantInfo generateParticipantInfo() {
         return ChatRoom.ParticipantInfo.builder()
                 .unreadCount(ZERO)
-                .lastReadMessageId(null)
+                .lastReadAt(null)
                 .build();
 
     }

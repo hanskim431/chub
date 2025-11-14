@@ -8,6 +8,7 @@ import com.chub.exception.chat.ChatException;
 import com.chub.exception.user.UserException;
 import com.chub.repository.UserRepository;
 import com.chub.repository.mongo.ChatRoomRepository;
+import com.chub.repository.mongo.MessageRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -35,6 +36,9 @@ class ChatRoomServiceImplTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private MessageRepository messageRepository;
 
     @InjectMocks
     private ChatRoomServiceImpl chatRoomService;
@@ -132,9 +136,16 @@ class ChatRoomServiceImplTest {
 
         User opponent1;
         User opponent2;
+        ChatRoom.ParticipantInfo dummyParticipantInfo;
 
         @BeforeEach
         void setup() {
+            dummyParticipantInfo = ChatRoom.ParticipantInfo.builder()
+                    .lastReadAt(LocalDateTime.now())
+                    .countedAt(LocalDateTime.now())
+                    .unreadCount(0)
+                    .build();
+
             opponent1 = User.builder().sub("opponent1").username("opponent1").build();
             ReflectionTestUtils.setField(opponent1, "id", opponentId1);
 
@@ -161,12 +172,14 @@ class ChatRoomServiceImplTest {
             LocalDateTime now = LocalDateTime.now();
             ChatRoom room1 = ChatRoom.builder()
                     .roomId("room_1_2")
+                    .participants(Map.of(1L, dummyParticipantInfo))
                     .participantIds(List.of(userId, opponentId1))
                     .updatedAt(now.minusHours(2))
                     .build();
 
             ChatRoom room2 = ChatRoom.builder()
                     .roomId("room_1_3")
+                    .participants(Map.of(1L, dummyParticipantInfo))
                     .participantIds(List.of(userId, opponentId2))
                     .updatedAt(now)
                     .build();
@@ -189,6 +202,7 @@ class ChatRoomServiceImplTest {
         void shouldMapOpponentInfo_Correctly() {
             ChatRoom room = ChatRoom.builder()
                     .roomId("room_1_2")
+                    .participants(Map.of(1L, dummyParticipantInfo))
                     .participantIds(List.of(userId, opponentId1))
                     .updatedAt(LocalDateTime.now())
                     .build();
@@ -213,12 +227,14 @@ class ChatRoomServiceImplTest {
             LocalDateTime now = LocalDateTime.now();
             ChatRoom room1 = ChatRoom.builder()
                     .roomId("room_1_2")
+                    .participants(Map.of(1L, dummyParticipantInfo))
                     .participantIds(List.of(userId, opponentId1))
                     .updatedAt(now)
                     .build();
 
             ChatRoom room2 = ChatRoom.builder()
                     .roomId("room_1_3")
+                    .participants(Map.of(1L, dummyParticipantInfo))
                     .participantIds(List.of(userId, opponentId2))
                     .updatedAt(now.minusHours(1))
                     .build();
@@ -243,10 +259,17 @@ class ChatRoomServiceImplTest {
                     .roomId("room_1_2")
                     .participantIds(List.of(userId, opponentId1))
                     .participants(Map.of(
-                            userId, ChatRoom.ParticipantInfo.builder().unreadCount(3).build(),
-                            opponentId1, ChatRoom.ParticipantInfo.builder().unreadCount(0).build()
+                            userId,
+                            ChatRoom.ParticipantInfo.builder()
+                                    .lastReadAt(LocalDateTime.now())
+                                    .countedAt(LocalDateTime.now())
+                                    .unreadCount(3).build(),
+                            opponentId1, ChatRoom.ParticipantInfo.builder()
+                                    .lastReadAt(LocalDateTime.now())
+                                    .countedAt(LocalDateTime.now())
+                                    .unreadCount(0).build()
                     ))
-                    .updatedAt(LocalDateTime.now())
+                    .updatedAt(LocalDateTime.now().minusHours(1))
                     .build();
 
             when(chatRoomRepository.findByParticipantIdsContainingOrderByUpdatedAtDesc(userId))
@@ -267,8 +290,11 @@ class ChatRoomServiceImplTest {
             ChatRoom room = ChatRoom.builder()
                     .roomId("room_1_2")
                     .participantIds(List.of(userId, opponentId1))
-                    .participants(new HashMap<>())
-                    .updatedAt(LocalDateTime.now())
+                    .participants(Map.of(1L, ChatRoom.ParticipantInfo.builder()
+                            .lastReadAt(LocalDateTime.now())
+                            .countedAt(LocalDateTime.now())
+                            .build()))
+                    .updatedAt(LocalDateTime.now().minusHours(1))
                     .build();
 
             when(chatRoomRepository.findByParticipantIdsContainingOrderByUpdatedAtDesc(userId))
@@ -321,6 +347,214 @@ class ChatRoomServiceImplTest {
                     () -> chatRoomService.getParticipantsByRoomIdsExcludeSender("Not-Exist", -1L),
                     "채팅방을 찾을 수 없습니다."
             );
+        }
+    }
+
+    @Nested
+    @DisplayName("채팅방 안읽은 메시지 개수 조회 로직 테스트")
+    class GetUnreadMessageAmountTest {
+
+        Long userId1 = 1L;
+        Long userId2 = 2L;
+        String roomId = "1:2";
+        LocalDateTime now = LocalDateTime.now();
+
+        @BeforeEach
+        void beforeEach() {
+            User opponent = User.builder().sub("2").username("2").build();
+            ReflectionTestUtils.setField(opponent, "id", userId2);
+            lenient().when(userRepository.findAllById(any()))
+                    .thenReturn(List.of(opponent));
+        }
+
+        @Test
+        @DisplayName("새 메시지가 읽은 시간과 카운트 시간보다 미래일 경우 다시 카운트한다")
+        void shouldCount_WhenNewMessageUpdateTimeAfterLastReadTimeAndCountTime() {
+            // Given
+            ChatRoom room = ChatRoom.builder()
+                    .roomId(roomId)
+                    .participantIds(List.of(userId1, userId2))
+                    .participants(Map.of(
+                            userId1, ChatRoom.ParticipantInfo.builder()
+                                    .unreadCount(0)
+                                    .lastReadAt(now.minusHours(2))
+                                    .countedAt(now.minusHours(1))
+                                    .build(),
+                            userId2, ChatRoom.ParticipantInfo.builder().build()
+                    ))
+                    .updatedAt(now)  // 새 메시지가 방금 온 상황
+                    .build();
+
+            when(chatRoomRepository.findByParticipantIdsContainingOrderByUpdatedAtDesc(userId1))
+                    .thenReturn(Optional.of(List.of(room)));
+            when(messageRepository.countByRoomIdAndCreatedAtGreaterThan(roomId, now.minusHours(2)))
+                    .thenReturn(3);
+
+            // When
+            ChatRoomListResponse response = chatRoomService.findAllChatRoom(userId1);
+
+            // Then
+            assertNotNull(response);
+            assertEquals(1, response.getRooms().size());
+            assertEquals(3, response.getRooms().getFirst().getUnreadCount());
+            verify(chatRoomRepository, times(1))
+                    .updateUnreadCount(eq(roomId), eq(userId1), eq(3), any(LocalDateTime.class));
+        }
+
+        @Test
+        @DisplayName("새 메시지가 읽은 시간보다 이전일 경우 카운트하지 않는다")
+        void shouldNotCount_WhenNewMessageUpdateTimeBeforeLastReadTime() {
+            // Given
+            ChatRoom room = ChatRoom.builder()
+                    .roomId(roomId)
+                    .participantIds(List.of(userId1, userId2))
+                    .participants(Map.of(
+                            userId1, ChatRoom.ParticipantInfo.builder()
+                                    .unreadCount(0)
+                                    .lastReadAt(now)  // 읽은 시간이 이미 최신
+                                    .countedAt(now.minusMinutes(30))
+                                    .build(),
+                            userId2, ChatRoom.ParticipantInfo.builder().build()
+                    ))
+                    .updatedAt(now.minusHours(1))  // 오래된 메시지
+                    .build();
+
+            when(chatRoomRepository.findByParticipantIdsContainingOrderByUpdatedAtDesc(userId1))
+                    .thenReturn(Optional.of(List.of(room)));
+
+            // When
+            ChatRoomListResponse response = chatRoomService.findAllChatRoom(userId1);
+
+            // Then
+            assertNotNull(response);
+            assertEquals(1, response.getRooms().size());
+            verify(messageRepository, never()).countByRoomIdAndCreatedAtGreaterThan(anyString(), any());
+            verify(chatRoomRepository, never()).updateUnreadCount(anyString(), anyLong(), anyInt(), any());
+        }
+
+        @Test
+        @DisplayName("새 메시지가 카운트 시간보다 이전일 경우 카운트하지 않는다")
+        void shouldNotCount_WhenNewMessageUpdateTimeBeforeCountedTime() {
+            // Given
+            ChatRoom room = ChatRoom.builder()
+                    .roomId(roomId)
+                    .participantIds(List.of(userId1, userId2))
+                    .participants(Map.of(
+                            userId1, ChatRoom.ParticipantInfo.builder()
+                                    .unreadCount(0)
+                                    .lastReadAt(now.minusHours(3))
+                                    .countedAt(now)  // 최근 카운트함
+                                    .build(),
+                            userId2, ChatRoom.ParticipantInfo.builder().build()
+                    ))
+                    .updatedAt(now.minusMinutes(30))  // 카운트한 이후에 메시지 없음
+                    .build();
+
+            when(chatRoomRepository.findByParticipantIdsContainingOrderByUpdatedAtDesc(userId1))
+                    .thenReturn(Optional.of(List.of(room)));
+
+            // When
+            ChatRoomListResponse response = chatRoomService.findAllChatRoom(userId1);
+
+            // Then
+            assertNotNull(response);
+            assertEquals(1, response.getRooms().size());
+            verify(messageRepository, never()).countByRoomIdAndCreatedAtGreaterThan(anyString(), any());
+            verify(chatRoomRepository, never()).updateUnreadCount(anyString(), anyLong(), anyInt(), any());
+        }
+
+        @Test
+        @DisplayName("여러 채팅방의 안읽은 메시지를 모두 카운트한다")
+        void shouldCountUnread_ForMultipleChatRooms() {
+            // Given
+            Long userId3 = 3L;
+            String roomId2 = "1:3";
+
+            ChatRoom room1 = ChatRoom.builder()
+                    .roomId(roomId)
+                    .participantIds(List.of(userId1, userId2))
+                    .participants(Map.of(
+                            userId1, ChatRoom.ParticipantInfo.builder()
+                                    .unreadCount(0)
+                                    .lastReadAt(now.minusHours(2))
+                                    .countedAt(now.minusHours(1))
+                                    .build(),
+                            userId2, ChatRoom.ParticipantInfo.builder().build()
+                    ))
+                    .updatedAt(now)
+                    .build();
+
+            ChatRoom room2 = ChatRoom.builder()
+                    .roomId(roomId2)
+                    .participantIds(List.of(userId1, userId3))
+                    .participants(Map.of(
+                            userId1, ChatRoom.ParticipantInfo.builder()
+                                    .unreadCount(0)
+                                    .lastReadAt(now.minusHours(1))
+                                    .countedAt(now.minusMinutes(30))
+                                    .build(),
+                            userId3, ChatRoom.ParticipantInfo.builder().build()
+                    ))
+                    .updatedAt(now)
+                    .build();
+
+            when(chatRoomRepository.findByParticipantIdsContainingOrderByUpdatedAtDesc(userId1))
+                    .thenReturn(Optional.of(List.of(room1, room2)));
+            when(messageRepository.countByRoomIdAndCreatedAtGreaterThan(roomId, now.minusHours(2)))
+                    .thenReturn(3);
+            when(messageRepository.countByRoomIdAndCreatedAtGreaterThan(roomId2, now.minusHours(1)))
+                    .thenReturn(5);
+
+            User user2 = User.builder().sub("2").username("2").build();
+            ReflectionTestUtils.setField(user2, "id", 2L);
+            User user3 = User.builder().sub("3").username("3").build();
+            ReflectionTestUtils.setField(user3, "id", 3L);
+
+            when(userRepository.findAllById(Set.of(userId2, userId3)))
+                    .thenReturn(List.of(
+                            user2, user3
+                    ));
+
+            // When
+            ChatRoomListResponse response = chatRoomService.findAllChatRoom(userId1);
+
+            // Then
+            assertNotNull(response);
+            assertEquals(2, response.getRooms().size());
+            assertEquals(3, response.getRooms().get(0).getUnreadCount());
+            assertEquals(5, response.getRooms().get(1).getUnreadCount());
+            verify(chatRoomRepository, times(2)).updateUnreadCount(anyString(), eq(userId1), anyInt(), any());
+        }
+
+        @Test
+        @DisplayName("새 메시지가 없을 경우 안읽은 메시지 개수는 0이다")
+        void shouldReturnZeroUnread_WhenNoNewMessages() {
+            // Given
+            ChatRoom room = ChatRoom.builder()
+                    .roomId(roomId)
+                    .participantIds(List.of(userId1, userId2))
+                    .participants(Map.of(
+                            userId1, ChatRoom.ParticipantInfo.builder()
+                                    .unreadCount(0)
+                                    .lastReadAt(now.minusHours(2))
+                                    .countedAt(now.minusHours(1))
+                                    .build(),
+                            userId2, ChatRoom.ParticipantInfo.builder().build()
+                    ))
+                    .updatedAt(now.minusHours(3))  // 오래된 업데이트
+                    .build();
+
+            when(chatRoomRepository.findByParticipantIdsContainingOrderByUpdatedAtDesc(userId1))
+                    .thenReturn(Optional.of(List.of(room)));
+
+            // When
+            ChatRoomListResponse response = chatRoomService.findAllChatRoom(userId1);
+
+            // Then
+            assertNotNull(response);
+            assertEquals(1, response.getRooms().size());
+            assertEquals(0, response.getRooms().getFirst().getUnreadCount());
+            verify(messageRepository, never()).countByRoomIdAndCreatedAtGreaterThan(anyString(), any());
         }
     }
 }

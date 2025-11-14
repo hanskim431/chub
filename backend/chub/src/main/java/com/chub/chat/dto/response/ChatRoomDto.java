@@ -27,12 +27,12 @@ public class ChatRoomDto {
         private LocalDateTime timestamp;
     }
 
-    static ChatRoomDto from(ChatRoom chatRoom, Long userId, User opponent) {
+    static ChatRoomDto from(ChatRoom chatRoom, Long userId, User opponent, int unreadCount) {
         return ChatRoomDto.builder()
                 .roomId(chatRoom.getRoomId())
                 .opponent(mapOpponentDto(opponent))
                 .lastMessage(mapLastMessageDto(chatRoom))
-                .unreadCount(countUnreadCount(chatRoom, userId))
+                .unreadCount(unreadCount)
                 .updatedAt(chatRoom.getUpdatedAt())
                 .build();
     }
@@ -53,6 +53,7 @@ public class ChatRoomDto {
                 .build();
     }
 
+    @Deprecated
     private static int countUnreadCount(ChatRoom chatRoom, Long userId) {
         ChatRoom.ParticipantInfo participantInfo = chatRoom.getParticipants().get(userId);
         return participantInfo != null && participantInfo.getUnreadCount() != null ?

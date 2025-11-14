@@ -49,7 +49,7 @@ public class ChatRoom {
 
     @LastModifiedDate
     @Field("updatedAt")
-    private LocalDateTime updatedAt;
+    private LocalDateTime updatedAt; // 새 메시지가 올라온 시간
 
     @Data
     @NoArgsConstructor
@@ -60,7 +60,10 @@ public class ChatRoom {
         @Field("unreadCount")
         private Integer unreadCount;
 
-        @Field("lastReadMessageId")
-        private ObjectId lastReadMessageId;
+        @Field("lastReadAt")
+        private LocalDateTime lastReadAt;
+
+        @Field("countedAt")
+        private LocalDateTime countedAt;
     }
 }
