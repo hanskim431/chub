@@ -3,6 +3,7 @@ import MyPage from "@pages/myPage/page";
 import DashboardPage from "@pages/dashboardPage/page";
 import InterviewRecordPage from "@pages/interviewRecordPage/page";
 import InterviewerDetailPage from "@pages/interviewerDetailPage/page";
+import InterviewRoomPage from "@pages/interviewRoomPage/page";
 
 const protectedRoutes: readonly Route[] = [
     { path: "/dashboard", element: <DashboardPage />, label: "dashboard-page" },
@@ -16,6 +17,11 @@ const protectedRoutes: readonly Route[] = [
         path: "/interviewers/:id",
         element: <InterviewerDetailPage />,
         label: "interviewer-detail-page",
+    },
+    {
+        path: "/interviews/room/:roomID",
+        element: <InterviewRoomPage />,
+        label: "interview-room-page",
     },
 ];
 

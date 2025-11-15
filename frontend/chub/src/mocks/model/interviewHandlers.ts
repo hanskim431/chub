@@ -40,6 +40,38 @@ const interviewer: Interviewer[] = [
     },
 ];
 
+// 면접 세션 저장소 (Mock용)
+const interviewSessions: Record<
+    number,
+    {
+        id: number;
+        roomID: number;
+        requestId: number;
+        interviewer: {
+            id: number;
+            name: string;
+            avatar: string;
+            field: string;
+        };
+        interviewee: {
+            id: number;
+            name: string;
+            avatar: string;
+        };
+        questions: Array<{
+            id: number;
+            question: string;
+            category?: string;
+        }>;
+        answers: Array<{
+            questionId: number;
+            answer: string;
+        }>;
+        startedAt?: string;
+        completedAt?: string;
+    }
+> = {};
+
 export const interviewHandlers = [
     // 인터뷰 요청
     http.post(
@@ -231,6 +263,235 @@ export const interviewHandlers = [
                         },
                     ],
                 },
+                timestamp: new Date().toISOString(),
+            });
+        }
+    ),
+
+    // 면접 세션 조회
+    http.get(
+        `${import.meta.env.VITE_API_URL}/api/interviews/rooms/:roomID`,
+        async ({ params }) => {
+            const roomID = Number(params.roomID);
+            const interviewerIndex = (roomID - 1000) % interviewer.length;
+            const iv = interviewer[interviewerIndex];
+
+            const questions = [
+                {
+                    id: 1,
+                    question: "자기소개를 해주세요.",
+                    category: "기본 질문",
+                },
+                {
+                    id: 2,
+                    question: "지원한 직무에 대한 본인의 강점은 무엇인가요?",
+                    category: "직무 관련",
+                },
+                {
+                    id: 3,
+                    question:
+                        "팀 프로젝트에서 갈등이 발생했을 때 어떻게 해결하셨나요?",
+                    category: "협업",
+                },
+                {
+                    id: 4,
+                    question:
+                        "가장 어려웠던 기술적 문제를 어떻게 해결하셨나요?",
+                    category: "기술",
+                },
+                {
+                    id: 5,
+                    question: "5년 후 자신의 모습은 어떨 것 같나요?",
+                    category: "비전",
+                },
+            ];
+
+            // 기존 세션이 있으면 반환, 없으면 새로 생성
+            if (interviewSessions[roomID]) {
+                return HttpResponse.json({
+                    success: true,
+                    status: 200,
+                    data: interviewSessions[roomID],
+                    timestamp: new Date().toISOString(),
+                });
+            }
+
+            const session = {
+                id: roomID,
+                roomID: roomID,
+                requestId: parseInt(iv.id),
+                interviewer: {
+                    id: parseInt(iv.id),
+                    name: iv.name,
+                    avatar: iv.avatar,
+                    field: iv.field,
+                },
+                interviewee: {
+                    id: 1,
+                    name: "이찬",
+                    avatar: "/logo.png",
+                },
+                questions,
+                answers: [],
+            };
+
+            interviewSessions[roomID] = session;
+
+            return HttpResponse.json({
+                success: true,
+                status: 200,
+                data: session,
+                timestamp: new Date().toISOString(),
+            });
+        }
+    ),
+
+    // 면접 시작
+    http.post(
+        `${import.meta.env.VITE_API_URL}/api/interviews/rooms/:roomID/start`,
+        async ({ params }) => {
+            const roomID = Number(params.roomID);
+
+            // 세션이 없으면 먼저 생성
+            if (!interviewSessions[roomID]) {
+                const interviewerIndex = (roomID - 1000) % interviewer.length;
+                const iv = interviewer[interviewerIndex];
+
+                interviewSessions[roomID] = {
+                    id: roomID,
+                    roomID: roomID,
+                    requestId: parseInt(iv.id),
+                    interviewer: {
+                        id: parseInt(iv.id),
+                        name: iv.name,
+                        avatar: iv.avatar,
+                        field: iv.field,
+                    },
+                    interviewee: {
+                        id: 1,
+                        name: "이찬",
+                        avatar: "/logo.png",
+                    },
+                    questions: [
+                        {
+                            id: 1,
+                            question: "자기소개를 해주세요.",
+                            category: "기본 질문",
+                        },
+                        {
+                            id: 2,
+                            question:
+                                "지원한 직무에 대한 본인의 강점은 무엇인가요?",
+                            category: "직무 관련",
+                        },
+                        {
+                            id: 3,
+                            question:
+                                "팀 프로젝트에서 갈등이 발생했을 때 어떻게 해결하셨나요?",
+                            category: "협업",
+                        },
+                        {
+                            id: 4,
+                            question:
+                                "가장 어려웠던 기술적 문제를 어떻게 해결하셨나요?",
+                            category: "기술",
+                        },
+                        {
+                            id: 5,
+                            question: "5년 후 자신의 모습은 어떨 것 같나요?",
+                            category: "비전",
+                        },
+                    ],
+                    answers: [],
+                };
+            }
+
+            // 면접 시작 시간 설정
+            interviewSessions[roomID].startedAt = new Date().toISOString();
+
+            return HttpResponse.json({
+                success: true,
+                status: 200,
+                data: interviewSessions[roomID],
+                timestamp: new Date().toISOString(),
+            });
+        }
+    ),
+
+    // 답변 제출
+    http.post(
+        `${import.meta.env.VITE_API_URL}/api/interviews/rooms/:roomID/answer`,
+        async ({ params, request }) => {
+            const roomID = Number(params.roomID);
+            const body = (await request.json()) as {
+                questionId: number;
+                answer: string;
+            };
+
+            const session = interviewSessions[roomID];
+
+            if (!session) {
+                return HttpResponse.json(
+                    {
+                        success: false,
+                        status: 404,
+                        errorCode: "NOT_FOUND",
+                        errorMessage: "면접 세션을 찾을 수 없습니다.",
+                        timestamp: new Date().toISOString(),
+                    },
+                    { status: 404 }
+                );
+            }
+
+            // 기존 답변 업데이트 또는 새로 추가
+            const existingAnswerIndex = session.answers.findIndex(
+                (a) => a.questionId === body.questionId
+            );
+
+            if (existingAnswerIndex >= 0) {
+                session.answers[existingAnswerIndex].answer = body.answer;
+            } else {
+                session.answers.push({
+                    questionId: body.questionId,
+                    answer: body.answer,
+                });
+            }
+
+            return HttpResponse.json({
+                success: true,
+                status: 200,
+                timestamp: new Date().toISOString(),
+            });
+        }
+    ),
+
+    // 면접 완료
+    http.post(
+        `${import.meta.env.VITE_API_URL}/api/interviews/rooms/:roomID/complete`,
+        async ({ params }) => {
+            const roomID = Number(params.roomID);
+            const session = interviewSessions[roomID];
+
+            if (!session) {
+                return HttpResponse.json(
+                    {
+                        success: false,
+                        status: 404,
+                        errorCode: "NOT_FOUND",
+                        errorMessage: "면접 세션을 찾을 수 없습니다.",
+                        timestamp: new Date().toISOString(),
+                    },
+                    { status: 404 }
+                );
+            }
+
+            // 면접 완료 시간 설정
+            session.completedAt = new Date().toISOString();
+
+            return HttpResponse.json({
+                success: true,
+                status: 200,
+                data: session,
                 timestamp: new Date().toISOString(),
             });
         }

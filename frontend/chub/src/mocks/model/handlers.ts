@@ -3,6 +3,7 @@ import { interviewHandlers } from "@/mocks/model/interviewHandlers";
 import { dashboardHandlers } from "@/mocks/model/dashboardHandlers";
 import { recruiterHandlers } from "@/mocks/model/recruiterHandler";
 import { resumeHandlers } from "@/mocks/model/resumeHandler";
+import { practiceHandlers } from "@/mocks/model/practiceHandlers";
 
 export const handlers = [
   ...userHandlers,
@@ -10,4 +11,5 @@ export const handlers = [
   ...interviewHandlers,
   ...recruiterHandlers,
   ...resumeHandlers,
+  ...practiceHandlers,
 ];
