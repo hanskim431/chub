@@ -1,6 +1,6 @@
-import { UserProfileSection } from "../ui/UserProfileSection";
-import { ResumeSection } from "../ui/ResumeSection";
-import { InterviewerProfileSection } from "../ui/InterviewerProfileSection";
+import { UserProfileSection } from "@/pages/myPage/ui/UserProfileSection";
+import { ResumeSection } from "@/pages/myPage/ui/ResumeSection";
+import { InterviewerProfileSection } from "@/pages/myPage/ui/InterviewerProfileSection";
 
 export default function MyPage() {
   return (

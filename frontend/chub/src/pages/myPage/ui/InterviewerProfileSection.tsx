@@ -8,8 +8,8 @@ import {
 import {
   saveInterviewerProfileActiveStatus,
   getInterviewerProfileActiveStatus,
-} from "../utils/localStorage";
-import { TagInput } from "./TagInput";
+} from "@/pages/myPage/utils/localStorage";
+import { TagInput } from "@/pages/myPage/ui/TagInput";
 import type { CreateInterviewerProfileRequest, UpdateInterviewerProfileRequest } from "@/entities/interviewer/model/types";
 
 export function InterviewerProfileSection() {

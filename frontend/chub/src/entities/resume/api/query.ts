@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getMyResume, uploadOrUpdateResume, deleteMyResume } from "./requests";
+import { getMyResume, uploadOrUpdateResume, deleteMyResume, getUserResume } from "@/entities/resume/api/requests";
 
 const THIRTY_MINUTES_IN_MS = 1000 * 60 * 30;
 
@@ -49,4 +49,19 @@ export function useDeleteResume() {
   });
 
   return { mutate, isPending, error, isSuccess };
+}
+
+/**
+ * 특정 사용자의 이력서 조회 hook
+ */
+export function useUserResume(userId: number | undefined) {
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["resume", "user", userId],
+    queryFn: () => getUserResume(userId!),
+    staleTime: THIRTY_MINUTES_IN_MS,
+    retry: false,
+    enabled: !!userId,
+  });
+
+  return { data, isLoading, error };
 }
