@@ -22,23 +22,6 @@ export const getMyResume =
     };
 
 /**
- * 내 이력서 목록 조회
- * GET /api/v2/profiles/resumes/list
- */
-export const getMyResumeList =
-    async (): Promise<ApiResponse<ResumeResponse> | null> => {
-        try {
-            const response = await api.get<ApiResponse<ResumeResponse>>(
-                "/api/v2/profiles/resumes/list"
-            );
-            return response.data;
-        } catch (error) {
-            console.warn("getMyResumeList API 호출 실패:", error);
-            return null;
-        }
-    };
-
-/**
  * 이력서 업로드 또는 수정
  * PUT /api/v2/profiles/resumes
  * @param file PDF 파일 (최대 10MB)

@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getMyResume, getMyResumeList, uploadOrUpdateResume, deleteMyResume, getUserResume } from "@/entities/resume/api/requests";
+import { getMyResume, uploadOrUpdateResume, deleteMyResume, getUserResume } from "@/entities/resume/api/requests";
 
 const THIRTY_MINUTES_IN_MS = 1000 * 60 * 30;
 
@@ -18,20 +18,6 @@ export function useMyResume() {
 }
 
 /**
- * 내 이력서 목록 조회 hook
- */
-export function useMyResumeList() {
-  const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ["resume", "list"],
-    queryFn: getMyResumeList,
-    staleTime: THIRTY_MINUTES_IN_MS,
-    retry: false,
-  });
-
-  return { data, isLoading, error, refetch };
-}
-
-/**
  * 이력서 업로드/수정 hook
  */
 export function useUploadResume() {
@@ -42,7 +28,6 @@ export function useUploadResume() {
     onSuccess: () => {
       // 이력서 조회 쿼리 캐시 무효화하여 최신 데이터 다시 가져오기
       queryClient.invalidateQueries({ queryKey: ["resume", "me"] });
-      queryClient.invalidateQueries({ queryKey: ["resume", "list"] });
     },
   });
 
@@ -60,7 +45,6 @@ export function useDeleteResume() {
     onSuccess: () => {
       // 이력서 조회 쿼리 캐시 무효화
       queryClient.invalidateQueries({ queryKey: ["resume", "me"] });
-      queryClient.invalidateQueries({ queryKey: ["resume", "list"] });
     },
   });
 
