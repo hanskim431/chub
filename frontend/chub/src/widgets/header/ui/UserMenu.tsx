@@ -6,7 +6,7 @@ import { useMe } from "@/features/auth/api/me";
 function UserMenu() {
     const qc = useQueryClient();
     const { data, isLoading, error } = useMe();
-    const isAuthenticated = !isLoading && data?.success && data?.data && !error;
+    const isAuthenticated = !isLoading && !error && data?.success && data?.data;
     const nickname = data?.data?.name ?? "";
     const handleLogout = async () => {
         await post("/api/users/logout");

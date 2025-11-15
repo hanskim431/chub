@@ -6,8 +6,8 @@ import { useMe } from "@/features/auth/api/me";
 
 function HomePage() {
     const navigate = useNavigate();
-    const { data, isLoading } = useMe();
-    const isAuthenticated = !isLoading && data?.data;
+    const { data, isLoading, error } = useMe();
+    const isAuthenticated = !isLoading && !error && data?.success && data?.data;
 
     useEffect(() => {
         if (isAuthenticated) {
