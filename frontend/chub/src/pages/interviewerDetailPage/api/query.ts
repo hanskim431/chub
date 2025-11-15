@@ -1,6 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getInterviewerDetail } from "./requests";
-import { createInterviewRequest, type CreateInterviewRequestRequest } from "./requests";
+import { getInterviewerDetail, createInterviewRequest, type CreateInterviewRequestRequest } from "@/pages/interviewerDetailPage/api/requests";
 
 const THIRTY_MINUTES_IN_MS = 1000 * 60 * 30;
 

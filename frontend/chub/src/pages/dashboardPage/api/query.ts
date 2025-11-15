@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getDashboardStats } from "./requests";
+import { getDashboardStats } from "@/pages/dashboardPage/api/requests";
 
 const THIRTY_MINUTES_IN_MS = 1000 * 60 * 30;
 

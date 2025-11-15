@@ -1,5 +1,5 @@
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { useInterviewRecord } from "../api/query";
+import { useInterviewRecord } from "@/pages/interviewRecordPage/api/query";
 import Card from "@/shared/ui/Card";
 
 export default function InterviewRecordPage() {

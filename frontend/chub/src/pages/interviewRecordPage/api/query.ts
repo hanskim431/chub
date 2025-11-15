@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getInterviewRecord } from "./requests";
+import { getInterviewRecord } from "@/pages/interviewRecordPage/api/requests";
 
 const THIRTY_MINUTES_IN_MS = 1000 * 60 * 30;
 

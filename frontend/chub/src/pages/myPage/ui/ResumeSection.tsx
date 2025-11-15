@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useMyResume, useDeleteResume } from "@/entities/resume/api/query";
-import { ResumeUploadForm } from "./ResumeUploadForm";
-import { ResumePreviewModal } from "./ResumePreviewModal";
+import { ResumeUploadForm } from "@/pages/myPage/ui/ResumeUploadForm";
+import { ResumePreviewModal } from "@/pages/myPage/ui/ResumePreviewModal";
 import Card from "@/shared/ui/Card";
 
 export function ResumeSection() {

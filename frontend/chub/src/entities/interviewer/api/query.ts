@@ -3,7 +3,7 @@ import {
   getMyInterviewerProfile,
   createInterviewerProfile,
   updateInterviewerProfile,
-} from "./requests";
+} from "@/entities/interviewer/api/requests";
 
 const THIRTY_MINUTES_IN_MS = 1000 * 60 * 30;
 

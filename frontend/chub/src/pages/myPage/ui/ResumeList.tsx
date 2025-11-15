@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useMyResumeList } from "@/entities/resume/api/query";
-import { ResumePreviewModal } from "./ResumePreviewModal";
-import { ResumeUploadForm } from "./ResumeUploadForm";
+import { ResumePreviewModal } from "@/pages/myPage/ui/ResumePreviewModal";
+import { ResumeUploadForm } from "@/pages/myPage/ui/ResumeUploadForm";
 import Card from "@/shared/ui/Card";
 import type { ResumeItem } from "@/entities/resume/model/types";
 

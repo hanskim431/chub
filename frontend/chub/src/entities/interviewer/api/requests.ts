@@ -4,7 +4,7 @@ import type {
   InterviewerProfileResponse,
   CreateInterviewerProfileRequest,
   UpdateInterviewerProfileRequest,
-} from "../model/types";
+} from "@/entities/interviewer/model/types";
 
 /**
  * 내 면접관 프로필 조회

@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useInterviewerDetail, useCreateInterviewRequest } from "../api/query";
+import { useInterviewerDetail, useCreateInterviewRequest } from "@/pages/interviewerDetailPage/api/query";
 import Card from "@/shared/ui/Card";
 import Pill from "@/shared/ui/Pill";
 import Modal from "@/shared/ui/Modal";

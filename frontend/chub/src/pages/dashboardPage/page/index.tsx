@@ -1,6 +1,6 @@
-import { useDashboardStats } from "../api/query";
+import { useDashboardStats } from "@/pages/dashboardPage/api/query";
 import Card from "@/shared/ui/Card";
-import { InterviewRequestList } from "../ui/InterviewRequestList";
+import { InterviewRequestList } from "@/pages/dashboardPage/ui/InterviewRequestList";
 
 export default function DashboardPage() {
     const { data, isLoading } = useDashboardStats();

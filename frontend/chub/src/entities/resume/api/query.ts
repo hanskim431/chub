@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getMyResume, getMyResumeList, uploadOrUpdateResume, deleteMyResume, getUserResume } from "./requests";
+import { getMyResume, getMyResumeList, uploadOrUpdateResume, deleteMyResume, getUserResume } from "@/entities/resume/api/requests";
 
 const THIRTY_MINUTES_IN_MS = 1000 * 60 * 30;
 

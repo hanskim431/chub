@@ -5,7 +5,7 @@ import {
     getScheduledInterviews,
     updateInterviewRequestStatus,
     type GetInterviewRequestsParams,
-} from "./interviewRequests";
+} from "@/pages/dashboardPage/api/interviewRequests";
 
 const THIRTY_MINUTES_IN_MS = 1000 * 60 * 30;
 
