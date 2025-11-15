@@ -7,8 +7,10 @@ export function useMe() {
   const { data, isLoading, error } = useQuery({
     queryKey: ["me"],
     queryFn: getMe,
-    staleTime: THIRTY_MINUTES_IN_MS,
-    refetchInterval: THIRTY_MINUTES_IN_MS,
+    staleTime: 0,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
     retry: false,
   });
   return { data, isLoading, error };
