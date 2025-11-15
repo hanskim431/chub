@@ -42,3 +42,27 @@ export const postLogout = async () => {
         return null;
     }
 };
+
+interface UpdateUserRequest {
+    name?: string;
+    email?: string;
+    bio?: string;
+    avatar?: string;
+}
+
+interface ApiResponse<T> {
+    success: boolean;
+    status: number;
+    data?: T;
+    errorCode?: string;
+    errorMessage?: string;
+    errorData?: unknown;
+    timestamp?: string;
+}
+
+export const updateUser = async (
+    data: UpdateUserRequest
+): Promise<ApiResponse<void>> => {
+    const response = await api.patch<ApiResponse<void>>("/api/users/me", data);
+    return response.data;
+};
