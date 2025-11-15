@@ -1,7 +1,7 @@
 import Card from "@/shared/ui/Card";
-import type { ScheduledInterview } from "../../api/interviewRequests";
-import { ResumeButton } from "./ResumeButton";
-import type { Role } from "../types";
+import type { ScheduledInterview } from "@/pages/dashboardPage/api/interviewRequests";
+import { ResumeButton } from "@/pages/dashboardPage/ui/components/ResumeButton";
+import type { Role } from "@/pages/dashboardPage/ui/types";
 
 interface ScheduledInterviewItemProps {
     interview: ScheduledInterview;
@@ -74,4 +74,3 @@ export function ScheduledInterviewItem({
         </Card>
     );
 }
-

@@ -1,11 +1,11 @@
 import { useState, useRef } from "react";
 import Card from "@/shared/ui/Card";
 import Modal from "@/shared/ui/Modal";
-import { useUpdateInterviewRequestStatus } from "../../api/interviewQuery";
-import type { InterviewRequest } from "../../api/interviewRequests";
-import { StatusBadge } from "./StatusBadge";
-import { ResumeButton } from "./ResumeButton";
-import type { Role } from "../types";
+import { useUpdateInterviewRequestStatus } from "@/pages/dashboardPage/api/interviewQuery";
+import type { InterviewRequest } from "@/pages/dashboardPage/api/interviewRequests";
+import { StatusBadge } from "@/pages/dashboardPage/ui/components/StatusBadge";
+import { ResumeButton } from "@/pages/dashboardPage/ui/components/ResumeButton";
+import type { Role } from "@/pages/dashboardPage/ui/types";
 
 interface InterviewRequestItemProps {
     request: InterviewRequest;

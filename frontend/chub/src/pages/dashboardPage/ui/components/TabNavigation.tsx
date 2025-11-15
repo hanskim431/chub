@@ -1,4 +1,4 @@
-import type { Tab, TabId } from "../types";
+import type { Tab, TabId } from "@/pages/dashboardPage/ui/types";
 
 interface TabNavigationProps {
     tabs: Tab[];
@@ -29,4 +29,3 @@ export function TabNavigation({
         </div>
     );
 }
-

@@ -1,8 +1,8 @@
-import { useInterviewRequests } from "../../api/interviewQuery";
-import { CompletedInterviewRequestItem } from "../components/CompletedInterviewRequestItem";
-import { LoadingState } from "../components/LoadingState";
-import { EmptyState } from "../components/EmptyState";
-import type { Role, TabId } from "../types";
+import { useInterviewRequests } from "@/pages/dashboardPage/api/interviewQuery";
+import { CompletedInterviewRequestItem } from "@/pages/dashboardPage/ui/components/CompletedInterviewRequestItem";
+import { LoadingState } from "@/pages/dashboardPage/ui/components/LoadingState";
+import { EmptyState } from "@/pages/dashboardPage/ui/components/EmptyState";
+import type { Role, TabId } from "@/pages/dashboardPage/ui/types";
 
 interface CompletedInterviewsProps {
     role: Role;

@@ -1,4 +1,4 @@
-import type { Role } from "../types";
+import type { Role } from "@/pages/dashboardPage/ui/types";
 
 interface RoleSwitcherProps {
     role: Role;
@@ -31,4 +31,3 @@ export function RoleSwitcher({ role, onRoleChange }: RoleSwitcherProps) {
         </div>
     );
 }
-

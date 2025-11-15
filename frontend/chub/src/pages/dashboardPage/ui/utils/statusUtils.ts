@@ -1,4 +1,4 @@
-import type { InterviewRequestStatus } from "../../api/interviewRequests";
+import type { InterviewRequestStatus } from "@/pages/dashboardPage/api/interviewRequests";
 
 export const getStatusColor = (status: InterviewRequestStatus): string => {
     switch (status) {

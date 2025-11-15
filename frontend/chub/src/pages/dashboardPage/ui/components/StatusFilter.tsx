@@ -1,4 +1,4 @@
-import type { InterviewRequestStatus } from "../../api/interviewRequests";
+import type { InterviewRequestStatus } from "@/pages/dashboardPage/api/interviewRequests";
 
 interface StatusFilterProps {
     filters: { value: InterviewRequestStatus | undefined; label: string }[];
@@ -29,4 +29,3 @@ export function StatusFilter({
         </div>
     );
 }
-

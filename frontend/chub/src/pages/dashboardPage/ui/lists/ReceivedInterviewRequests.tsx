@@ -1,8 +1,8 @@
-import { useReceivedInterviewRequests } from "../../api/interviewQuery";
-import { InterviewRequestItem } from "../components/InterviewRequestItem";
-import { LoadingState } from "../components/LoadingState";
-import { EmptyState } from "../components/EmptyState";
-import type { Role } from "../types";
+import { useReceivedInterviewRequests } from "@/pages/dashboardPage/api/interviewQuery";
+import { InterviewRequestItem } from "@/pages/dashboardPage/ui/components/InterviewRequestItem";
+import { LoadingState } from "@/pages/dashboardPage/ui/components/LoadingState";
+import { EmptyState } from "@/pages/dashboardPage/ui/components/EmptyState";
+import type { Role } from "@/pages/dashboardPage/ui/types";
 
 interface ReceivedInterviewRequestsProps {
     role: Role;
@@ -35,4 +35,3 @@ export function ReceivedInterviewRequests({
         </div>
     );
 }
-

@@ -1,5 +1,9 @@
-import type { InterviewRequestStatus } from "../../api/interviewRequests";
-import { getStatusColor, getStatusTextColor, getStatusLabel } from "../utils/statusUtils";
+import type { InterviewRequestStatus } from "@/pages/dashboardPage/api/interviewRequests";
+import {
+    getStatusColor,
+    getStatusTextColor,
+    getStatusLabel,
+} from "@/pages/dashboardPage/ui/utils/statusUtils";
 
 interface StatusBadgeProps {
     status: InterviewRequestStatus;
@@ -22,4 +26,3 @@ export function StatusBadge({ status }: StatusBadgeProps) {
         </div>
     );
 }
-

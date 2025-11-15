@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import Card from "@/shared/ui/Card";
-import type { InterviewRequest } from "../../api/interviewRequests";
-import type { Role, TabId } from "../types";
+import type { InterviewRequest } from "@/pages/dashboardPage/api/interviewRequests";
+import type { Role, TabId } from "@/pages/dashboardPage/ui/types";
 
 interface CompletedInterviewRequestItemProps {
     request: InterviewRequest;
@@ -78,4 +78,3 @@ export function CompletedInterviewRequestItem({
         </div>
     );
 }
-

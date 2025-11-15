@@ -2,16 +2,16 @@ import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import Card from "@/shared/ui/Card";
 import { useMyInterviewerProfile } from "@/entities/interviewer/api/query";
-import type { InterviewRequestStatus } from "../api/interviewRequests";
-import { RoleSwitcher } from "./components/RoleSwitcher";
-import { TabNavigation } from "./components/TabNavigation";
-import { StatusFilter } from "./components/StatusFilter";
-import { SentInterviewRequests } from "./lists/SentInterviewRequests";
-import { ReceivedInterviewRequests } from "./lists/ReceivedInterviewRequests";
-import { ScheduledInterviews } from "./lists/ScheduledInterviews";
-import { CancelledInterviewRequests } from "./lists/CancelledInterviewRequests";
-import { CompletedInterviews } from "./lists/CompletedInterviews";
-import type { Role, TabId, Tab } from "./types";
+import type { InterviewRequestStatus } from "@/pages/dashboardPage/api/interviewRequests";
+import { RoleSwitcher } from "@/pages/dashboardPage/ui/components/RoleSwitcher";
+import { TabNavigation } from "@/pages/dashboardPage/ui/components/TabNavigation";
+import { StatusFilter } from "@/pages/dashboardPage/ui/components/StatusFilter";
+import { SentInterviewRequests } from "@/pages/dashboardPage/ui/lists/SentInterviewRequests";
+import { ReceivedInterviewRequests } from "@/pages/dashboardPage/ui/lists/ReceivedInterviewRequests";
+import { ScheduledInterviews } from "@/pages/dashboardPage/ui/lists/ScheduledInterviews";
+import { CancelledInterviewRequests } from "@/pages/dashboardPage/ui/lists/CancelledInterviewRequests";
+import { CompletedInterviews } from "@/pages/dashboardPage/ui/lists/CompletedInterviews";
+import type { Role, TabId, Tab } from "@/pages/dashboardPage/ui/types";
 
 const INTERVIEWEE_TABS: Tab[] = [
     { id: "sent", label: "보낸 요청" },

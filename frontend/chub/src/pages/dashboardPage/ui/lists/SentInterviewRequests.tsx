@@ -1,9 +1,9 @@
-import { useInterviewRequests } from "../../api/interviewQuery";
-import type { InterviewRequestStatus } from "../../api/interviewRequests";
-import { InterviewRequestItem } from "../components/InterviewRequestItem";
-import { LoadingState } from "../components/LoadingState";
-import { EmptyState } from "../components/EmptyState";
-import type { Role } from "../types";
+import { useInterviewRequests } from "@/pages/dashboardPage/api/interviewQuery";
+import type { InterviewRequestStatus } from "@/pages/dashboardPage/api/interviewRequests";
+import { InterviewRequestItem } from "@/pages/dashboardPage/ui/components/InterviewRequestItem";
+import { LoadingState } from "@/pages/dashboardPage/ui/components/LoadingState";
+import { EmptyState } from "@/pages/dashboardPage/ui/components/EmptyState";
+import type { Role } from "@/pages/dashboardPage/ui/types";
 
 interface SentInterviewRequestsProps {
     status?: InterviewRequestStatus;

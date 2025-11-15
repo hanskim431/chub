@@ -1,8 +1,8 @@
-import { useScheduledInterviews } from "../../api/interviewQuery";
-import { ScheduledInterviewItem } from "../components/ScheduledInterviewItem";
-import { LoadingState } from "../components/LoadingState";
-import { EmptyState } from "../components/EmptyState";
-import type { Role } from "../types";
+import { useScheduledInterviews } from "@/pages/dashboardPage/api/interviewQuery";
+import { ScheduledInterviewItem } from "@/pages/dashboardPage/ui/components/ScheduledInterviewItem";
+import { LoadingState } from "@/pages/dashboardPage/ui/components/LoadingState";
+import { EmptyState } from "@/pages/dashboardPage/ui/components/EmptyState";
+import type { Role } from "@/pages/dashboardPage/ui/types";
 
 interface ScheduledInterviewsProps {
     role: Role;
