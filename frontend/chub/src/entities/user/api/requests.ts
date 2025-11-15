@@ -1,13 +1,24 @@
 import { api } from "@/shared/api/api";
 
-export const getMe = async () => {
-  try {
-    const response = await api.get("/users/me");
-    return response.data;
-  } catch (error) {
-    console.warn("getMe API 호출 실패:", error);
-    return null;
-  }
+interface UserData {
+  id: number;
+  name: string;
+  avatar: string;
+}
+
+interface MeResponse {
+  success: boolean;
+  status: number;
+  data?: UserData;
+  errorCode?: string;
+  errorMessage?: string;
+  errorData?: unknown;
+  timestamp?: string;
+}
+
+export const getMe = async (): Promise<MeResponse> => {
+  const response = await api.get<MeResponse>("/users/me");
+  return response.data;
 };
 
 export const postGuestLogin = async () => {
