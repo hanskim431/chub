@@ -66,10 +66,7 @@ export function InterviewerProfileSection() {
             // 프로필 없을 때 사용자 정보로 초기화
             setFormData((prev) => ({
                 ...prev,
-                name:
-                    userData?.success && userData?.data?.name
-                        ? userData.data.name
-                        : "",
+                name: userData?.data?.name ?? "",
             }));
             setIsActive(false); // 프로필 없으면 비활성
         }

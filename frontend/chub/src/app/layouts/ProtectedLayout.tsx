@@ -6,7 +6,7 @@ import { useMe } from "@/features/auth/api/me";
 function ProtectedLayout() {
     const navigate = useNavigate();
     const { data, isLoading, error } = useMe();
-    const isAuthenticated = !isLoading && data?.data && !error;
+    const isAuthenticated = !isLoading && !error && data?.success && data?.data;
 
     useEffect(() => {
         if (!isLoading && !isAuthenticated) {

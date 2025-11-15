@@ -6,14 +6,6 @@ import { useMe } from "@/features/auth/api/me";
 function UserMenu() {
     const qc = useQueryClient();
     const { data, isLoading, error } = useMe();
-
-    // 디버깅용 로그
-    console.log("UserMenu - data:", data);
-    console.log("UserMenu - isLoading:", isLoading);
-    console.log("UserMenu - error:", error);
-    console.log("UserMenu - data?.success:", data?.success);
-    console.log("UserMenu - data?.data:", data?.data);
-
     const isAuthenticated = !isLoading && !error && data?.success && data?.data;
     const nickname = data?.data?.name ?? "";
     const handleLogout = async () => {

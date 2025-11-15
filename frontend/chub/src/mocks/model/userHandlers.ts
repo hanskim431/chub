@@ -12,6 +12,8 @@ export const userHandlers = [
           id: 0,
           name: "이찬",
           avatar: "/logo.png",
+          email: "test@example.com",
+          bio: "안녕하세요. 이찬입니다.",
         },
       });
     }
