@@ -19,7 +19,7 @@ interface MeResponse {
 }
 
 export const getMe = async (): Promise<MeResponse> => {
-    const response = await api.get<MeResponse>("/users/me");
+    const response = await api.get<MeResponse>("/api/users/me");
     return response.data;
 };
 
