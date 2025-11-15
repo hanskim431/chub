@@ -6,7 +6,20 @@ import { useMe } from "@/features/auth/api/me";
 function UserMenu() {
     const qc = useQueryClient();
     const { data, isLoading, error } = useMe();
+
+    // 디버깅 로그
+    console.log("=== UserMenu Debug ===");
+    console.log("isLoading:", isLoading);
+    console.log("error:", error);
+    console.log("data:", data);
+    console.log("data?.success:", data?.success);
+    console.log("data?.data:", data?.data);
+    console.log("data?.data?.name:", data?.data?.name);
+
     const isAuthenticated = !isLoading && !error && data?.success && data?.data;
+    console.log("isAuthenticated:", isAuthenticated);
+    console.log("=====================");
+
     const nickname = data?.data?.name ?? "";
     const handleLogout = async () => {
         await post("/api/users/logout");
