@@ -46,14 +46,14 @@ public class InterviewRequestServiceImpl implements InterviewRequestService {
                 .orElseThrow(UserException::userNotFound);
 
         // 면접관 프로필 조회
-        InterviewerProfile interviewerProfile = interviewerProfileRepository.findById(request.interviewerProfileId())
+        InterviewerProfile interviewerProfile = interviewerProfileRepository.findById(request.interviewerId())
                 .orElseThrow(InterviewerProfileException::notFound);
 
         // 중복 신청 체크 (PENDING 또는 APPROVED 상태 요청이 이미 존재하는지)
         Optional<InterviewRequest> existingRequest = interviewRequestRepository
                 .findByUserIdAndInterviewerProfileIdAndStatusIn(
                         userId,
-                        request.interviewerProfileId(),
+                        request.interviewerId(),
                         Arrays.asList("PENDING", "APPROVED")
                 );
 
@@ -62,7 +62,7 @@ public class InterviewRequestServiceImpl implements InterviewRequestService {
         }
 
         // 면접 신청 생성
-        InterviewRequest interviewRequest = InterviewRequest.of(user, interviewerProfile, request.message());
+        InterviewRequest interviewRequest = InterviewRequest.of(user, interviewerProfile, request.requestMessage());
         interviewRequestRepository.save(interviewRequest);
     }
 

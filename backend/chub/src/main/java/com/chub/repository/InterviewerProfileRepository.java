@@ -19,4 +19,6 @@ public interface InterviewerProfileRepository extends JpaRepository<InterviewerP
     boolean existsByUserId(Long userId);
 
     Page<InterviewerProfile> findByDepartmentContaining(String department, Pageable pageable);
+
+    Page<InterviewerProfile> findByFieldContaining(String field, Pageable pageable);
 }
