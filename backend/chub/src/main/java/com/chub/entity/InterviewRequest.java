@@ -34,7 +34,7 @@ public class InterviewRequest extends BaseEntity {
     @JoinColumn(name = "interviewer_profile_id", nullable = false)
     private InterviewerProfile interviewerProfile;
 
-    @Column(name = "message", columnDefinition = "TEXT")
+    @Column(name = "requestMessage", columnDefinition = "TEXT")
     private String message;
 
     @Column(name = "status")
@@ -77,5 +77,13 @@ public class InterviewRequest extends BaseEntity {
     public void updateSchedule(LocalDateTime scheduledAt, Integer duration) {
         this.scheduledAt = scheduledAt;
         this.duration = duration;
+    }
+
+    /**
+     * 개발용 메서드: 상태를 강제로 변경합니다.
+     * 프로덕션 코드에서는 사용하지 마세요.
+     */
+    public void forceUpdateStatus(String status) {
+        this.status = status;
     }
 }

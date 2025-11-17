@@ -33,7 +33,7 @@ public record InterviewerProfileListItemResponse(
         String bio,
 
         @Schema(description = "경력 사항")
-        List<ExperienceVo> experiences,
+        List<ExperienceDto> experiences,
 
         @Schema(description = "전문 분야")
         List<String> specialties,
@@ -50,10 +50,25 @@ public record InterviewerProfileListItemResponse(
                 profile.getCompany(),
                 profile.getPosition(),
                 profile.getIntroduction(),
-                profile.getExperiences(),
+                convertExperiences(profile.getExperiences()),
                 convertSpecialties(profile.getSpecialties()),
                 profile.getPrice()
         );
+    }
+
+    private static List<ExperienceDto> convertExperiences(List<ExperienceVo> experiences) {
+        if (experiences == null) {
+            return Collections.emptyList();
+        }
+        return experiences.stream()
+                .map(vo -> new ExperienceDto(
+                        vo.getCompanyName(),
+                        vo.getStartYear(),
+                        vo.getEndYear(),
+                        vo.getPosition(),
+                        vo.getDescription()
+                ))
+                .collect(Collectors.toList());
     }
 
     private static List<String> convertSpecialties(List<SpecialtyVo> specialties) {
@@ -64,4 +79,22 @@ public record InterviewerProfileListItemResponse(
                 .map(SpecialtyVo::getSpecialty)
                 .collect(Collectors.toList());
     }
+
+    @Schema(description = "경력 정보")
+    public record ExperienceDto(
+            @Schema(description = "회사명", example = "네이버")
+            String company,
+
+            @Schema(description = "시작 년도", example = "2020")
+            Integer startYear,
+
+            @Schema(description = "종료 년도", example = "2023")
+            Integer endYear,
+
+            @Schema(description = "직책", example = "백엔드 개발자")
+            String position,
+
+            @Schema(description = "업무 설명", example = "검색 서비스 백엔드 개발")
+            String description
+    ) {}
 }

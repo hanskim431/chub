@@ -126,12 +126,12 @@ public class InterviewerProfileServiceImpl implements InterviewerProfileService 
     }
 
     @Override
-    public PageResponse<InterviewerProfileListData> getInterviewerProfiles(String department, int page, int size) {
+    public PageResponse<InterviewerProfileListData> getInterviewerProfiles(String field, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
         Page<InterviewerProfile> profilePage;
-        if (department != null && !department.isBlank()) {
-            profilePage = interviewerProfileRepository.findByDepartmentContaining(department, pageable);
+        if (field != null && !field.isBlank()) {
+            profilePage = interviewerProfileRepository.findByFieldContaining(field, pageable);
         } else {
             profilePage = interviewerProfileRepository.findAll(pageable);
         }

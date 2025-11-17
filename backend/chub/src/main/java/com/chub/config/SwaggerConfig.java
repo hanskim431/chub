@@ -31,8 +31,9 @@ public class SwaggerConfig {
                         "com.chub.auth.controller",
                         "com.chub.dashboard.controller",
                         "com.chub.chat.controller",
-                        "com.chub.Interview.controller",
-                        "com.chub.interviewroom.controller"
+                        "com.chub.interview.controller",
+                        "com.chub.interviewroom.controller",
+                        "com.chub.dummy"
                 )
                 .build();
     }
