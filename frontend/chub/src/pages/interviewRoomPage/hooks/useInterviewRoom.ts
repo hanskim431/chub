@@ -79,6 +79,7 @@ export function useInterviewRoom(roomId: string) {
   const offerSentRef = useRef<boolean>(false); // offer 전송 여부 추적
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordedChunksRef = useRef<Blob[]>([]);
+  const sendOfferWhenReadyRef = useRef<(() => Promise<void>) | null>(null);
 
   // WebRTC 설정 - Promise로 반환하여 로컬 스트림 로드 완료 보장
   const setupWebRTC = useCallback(async (): Promise<void> => {
@@ -227,150 +228,211 @@ export function useInterviewRoom(roomId: string) {
       heartbeatIncoming: 4000,
       heartbeatOutgoing: 4000,
       onConnect: () => {
-        console.log("WebSocket 연결됨");
+        console.log("[WebSocket] 연결됨");
 
-        // 면접방 입장 (joined 이벤트) - userId 포함
+        // 면접방 입장 (joined 이벤트) - userId와 userName 포함
+        const currentUserName = userData?.data?.name || "사용자";
+        console.log("[WebSocket] 면접방 입장 이벤트 전송:", {
+          destination: `/app/interview/${roomId}/joined`,
+          userId,
+          userName: currentUserName,
+        });
         client.publish({
           destination: `/app/interview/${roomId}/joined`,
           body: JSON.stringify({
             userId: userId,
+            userName: currentUserName,
           }),
         });
 
         // 브로드캐스트 이벤트 구독 (/topic/interview/{interviewRequestId})
-        client.subscribe(
-          `/topic/interview/${roomId}`,
-          (message: StompMessage) => {
-            const wsMessage: WebSocketMessage = JSON.parse(message.body);
+        const topicDestination = `/topic/interview/${roomId}`;
+        console.log("[WebSocket] 토픽 구독:", topicDestination);
+        client.subscribe(topicDestination, (message: StompMessage) => {
+          console.log("[WebSocket] 토픽 메시지 수신:", {
+            destination: message.headers.destination,
+            body: message.body,
+          });
+          const wsMessage: WebSocketMessage = JSON.parse(message.body);
 
-            switch (wsMessage.type) {
-              case "chat-received": {
-                // 채팅 메시지 수신
-                const chatData = wsMessage.data as InterviewRoomChatMessage;
-                setMessages((prev) => [
-                  ...prev,
-                  {
-                    id: Date.now().toString() + Math.random(),
-                    senderId: chatData.senderId,
-                    senderName: chatData.senderNickname,
-                    receiverId: chatData.receiverId,
-                    receiverNickname: chatData.receiverNickname,
-                    content: chatData.message,
-                    timestamp: chatData.createdAt,
-                    type: chatData.type,
-                  },
-                ]);
-                break;
+          switch (wsMessage.type) {
+            case "chat-received": {
+              // 채팅 메시지 수신
+              console.log("[Chat] 메시지 수신:", wsMessage);
+              const chatData = wsMessage.data as InterviewRoomChatMessage;
+              const newMessage = {
+                id: Date.now().toString() + Math.random(),
+                senderId: chatData.senderId,
+                senderName: chatData.senderNickname,
+                receiverId: chatData.receiverId,
+                receiverNickname: chatData.receiverNickname,
+                content: chatData.message,
+                timestamp: chatData.createdAt,
+                type: chatData.type,
+              };
+              console.log("[Chat] 새 메시지 추가:", newMessage);
+              setMessages((prev) => [...prev, newMessage]);
+              break;
+            }
+            case "user-joined": {
+              // 사용자 입장 알림
+              const joinData = wsMessage.data as {
+                userId?: number;
+                userName?: string;
+              };
+              const joinedUserId = joinData?.userId;
+              const joinedUserName = joinData?.userName;
+
+              // 입장한 사용자 이름 표시 (ID 노출 방지)
+              let userName = "사용자";
+              if (joinedUserName) {
+                userName = joinedUserName;
+              } else if (joinedUserId === userId) {
+                // 자신이 입장한 경우
+                userName = "나";
+              } else if (opponentInfo && joinedUserId === opponentInfo.id) {
+                // 상대방이 입장한 경우
+                userName = opponentInfo.name;
               }
-              case "user-joined": {
-                // 사용자 입장 알림
-                const joinData = wsMessage.data as { userId?: number };
-                const joinedUserId = joinData?.userId;
 
-                setMessages((prev) => [
-                  ...prev,
-                  {
-                    id: Date.now().toString() + Math.random(),
-                    senderId: null,
-                    senderName: null,
-                    receiverId: null,
-                    receiverNickname: null,
-                    content: "사용자가 입장했습니다.",
-                    timestamp: wsMessage.timestamp,
-                    type: "SYSTEM",
-                  },
-                ]);
+              setMessages((prev) => [
+                ...prev,
+                {
+                  id: Date.now().toString() + Math.random(),
+                  senderId: null,
+                  senderName: null,
+                  receiverId: null,
+                  receiverNickname: null,
+                  content: `${userName}님이 입장했습니다.`,
+                  timestamp: wsMessage.timestamp,
+                  type: "SYSTEM",
+                },
+              ]);
 
-                // user-joined 이벤트를 받은 사람이 offer를 보냄
-                // (자신이 보낸 이벤트가 아닌 경우에만)
-                if (
-                  joinedUserId &&
-                  joinedUserId !== userId &&
-                  !offerSentRef.current
-                ) {
-                  console.log("user-joined 이벤트 수신, offer 전송 시작");
-                  sendOfferWhenReady();
+              // user-joined 이벤트를 받은 사람이 offer를 보냄
+              // (자신이 보낸 이벤트가 아닌 경우에만)
+              if (
+                joinedUserId &&
+                joinedUserId !== userId &&
+                !offerSentRef.current
+              ) {
+                console.log(
+                  "[WebRTC] user-joined 이벤트 수신, offer 전송 시작"
+                );
+                if (sendOfferWhenReadyRef.current) {
+                  sendOfferWhenReadyRef.current();
+                } else {
+                  console.warn(
+                    "[WebRTC] sendOfferWhenReady 함수가 아직 준비되지 않았습니다."
+                  );
                 }
-                break;
               }
-              case "user-left": {
-                // 사용자 퇴장 알림
-                setMessages((prev) => [
-                  ...prev,
-                  {
-                    id: Date.now().toString() + Math.random(),
-                    senderId: null,
-                    senderName: null,
-                    receiverId: null,
-                    receiverNickname: null,
-                    content: "사용자가 퇴장했습니다.",
-                    timestamp: wsMessage.timestamp,
-                    type: "SYSTEM",
-                  },
-                ]);
-                break;
+              break;
+            }
+            case "user-left": {
+              // 사용자 퇴장 알림
+              const leaveData = wsMessage.data as {
+                userId?: number;
+                userName?: string;
+              };
+              const leftUserId = leaveData?.userId;
+              const leftUserName = leaveData?.userName;
+
+              // 퇴장한 사용자 이름 표시 (ID 노출 방지)
+              let userName = "사용자";
+              if (leftUserName) {
+                userName = leftUserName;
+              } else if (leftUserId === userId) {
+                // 자신이 퇴장한 경우
+                userName = "나";
+              } else if (opponentInfo && leftUserId === opponentInfo.id) {
+                // 상대방이 퇴장한 경우
+                userName = opponentInfo.name;
               }
-              case "answer": {
-                // 면접자의 답변 (STT 변환 완료)
-                const answerData = wsMessage.data as { answer: string };
-                setMessages((prev) => [
-                  ...prev,
-                  {
-                    id: Date.now().toString() + Math.random(),
-                    senderId: null,
-                    senderName: null,
-                    receiverId: null,
-                    receiverNickname: null,
-                    content: answerData.answer,
-                    timestamp: wsMessage.timestamp,
-                    type: "SYSTEM_ANSWER",
-                  },
-                ]);
-                break;
-              }
-              case "question": {
-                // 면접관의 질문 (STT 변환 완료)
-                const questionData = wsMessage.data as { question: string };
-                setMessages((prev) => [
-                  ...prev,
-                  {
-                    id: Date.now().toString() + Math.random(),
-                    senderId: null,
-                    senderName: null,
-                    receiverId: null,
-                    receiverNickname: null,
-                    content: questionData.question,
-                    timestamp: wsMessage.timestamp,
-                    type: "SYSTEM_QUESTION",
-                  },
-                ]);
-                break;
-              }
-              case "status-update": {
-                // 면접 상태 업데이트
-                const status = wsMessage.data as string;
-                setInterviewStatus(status);
-                break;
-              }
+
+              setMessages((prev) => [
+                ...prev,
+                {
+                  id: Date.now().toString() + Math.random(),
+                  senderId: null,
+                  senderName: null,
+                  receiverId: null,
+                  receiverNickname: null,
+                  content: `${userName}님이 퇴장했습니다.`,
+                  timestamp: wsMessage.timestamp,
+                  type: "SYSTEM",
+                },
+              ]);
+              break;
+            }
+            case "answer": {
+              // 면접자의 답변 (STT 변환 완료)
+              const answerData = wsMessage.data as { answer: string };
+              setMessages((prev) => [
+                ...prev,
+                {
+                  id: Date.now().toString() + Math.random(),
+                  senderId: null,
+                  senderName: null,
+                  receiverId: null,
+                  receiverNickname: null,
+                  content: answerData.answer,
+                  timestamp: wsMessage.timestamp,
+                  type: "SYSTEM_ANSWER",
+                },
+              ]);
+              break;
+            }
+            case "question": {
+              // 면접관의 질문 (STT 변환 완료)
+              const questionData = wsMessage.data as { question: string };
+              setMessages((prev) => [
+                ...prev,
+                {
+                  id: Date.now().toString() + Math.random(),
+                  senderId: null,
+                  senderName: null,
+                  receiverId: null,
+                  receiverNickname: null,
+                  content: questionData.question,
+                  timestamp: wsMessage.timestamp,
+                  type: "SYSTEM_QUESTION",
+                },
+              ]);
+              break;
+            }
+            case "status-update": {
+              // 면접 상태 업데이트
+              const status = wsMessage.data as string;
+              setInterviewStatus(status);
+              break;
             }
           }
-        );
+        });
 
-        // 개인 큐 구독 (/user/queue)
+        // 개인 큐 구독 (/user/queue) - 꼬리 질문은 면접관에게만 제공
         if (userId) {
-          client.subscribe(`/user/${userId}/queue`, (message: StompMessage) => {
+          const queueDestination = `/user/${userId}/queue`;
+          console.log("[WebSocket] 개인 큐 구독:", queueDestination);
+          client.subscribe(queueDestination, (message: StompMessage) => {
+            console.log("[WebSocket] 개인 큐 메시지 수신:", {
+              destination: message.headers.destination,
+              body: message.body,
+            });
             const wsMessage: WebSocketMessage = JSON.parse(message.body);
 
             switch (wsMessage.type) {
               case "tail-questions": {
-                // 꼬리 질문 선택지 제공
+                // 꼬리 질문 선택지 제공 (면접관에게만)
                 const tailData = wsMessage.data as { tailQuestions: string[] };
+                console.log("[WebSocket] 꼬리 질문 수신:", tailData);
                 setTailQuestions(tailData.tailQuestions);
                 break;
               }
               case "error": {
                 // 에러 메시지
                 const errorMessage = wsMessage.data as string;
+                console.error("[WebSocket] 에러 메시지:", errorMessage);
                 setError(errorMessage);
                 break;
               }
@@ -379,15 +441,24 @@ export function useInterviewRoom(roomId: string) {
         }
 
         // WebRTC 시그널링 구독 (/topic/webrtc/{interviewRequestId})
+        const webrtcTopicDestination = `/topic/webrtc/${roomId}`;
+        console.log("[WebRTC] WebRTC 토픽 구독:", webrtcTopicDestination);
         client.subscribe(
-          `/topic/webrtc/${roomId}`,
+          webrtcTopicDestination,
           async (message: StompMessage) => {
             try {
+              console.log("[WebRTC] WebRTC 메시지 수신:", {
+                destination: message.headers.destination,
+                body: message.body,
+              });
               const wsMessage: WebSocketMessage = JSON.parse(message.body);
               const data = wsMessage.data as any;
 
               // 자신이 보낸 메시지는 무시
-              if (data.userId === userId) return;
+              if (data.userId === userId) {
+                console.log("[WebRTC] 자신이 보낸 메시지 무시:", data.userId);
+                return;
+              }
 
               switch (wsMessage.type) {
                 case "offer": {
@@ -451,7 +522,7 @@ export function useInterviewRoom(roomId: string) {
         const sendOfferWhenReady = async () => {
           // 이미 offer를 보냈으면 중복 전송 방지
           if (offerSentRef.current) {
-            console.log("이미 offer를 전송했습니다.");
+            console.log("[WebRTC] 이미 offer를 전송했습니다.");
             return;
           }
 
@@ -477,10 +548,10 @@ export function useInterviewRoom(roomId: string) {
 
           try {
             await checkReady();
-            console.log("로컬 스트림 준비 완료, offer 전송");
+            console.log("[WebRTC] 로컬 스트림 준비 완료, offer 전송");
 
-            if (pcRef.current && !offerSentRef.current) {
-              console.log("Offer 생성 및 전송 중...");
+            if (pcRef.current && !offerSentRef.current && client.connected) {
+              console.log("[WebRTC] Offer 생성 및 전송 중...");
               // Offer 생성
               const offer = await pcRef.current.createOffer({
                 offerToReceiveAudio: true,
@@ -502,12 +573,24 @@ export function useInterviewRoom(roomId: string) {
                 }),
               });
               offerSentRef.current = true;
-              console.log("Offer 전송 완료");
+              console.log("[WebRTC] Offer 전송 완료:", {
+                destination: `/app/webrtc/${roomId}/offer`,
+                userId,
+              });
+            } else {
+              console.warn("[WebRTC] Offer 전송 실패:", {
+                hasPc: !!pcRef.current,
+                alreadySent: offerSentRef.current,
+                connected: client.connected,
+              });
             }
           } catch (err) {
-            console.error("Offer 전송 실패:", err);
+            console.error("[WebRTC] Offer 전송 실패:", err);
           }
         };
+
+        // sendOfferWhenReady를 ref에 저장하여 외부에서 접근 가능하게 함
+        sendOfferWhenReadyRef.current = sendOfferWhenReady;
       },
       onStompError: (frame) => {
         console.error("STOMP 에러:", frame);
@@ -517,7 +600,7 @@ export function useInterviewRoom(roomId: string) {
 
     client.activate();
     stompClientRef.current = client;
-  }, [roomId, userId]);
+  }, [roomId, userId, userData]);
 
   // 타이머 시작
   const startTimer = useCallback((duration: number) => {
@@ -636,14 +719,36 @@ export function useInterviewRoom(roomId: string) {
   // 메시지 전송 (chat-send 이벤트)
   const sendMessage = useCallback(
     (content: string) => {
-      if (stompClientRef.current?.connected) {
+      if (!stompClientRef.current) {
+        console.warn("[Chat] STOMP 클라이언트가 없습니다.");
+        return;
+      }
+
+      if (!stompClientRef.current.connected) {
+        console.warn("[Chat] WebSocket이 연결되지 않았습니다.");
+        return;
+      }
+
+      const destination = `/app/interview/${roomId}/chat-send`;
+      const messageBody = {
+        type: "USER",
+        message: content,
+      };
+
+      console.log("[Chat] 메시지 전송:", {
+        destination,
+        message: content,
+        connected: stompClientRef.current.connected,
+      });
+
+      try {
         stompClientRef.current.publish({
-          destination: `/app/interview/${roomId}/chat-send`,
-          body: JSON.stringify({
-            type: "USER",
-            message: content,
-          }),
+          destination,
+          body: JSON.stringify(messageBody),
         });
+        console.log("[Chat] 메시지 전송 완료");
+      } catch (error) {
+        console.error("[Chat] 메시지 전송 실패:", error);
       }
     },
     [roomId]
