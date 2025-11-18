@@ -32,7 +32,8 @@ export function FloatingChat({ messages = [] }: FloatingChatProps) {
   const unreadDividerRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const isFirstRender = useRef(true);
-  const hasScrolledToUnread = useRef(false);
+  // 각 채팅방별로 스크롤 여부를 추적 (채팅방을 열었을 때 한 번만 스크롤)
+  const scrolledRooms = useRef<Set<string>>(new Set());
   const { data: meData } = useMe();
   const currentUserId = meData?.data?.id;
   const isAuthenticated = !!(meData?.success && meData?.data);
@@ -268,14 +269,12 @@ export function FloatingChat({ messages = [] }: FloatingChatProps) {
     if (isOpen && !isAnimating) {
       // 채팅창이 열릴 때 아무 채팅도 선택하지 않음
       setSelectedRoomId(null);
-      hasScrolledToUnread.current = false;
     }
   }, [isOpen, isAnimating]);
 
-  // 채팅방이 변경되면 스크롤 초기화 및 읽음 처리
+  // 채팅방이 변경되면 읽음 처리
   useEffect(() => {
     if (selectedRoomId) {
-      hasScrolledToUnread.current = false;
       // 채팅방을 열면 읽음 처리
       setReadRoomIds((prev) => new Set(prev).add(selectedRoomId));
       // 웹소켓으로 읽음 처리 전송
@@ -283,14 +282,14 @@ export function FloatingChat({ messages = [] }: FloatingChatProps) {
     }
   }, [selectedRoomId, markAsRead]);
 
-  // 안읽은 메시지로 스크롤 조정 (애니메이션 없이 즉시)
+  // 안읽은 메시지로 스크롤 조정 (채팅방을 열었을 때 한 번만)
   useEffect(() => {
     if (
       isOpen &&
       !isAnimating &&
       selectedRoomId &&
       processedMessages.length > 0 &&
-      !hasScrolledToUnread.current
+      !scrolledRooms.current.has(selectedRoomId)
     ) {
       // requestAnimationFrame을 사용하여 DOM이 완전히 렌더링된 후 스크롤
       requestAnimationFrame(() => {
@@ -308,13 +307,15 @@ export function FloatingChat({ messages = [] }: FloatingChatProps) {
 
             // 중앙에 오도록 즉시 스크롤
             container.scrollTop = dividerTop - containerHeight / 2;
-            hasScrolledToUnread.current = true;
+            // 이 채팅방에 대해 스크롤 완료 표시
+            scrolledRooms.current.add(selectedRoomId);
           } else if (messagesEndRef.current && messagesContainerRef.current) {
             // 안읽은 메시지가 없으면 맨 아래로 즉시 스크롤
             const container = messagesContainerRef.current;
             const endElement = messagesEndRef.current;
             container.scrollTop = endElement.offsetTop;
-            hasScrolledToUnread.current = true;
+            // 이 채팅방에 대해 스크롤 완료 표시
+            scrolledRooms.current.add(selectedRoomId);
           }
         });
       });
@@ -380,15 +381,17 @@ export function FloatingChat({ messages = [] }: FloatingChatProps) {
 
   const handleSelectRoom = (roomId: string) => {
     console.log("[FloatingChat] 채팅방 선택:", roomId);
+    // 다른 채팅방을 선택하면 스크롤 여부 초기화 (새 채팅방은 한 번 스크롤)
+    if (selectedRoomId !== roomId) {
+      scrolledRooms.current.delete(roomId);
+    }
     setSelectedRoomId(roomId);
-    hasScrolledToUnread.current = false;
     // 채팅방을 클릭하면 즉시 읽음 처리
     setReadRoomIds((prev) => new Set(prev).add(roomId));
   };
 
   const handleCloseChat = () => {
     setSelectedRoomId(null);
-    hasScrolledToUnread.current = false;
   };
 
   const selectedConversation = conversations.find(
