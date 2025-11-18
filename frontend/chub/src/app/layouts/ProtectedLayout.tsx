@@ -16,11 +16,14 @@ function ProtectedLayout() {
 
     // 로그인 시 모든 채팅방 구독 (메모이제이션으로 불필요한 재생성 방지)
     const chatRoomsForSubscription = useMemo(() => {
-        const chatRooms = chatRoomsData?.data?.rooms || [];
+        if (!chatRoomsData?.success || !chatRoomsData?.data?.rooms) {
+            return [];
+        }
+        const chatRooms = chatRoomsData.data.rooms;
         return chatRooms.map((room) => ({
             roomId: room.roomId,
         }));
-    }, [chatRoomsData?.data?.rooms]);
+    }, [chatRoomsData]);
 
     const { wsConnected, sendMessage, markAsRead, setOnMessageReceived } = useChatWebSocket({
         currentUserId,
