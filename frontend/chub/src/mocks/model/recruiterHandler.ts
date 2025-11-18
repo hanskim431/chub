@@ -50,15 +50,14 @@ export const recruiterHandlers = [
       if (!page || !size) {
         return HttpResponse.error();
       }
+      const pageNum = parseInt(page); // 0-based
+      const sizeNum = parseInt(size);
       return HttpResponse.json({
         success: true,
         status: 200,
         data: {
           profiles: data
-            .slice(
-              (parseInt(page) - 1) * parseInt(size),
-              parseInt(page) * parseInt(size)
-            )
+            .slice(pageNum * sizeNum, (pageNum + 1) * sizeNum)
             .map((recruiter: Recruiter) => ({
               id: recruiter.id,
               name: recruiter.name,
@@ -73,12 +72,12 @@ export const recruiterHandlers = [
             })),
         },
         pageInfo: {
-          page: parseInt(page),
-          size: parseInt(size),
+          page: pageNum, // 0-based
+          size: sizeNum,
           totalElements: data.length,
-          totalPages: Math.ceil(data.length / parseInt(size)),
-          first: parseInt(page) === 1,
-          last: parseInt(page) === Math.ceil(data.length / parseInt(size)),
+          totalPages: Math.ceil(data.length / sizeNum),
+          first: pageNum === 0,
+          last: pageNum === Math.ceil(data.length / sizeNum) - 1,
         },
       });
     }
