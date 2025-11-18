@@ -72,24 +72,32 @@ public class ChatRoomServiceImpl implements ChatRoomService {
 
     private int countAndUpdateUnread(ChatRoom chatRoom, Long userId) {
         LocalDateTime messageUpdatedAt = chatRoom.getUpdatedAt();
+
+        if (messageUpdatedAt == null) {
+            return 0;
+        }
+
         LocalDateTime lastReadAt = chatRoom.getParticipants().get(userId).getLastReadAt();
         LocalDateTime countedAt = chatRoom.getParticipants().get(userId).getCountedAt();
 
-        if (messageUpdatedAt.isBefore(lastReadAt) || messageUpdatedAt.isBefore(countedAt)) {
+        if ((lastReadAt != null && messageUpdatedAt.isBefore(lastReadAt))
+                || (countedAt != null && messageUpdatedAt.isBefore(countedAt))) {
             Integer unreadCount = chatRoom.getParticipants().get(userId).getUnreadCount();
             return Objects.requireNonNullElse(unreadCount, 0);
         }
 
         String roomId = chatRoom.getRoomId();
 
-        int unreadAmount =
-                messageRepository.countByRoomIdAndCreatedAtGreaterThan(roomId, lastReadAt);
+        // null이면 모든 메시지 개수 반환 (한 번도 읽지 않은 채팅방)
+        int unreadAmount = lastReadAt == null
+                ? messageRepository.countByRoomId(roomId)
+                : messageRepository.countByRoomIdAndCreatedAtGreaterThan(roomId, lastReadAt);
         chatRoomRepository.updateUnreadCount(roomId, userId, unreadAmount, LocalDateTime.now());
         return unreadAmount;
     }
 
     private List<ChatRoom> countUnreadMessages(List<ChatRoom> chatRooms, Long userId) {
-         return chatRooms.stream().map(chatRoom -> {
+        return chatRooms.stream().map(chatRoom -> {
             int unread = countAndUpdateUnread(chatRoom, userId);
             chatRoom.getParticipants().get(userId).setUnreadCount(unread);
             return chatRoom;
@@ -144,7 +152,8 @@ public class ChatRoomServiceImpl implements ChatRoomService {
     private ChatRoom.ParticipantInfo generateParticipantInfo() {
         return ChatRoom.ParticipantInfo.builder()
                 .unreadCount(ZERO)
-                .lastReadAt(null)
+                .lastReadAt(LocalDateTime.MIN)
+                .countedAt(LocalDateTime.MIN)
                 .build();
 
     }

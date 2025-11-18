@@ -1,5 +1,8 @@
 package com.chub.Interview.controller;
 
+import static com.chub.interviewroom.enums.InterviewRoomChatType.SYSTEM;
+import static com.chub.interviewroom.enums.InterviewRoomChatType.SYSTEM_ANSWER;
+import static com.chub.interviewroom.enums.InterviewRoomChatType.SYSTEM_QUESTION;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.FORBIDDEN;
 
@@ -13,6 +16,7 @@ import com.chub.auth.annotation.LoginUser;
 import com.chub.common.CommonApiResponse;
 import com.chub.common.PageInfo;
 import com.chub.common.PageResponse;
+import com.chub.interviewroom.domain.InterviewRoomChatMessage;
 import com.chub.interviewroom.manager.InterviewRoomManager;
 import com.chub.websocket.util.WebSocketHelper;
 import io.swagger.v3.oas.annotations.Operation;
@@ -75,10 +79,10 @@ public class InterviewHttpController {
             // 4. STT 처리 및 답변 저장
             String transcribedText = interviewService.processAudioAnswer(userId, audioBytes);
 
-            // 5. InterviewRoomChatMessage 생성 (type: SYSTEM, message만 포함)
-            com.chub.interviewroom.domain.InterviewRoomChatMessage chatMessage =
-                    com.chub.interviewroom.domain.InterviewRoomChatMessage.builder()
-                            .type(com.chub.interviewroom.enums.InterviewRoomChatType.SYSTEM)
+            // 5. InterviewRoomChatMessage 생성 (type: SYSTEM_ANSWER, message만 포함)
+            InterviewRoomChatMessage chatMessage =
+                    InterviewRoomChatMessage.builder()
+                            .type(SYSTEM_ANSWER)
                             .message(transcribedText)
                             .createdAt(java.time.LocalDateTime.now())
                             .build();
@@ -149,10 +153,10 @@ public class InterviewHttpController {
             // 4. STT 처리 및 질문 생성
             QuestionDto question = interviewService.createQuestion(userId, audioBytes);
 
-            // 5. InterviewRoomChatMessage 생성 (type: SYSTEM, message만 포함)
-            com.chub.interviewroom.domain.InterviewRoomChatMessage chatMessage =
-                    com.chub.interviewroom.domain.InterviewRoomChatMessage.builder()
-                            .type(com.chub.interviewroom.enums.InterviewRoomChatType.SYSTEM)
+            // 5. InterviewRoomChatMessage 생성 (type: SYSTEM_QUESTION, message만 포함)
+            InterviewRoomChatMessage chatMessage =
+                    InterviewRoomChatMessage.builder()
+                            .type(SYSTEM_QUESTION)
                             .message(question.getQuestionText())
                             .createdAt(java.time.LocalDateTime.now())
                             .build();

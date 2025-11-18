@@ -33,12 +33,12 @@ public interface InterviewerProfileService {
 
     /**
      * 면접관 목록 조회 (페이징, 필터링)
-     * @param department 부서 필터 (선택)
+     * @param field 분야 필터 (선택)
      * @param page 페이지 번호 (0-based)
      * @param size 페이지 크기
      * @return 면접관 목록 페이지 응답
      */
-    PageResponse<InterviewerProfileListData> getInterviewerProfiles(String department, int page, int size);
+    PageResponse<InterviewerProfileListData> getInterviewerProfiles(String field, int page, int size);
 
     /**
      * 면접관 상세 조회

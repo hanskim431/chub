@@ -77,18 +77,18 @@ public class InterviewerProfileController {
     @GetMapping
     @Operation(
             summary = "면접관 목록 조회",
-            description = "면접관 목록을 페이징 처리하여 조회합니다. department 필터를 통해 부서별 검색이 가능합니다."
+            description = "면접관 목록을 페이징 처리하여 조회합니다. field 필터를 통해 분야별 검색이 가능합니다."
     )
     @ApiResponse(responseCode = "200", description = "조회 성공")
     public ResponseEntity<PageResponse<InterviewerProfileListData>> getInterviewerProfiles(
-            @Parameter(description = "부서 필터 (부분 일치 검색)", example = "백엔드")
-            @RequestParam(required = false) String department,
+            @Parameter(description = "분야 필터 (부분 일치 검색)", example = "backend")
+            @RequestParam(required = false) String field,
             @Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
             @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "페이지 크기", example = "10")
             @RequestParam(defaultValue = "10") int size
     ) {
-        PageResponse<InterviewerProfileListData> response = interviewerProfileService.getInterviewerProfiles(department, page, size);
+        PageResponse<InterviewerProfileListData> response = interviewerProfileService.getInterviewerProfiles(field, page, size);
         return ResponseEntity.ok(response);
     }
 

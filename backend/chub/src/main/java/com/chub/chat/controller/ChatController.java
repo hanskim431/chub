@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 
 @RestController
-@RequestMapping("/chat")
+@RequestMapping("/api/chat")
 @Tag(name = "Chat", description = "채팅 API")
 public class ChatController {
 
