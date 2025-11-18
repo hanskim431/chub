@@ -14,6 +14,9 @@ public record InterviewerProfileListItemResponse(
         @Schema(description = "면접관 프로필 ID", example = "1")
         Long id,
 
+        @Schema(description = "사용자 ID", example = "123")
+        Long userId,
+
         @Schema(description = "이름", example = "김민준")
         String name,
 
@@ -44,6 +47,7 @@ public record InterviewerProfileListItemResponse(
     public static InterviewerProfileListItemResponse from(InterviewerProfile profile) {
         return new InterviewerProfileListItemResponse(
                 profile.getId(),
+                profile.getUser().getId(),
                 profile.getUser().getUsername(),
                 profile.getUser().getAvatarUrl(),
                 profile.getField(),
