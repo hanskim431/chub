@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useCreateChatRoom } from "@/entities/chat/api/query";
 import { CreateChatRoomModal } from "@/widgets/chat/ui/CreateChatRoomModal";
 import { useCreateInterviewRequest } from "@/pages/interviewerDetailPage/api/query";
+import { useQueryClient } from "@tanstack/react-query";
 import Card from "@/shared/ui/Card";
 import Pill from "@/shared/ui/Pill";
 import Modal from "@/shared/ui/Modal";
@@ -14,6 +15,7 @@ function RecruiterListItem({
   recruiterOverview: RecruiterOverview;
 }) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { mutate: createChatRoom, isPending: isCreatingChatRoom } =
     useCreateChatRoom();
   const { mutate: createRequest, isPending: isCreatingRequest } =
@@ -185,11 +187,21 @@ function RecruiterListItem({
           createChatRoom(
             { opponentId: recruiterOverview.userId },
             {
-              onSuccess: (response) => {
+              onSuccess: async (response) => {
                 if (response.success && response.data) {
                   setShowChatModal(false);
-                  // 채팅창 열기 (FloatingChat에서 처리)
-                  console.log("채팅방 생성 완료:", response.data.roomId);
+                  // 채팅방 목록이 업데이트될 때까지 기다린 후 채팅방 열기
+                  await queryClient.refetchQueries({ queryKey: ["chatRooms"] });
+                  // 채팅방 생성 완료 후 해당 채팅방 열기
+                  const roomId = response.data.roomId;
+                  // 약간의 지연을 두어 채팅방 목록이 완전히 업데이트되도록 함
+                  setTimeout(() => {
+                    // 커스텀 이벤트를 통해 FloatingChat에 채팅방 열기 요청
+                    const event = new CustomEvent("openChatRoom", {
+                      detail: roomId,
+                    });
+                    window.dispatchEvent(event);
+                  }, 100);
                 }
               },
               onError: () => {
