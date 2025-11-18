@@ -13,7 +13,9 @@ import { TagInput } from "@/pages/myPage/ui/TagInput";
 import type {
   CreateInterviewerProfileRequest,
   UpdateInterviewerProfileRequest,
+  ExperienceDto,
 } from "@/entities/interviewer/model/types";
+import { Plus, X } from "lucide-react";
 
 export function InterviewerProfileSection() {
   const { data: userData } = useMe();
@@ -41,6 +43,7 @@ export function InterviewerProfileSection() {
     specialties: [] as string[],
     languages: [] as string[],
     availableTimeSlots: [] as string[],
+    experiences: [] as ExperienceDto[],
   });
 
   // 프로필 데이터 로드 시 폼 초기화
@@ -57,6 +60,7 @@ export function InterviewerProfileSection() {
         specialties: profile.specialties || [],
         languages: profile.languages || [],
         availableTimeSlots: profile.availableTimeSlots || [],
+        experiences: profile.experiences || [],
       });
 
       // 프로필 데이터에 isActive가 있으면 사용, 없으면 localStorage에서 복원
@@ -342,6 +346,189 @@ export function InterviewerProfileSection() {
                 : ""
             }`}
           />
+        </div>
+
+        {/* 경력 */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            경력
+          </label>
+          <div className="space-y-3">
+            {formData.experiences.map((experience, index) => (
+              <div
+                key={index}
+                className="flex gap-2 p-3 border border-gray-300 rounded-md bg-gray-50"
+              >
+                <div className="flex-1 grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-xs text-gray-600 mb-1">
+                      회사명
+                    </label>
+                    <input
+                      type="text"
+                      value={experience.company}
+                      onChange={(e) => {
+                        const newExperiences = [...formData.experiences];
+                        newExperiences[index] = {
+                          ...newExperiences[index],
+                          company: e.target.value,
+                        };
+                        setFormData({ ...formData, experiences: newExperiences });
+                      }}
+                      disabled={isDisabled}
+                      placeholder="예: 네이버"
+                      className={`w-full px-2 py-1 text-sm border rounded focus:outline-none focus:ring-1 focus:ring-blue-500 ${
+                        isDisabled
+                          ? "bg-gray-100 text-gray-500 cursor-not-allowed opacity-50"
+                          : "bg-white"
+                      }`}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-600 mb-1">
+                      직무
+                    </label>
+                    <input
+                      type="text"
+                      value={experience.role}
+                      onChange={(e) => {
+                        const newExperiences = [...formData.experiences];
+                        newExperiences[index] = {
+                          ...newExperiences[index],
+                          role: e.target.value,
+                        };
+                        setFormData({ ...formData, experiences: newExperiences });
+                      }}
+                      disabled={isDisabled}
+                      placeholder="예: 백엔드 개발자"
+                      className={`w-full px-2 py-1 text-sm border rounded focus:outline-none focus:ring-1 focus:ring-blue-500 ${
+                        isDisabled
+                          ? "bg-gray-100 text-gray-500 cursor-not-allowed opacity-50"
+                          : "bg-white"
+                      }`}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-600 mb-1">
+                      시작 연도
+                    </label>
+                    <input
+                      type="number"
+                      value={experience.startedYear || ""}
+                      onChange={(e) => {
+                        const newExperiences = [...formData.experiences];
+                        newExperiences[index] = {
+                          ...newExperiences[index],
+                          startedYear: parseInt(e.target.value) || 0,
+                        };
+                        setFormData({ ...formData, experiences: newExperiences });
+                      }}
+                      disabled={isDisabled}
+                      placeholder="예: 2020"
+                      min="1900"
+                      max="2100"
+                      className={`w-full px-2 py-1 text-sm border rounded focus:outline-none focus:ring-1 focus:ring-blue-500 ${
+                        isDisabled
+                          ? "bg-gray-100 text-gray-500 cursor-not-allowed opacity-50"
+                          : "bg-white"
+                      }`}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-600 mb-1">
+                      종료 연도
+                    </label>
+                    <div className="flex gap-1">
+                      <input
+                        type="number"
+                        value={
+                          experience.endedYear === "재직중" || experience.endedYear === null
+                            ? ""
+                            : experience.endedYear
+                        }
+                        onChange={(e) => {
+                          const newExperiences = [...formData.experiences];
+                          const value = e.target.value;
+                          newExperiences[index] = {
+                            ...newExperiences[index],
+                            endedYear: value ? value : null,
+                          };
+                          setFormData({ ...formData, experiences: newExperiences });
+                        }}
+                        disabled={isDisabled || experience.endedYear === "재직중"}
+                        placeholder="예: 2023"
+                        min="1900"
+                        max="2100"
+                        className={`flex-1 px-2 py-1 text-sm border rounded focus:outline-none focus:ring-1 focus:ring-blue-500 ${
+                          isDisabled || experience.endedYear === "재직중"
+                            ? "bg-gray-100 text-gray-500 cursor-not-allowed opacity-50"
+                            : "bg-white"
+                        }`}
+                      />
+                      <label className="flex items-center gap-1 text-xs text-gray-600 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={experience.endedYear === "재직중"}
+                          onChange={(e) => {
+                            const newExperiences = [...formData.experiences];
+                            newExperiences[index] = {
+                              ...newExperiences[index],
+                              endedYear: e.target.checked ? "재직중" : null,
+                            };
+                            setFormData({ ...formData, experiences: newExperiences });
+                          }}
+                          disabled={isDisabled}
+                          className="w-4 h-4"
+                        />
+                        재직중
+                      </label>
+                    </div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const newExperiences = formData.experiences.filter(
+                      (_, i) => i !== index
+                    );
+                    setFormData({ ...formData, experiences: newExperiences });
+                  }}
+                  disabled={isDisabled}
+                  className={`self-start mt-6 p-1 rounded hover:bg-red-100 transition-colors ${
+                    isDisabled
+                      ? "text-gray-400 cursor-not-allowed"
+                      : "text-red-600 hover:text-red-700"
+                  }`}
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={() => {
+                const newExperiences = [
+                  ...formData.experiences,
+                  {
+                    company: "",
+                    role: "",
+                    startedYear: new Date().getFullYear(),
+                    endedYear: null,
+                  },
+                ];
+                setFormData({ ...formData, experiences: newExperiences });
+              }}
+              disabled={isDisabled}
+              className={`w-full py-2 px-3 border-2 border-dashed border-gray-300 rounded-md flex items-center justify-center gap-2 text-sm font-medium transition-colors ${
+                isDisabled
+                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  : "text-gray-600 hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50"
+              }`}
+            >
+              <Plus className="w-4 h-4" />
+              경력 추가
+            </button>
+          </div>
         </div>
 
         {/* 전문 기술 */}
