@@ -60,6 +60,7 @@ export const recruiterHandlers = [
             .slice(pageNum * sizeNum, (pageNum + 1) * sizeNum)
             .map((recruiter: Recruiter) => ({
               id: recruiter.id,
+              userId: Number(recruiter.id),
               name: recruiter.name,
               avatar: recruiter.avatar,
               field: recruiter.field,
