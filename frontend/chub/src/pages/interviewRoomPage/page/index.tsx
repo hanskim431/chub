@@ -17,7 +17,7 @@ export default function InterviewRoomPage() {
     sendMessage,
     endInterview,
     error
-  } = useInterviewRoom(roomId || "", navigate);
+  } = useInterviewRoom(roomId || "");
 
   useEffect(() => {
     if (!roomId) {
