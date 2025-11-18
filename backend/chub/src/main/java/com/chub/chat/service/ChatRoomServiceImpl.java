@@ -72,8 +72,13 @@ public class ChatRoomServiceImpl implements ChatRoomService {
 
     private int countAndUpdateUnread(ChatRoom chatRoom, Long userId) {
         LocalDateTime messageUpdatedAt = chatRoom.getUpdatedAt();
-        LocalDateTime lastReadAt = chatRoom.getParticipants().get(userId).getLastReadAt();
-        LocalDateTime countedAt = chatRoom.getParticipants().get(userId).getCountedAt();
+
+        if (messageUpdatedAt == null) {
+            return 0;
+        }
+
+        LocalDateTime lastReadAt = Objects.requireNonNullElse(chatRoom.getParticipants().get(userId).getLastReadAt(), LocalDateTime.MIN);
+        LocalDateTime countedAt = Objects.requireNonNullElse(chatRoom.getParticipants().get(userId).getCountedAt(), LocalDateTime.MIN);
 
         if (messageUpdatedAt.isBefore(lastReadAt) || messageUpdatedAt.isBefore(countedAt)) {
             Integer unreadCount = chatRoom.getParticipants().get(userId).getUnreadCount();
@@ -89,7 +94,7 @@ public class ChatRoomServiceImpl implements ChatRoomService {
     }
 
     private List<ChatRoom> countUnreadMessages(List<ChatRoom> chatRooms, Long userId) {
-         return chatRooms.stream().map(chatRoom -> {
+        return chatRooms.stream().map(chatRoom -> {
             int unread = countAndUpdateUnread(chatRoom, userId);
             chatRoom.getParticipants().get(userId).setUnreadCount(unread);
             return chatRoom;
@@ -144,7 +149,8 @@ public class ChatRoomServiceImpl implements ChatRoomService {
     private ChatRoom.ParticipantInfo generateParticipantInfo() {
         return ChatRoom.ParticipantInfo.builder()
                 .unreadCount(ZERO)
-                .lastReadAt(null)
+                .lastReadAt(LocalDateTime.MIN)
+                .countedAt(LocalDateTime.MIN)
                 .build();
 
     }
