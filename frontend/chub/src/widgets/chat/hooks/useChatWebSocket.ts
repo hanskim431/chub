@@ -67,9 +67,8 @@ export function useChatWebSocket({
     if (chatRooms.length > 0) {
       chatRooms.forEach((room) => {
         // roomId에 특수 문자(:)가 포함되어 있으므로 URL 인코딩
-        const encodedRoomId = encodeURIComponent(room.roomId);
         const subscription = stompClientRef.current!.subscribe(
-          `/topic/chat/rooms/${encodedRoomId}`,
+          `/topic/chat/rooms/${room.roomId}`,
           (message: StompMessage) => {
             const data = JSON.parse(message.body);
             if (data.type === "message.received") {
