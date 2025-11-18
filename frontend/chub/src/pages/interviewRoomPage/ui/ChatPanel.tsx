@@ -3,11 +3,13 @@ import { Send } from "lucide-react";
 
 interface Message {
   id: string;
-  senderId: number;
-  senderName: string;
+  senderId: number | null;
+  senderName: string | null;
+  receiverId?: number | null;
+  receiverNickname?: string | null;
   content: string;
   timestamp: string;
-  type: "CHAT" | "SYSTEM";
+  type: "USER" | "SYSTEM" | "SYSTEM_QUESTION" | "SYSTEM_ANSWER";
 }
 
 interface ChatPanelProps {
@@ -63,15 +65,17 @@ export function ChatPanel({
                 message.type === "SYSTEM" ? "items-center" : "items-start"
               }`}
             >
-              {message.type === "SYSTEM" ? (
+              {message.type === "SYSTEM" || message.type === "SYSTEM_QUESTION" || message.type === "SYSTEM_ANSWER" ? (
                 <div className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
                   {message.content}
                 </div>
               ) : (
                 <div className="max-w-[80%]">
-                  <div className="text-xs text-gray-500 mb-1">
-                    {message.senderName}
-                  </div>
+                  {message.senderName && (
+                    <div className="text-xs text-gray-500 mb-1">
+                      {message.senderName}
+                    </div>
+                  )}
                   <div className="bg-blue-50 rounded-lg px-3 py-2 text-sm text-gray-900">
                     {message.content}
                   </div>
