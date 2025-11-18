@@ -6,11 +6,31 @@ import { useMe } from "@/features/auth/api/me";
 
 interface ChatMessage {
   id: string;
-  senderId: number;
-  senderName: string;
+  senderId: number | null;
+  senderName: string | null;
+  receiverId: number | null;
+  receiverNickname: string | null;
   content: string;
   timestamp: string;
-  type: "CHAT" | "SYSTEM";
+  type: "USER" | "SYSTEM" | "SYSTEM_QUESTION" | "SYSTEM_ANSWER";
+}
+
+// WebSocketMessage 래퍼 구조
+interface WebSocketMessage<T = unknown> {
+  type: string;
+  data: T;
+  timestamp: string;
+}
+
+// InterviewRoomChatMessage (서버에서 받는 메시지)
+interface InterviewRoomChatMessage {
+  type: "USER" | "SYSTEM" | "SYSTEM_QUESTION" | "SYSTEM_ANSWER";
+  senderId: number | null;
+  senderNickname: string | null;
+  receiverId: number | null;
+  receiverNickname: string | null;
+  message: string;
+  createdAt: string;
 }
 
 interface OpponentInfo {
@@ -23,7 +43,7 @@ interface OpponentInfo {
   interviewStyle?: string;
 }
 
-type InterviewStatus = "WAITING" | "QUESTION" | "ANSWER" | "COMPLETED";
+type InterviewStatus = "WAITING" | "QUESTION" | "ANSWER" | "COMPLETED" | string;
 
 export function useInterviewRoom(roomId: string) {
   const { data: userData } = useMe();
@@ -37,6 +57,7 @@ export function useInterviewRoom(roomId: string) {
   const [interviewStatus, setInterviewStatus] = useState<InterviewStatus>("WAITING");
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [tailQuestions, setTailQuestions] = useState<string[]>([]);
 
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const stompClientRef = useRef<Client | null>(null);
@@ -140,53 +161,135 @@ export function useInterviewRoom(roomId: string) {
       onConnect: () => {
         console.log("WebSocket 연결됨");
 
-        // 면접방 입장
+        // 면접방 입장 (joined 이벤트)
         client.publish({
-          destination: `/app/interview/${roomId}/join`,
-          body: JSON.stringify({ userId }),
+          destination: `/app/interview/${roomId}/joined`,
+          body: JSON.stringify({}),
         });
 
-        // 채팅 메시지 구독
-        client.subscribe(`/topic/interview/${roomId}/chat`, (message: StompMessage) => {
-          const data = JSON.parse(message.body);
-          setMessages((prev) => [
-            ...prev,
-            {
-              id: data.id || Date.now().toString(),
-              senderId: data.senderId,
-              senderName: data.senderName,
-              content: data.content,
-              timestamp: data.timestamp || new Date().toISOString(),
-              type: "CHAT",
-            },
-          ]);
-        });
-
-        // 시스템 메시지 구독
-        client.subscribe(`/topic/interview/${roomId}/system`, (message: StompMessage) => {
-          const data = JSON.parse(message.body);
-          setMessages((prev) => [
-            ...prev,
-            {
-              id: data.id || Date.now().toString(),
-              senderId: 0,
-              senderName: "시스템",
-              content: data.message,
-              timestamp: data.timestamp || new Date().toISOString(),
-              type: "SYSTEM",
-            },
-          ]);
-
-          // 면접 상태 변경
-          if (data.status) {
-            setInterviewStatus(data.status);
+        // 브로드캐스트 이벤트 구독 (/topic/interview/{interviewRequestId})
+        client.subscribe(`/topic/interview/${roomId}`, (message: StompMessage) => {
+          const wsMessage: WebSocketMessage = JSON.parse(message.body);
+          
+          switch (wsMessage.type) {
+            case "chat-received": {
+              // 채팅 메시지 수신
+              const chatData = wsMessage.data as InterviewRoomChatMessage;
+              setMessages((prev) => [
+                ...prev,
+                {
+                  id: Date.now().toString() + Math.random(),
+                  senderId: chatData.senderId,
+                  senderName: chatData.senderNickname,
+                  receiverId: chatData.receiverId,
+                  receiverNickname: chatData.receiverNickname,
+                  content: chatData.message,
+                  timestamp: chatData.createdAt,
+                  type: chatData.type,
+                },
+              ]);
+              break;
+            }
+            case "user-joined": {
+              // 사용자 입장 알림
+              setMessages((prev) => [
+                ...prev,
+                {
+                  id: Date.now().toString() + Math.random(),
+                  senderId: null,
+                  senderName: null,
+                  receiverId: null,
+                  receiverNickname: null,
+                  content: "사용자가 입장했습니다.",
+                  timestamp: wsMessage.timestamp,
+                  type: "SYSTEM",
+                },
+              ]);
+              break;
+            }
+            case "user-left": {
+              // 사용자 퇴장 알림
+              setMessages((prev) => [
+                ...prev,
+                {
+                  id: Date.now().toString() + Math.random(),
+                  senderId: null,
+                  senderName: null,
+                  receiverId: null,
+                  receiverNickname: null,
+                  content: "사용자가 퇴장했습니다.",
+                  timestamp: wsMessage.timestamp,
+                  type: "SYSTEM",
+                },
+              ]);
+              break;
+            }
+            case "answer": {
+              // 면접자의 답변 (STT 변환 완료)
+              const answerData = wsMessage.data as { answer: string };
+              setMessages((prev) => [
+                ...prev,
+                {
+                  id: Date.now().toString() + Math.random(),
+                  senderId: null,
+                  senderName: null,
+                  receiverId: null,
+                  receiverNickname: null,
+                  content: answerData.answer,
+                  timestamp: wsMessage.timestamp,
+                  type: "SYSTEM_ANSWER",
+                },
+              ]);
+              break;
+            }
+            case "question": {
+              // 면접관의 질문 (STT 변환 완료)
+              const questionData = wsMessage.data as { question: string };
+              setMessages((prev) => [
+                ...prev,
+                {
+                  id: Date.now().toString() + Math.random(),
+                  senderId: null,
+                  senderName: null,
+                  receiverId: null,
+                  receiverNickname: null,
+                  content: questionData.question,
+                  timestamp: wsMessage.timestamp,
+                  type: "SYSTEM_QUESTION",
+                },
+              ]);
+              break;
+            }
+            case "status-update": {
+              // 면접 상태 업데이트
+              const status = wsMessage.data as string;
+              setInterviewStatus(status);
+              break;
+            }
           }
-
-          // 상대방 정보 업데이트
-          if (data.opponentInfo) {
-            setOpponentInfo(data.opponentInfo);
-          }
         });
+
+        // 개인 큐 구독 (/user/queue)
+        if (userId) {
+          client.subscribe(`/user/${userId}/queue`, (message: StompMessage) => {
+            const wsMessage: WebSocketMessage = JSON.parse(message.body);
+            
+            switch (wsMessage.type) {
+              case "tail-questions": {
+                // 꼬리 질문 선택지 제공
+                const tailData = wsMessage.data as { tailQuestions: string[] };
+                setTailQuestions(tailData.tailQuestions);
+                break;
+              }
+              case "error": {
+                // 에러 메시지
+                const errorMessage = wsMessage.data as string;
+                setError(errorMessage);
+                break;
+              }
+            }
+          });
+        }
 
         // WebRTC 시그널링 구독
         client.subscribe(`/user/interview/${roomId}/offer`, async (message: StompMessage) => {
@@ -331,29 +434,38 @@ export function useInterviewRoom(roomId: string) {
     };
   }, [roomId, userId, setupWebRTC, connectWebSocket, startTimer]);
 
-  // 메시지 전송
+  // 메시지 전송 (chat-send 이벤트)
   const sendMessage = useCallback(
     (content: string) => {
-      if (stompClientRef.current?.connected && userId && userData?.data) {
+      if (stompClientRef.current?.connected) {
         stompClientRef.current.publish({
-          destination: `/app/interview/${roomId}/chat`,
+          destination: `/app/interview/${roomId}/chat-send`,
           body: JSON.stringify({
-            content,
-            senderId: userId,
-            senderName: userData.data.name,
+            type: "USER",
+            message: content,
           }),
         });
       }
     },
-    [roomId, userId, userData]
+    [roomId]
   );
 
-  // 면접 종료
+  // 면접 시작 (start 이벤트)
+  const startInterview = useCallback(() => {
+    if (stompClientRef.current?.connected) {
+      stompClientRef.current.publish({
+        destination: `/app/interview/start`,
+        body: JSON.stringify({}),
+      });
+    }
+  }, []);
+
+  // 면접 종료 (end 이벤트)
   const endInterview = useCallback(() => {
     if (stompClientRef.current?.connected) {
       stompClientRef.current.publish({
-        destination: `/app/interview/${roomId}/end`,
-        body: JSON.stringify({ userId }),
+        destination: `/app/interview/end`,
+        body: JSON.stringify({}),
       });
     }
 
@@ -383,7 +495,9 @@ export function useInterviewRoom(roomId: string) {
     interviewStatus,
     timeRemaining,
     sendMessage,
+    startInterview,
     endInterview,
+    tailQuestions,
     error,
   };
 }
