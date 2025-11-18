@@ -33,12 +33,13 @@ public interface InterviewerProfileService {
 
     /**
      * 면접관 목록 조회 (페이징, 필터링)
+     * @param userId 현재 로그인한 사용자 ID (자기 자신 제외용)
      * @param field 분야 필터 (선택)
      * @param page 페이지 번호 (0-based)
      * @param size 페이지 크기
-     * @return 면접관 목록 페이지 응답
+     * @return 면접관 목록 페이지 응답 (isActive=true이고 자기 자신 제외)
      */
-    PageResponse<InterviewerProfileListData> getInterviewerProfiles(String field, int page, int size);
+    PageResponse<InterviewerProfileListData> getInterviewerProfiles(Long userId, String field, int page, int size);
 
     /**
      * 면접관 상세 조회
