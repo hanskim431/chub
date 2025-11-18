@@ -8,7 +8,7 @@ import { ChatWebSocketProvider } from "@/widgets/chat/context/ChatWebSocketConte
 
 function MainLayout() {
   const { data } = useMe();
-  const isAuthenticated = data?.success && data?.data;
+  const isAuthenticated = !!(data?.success && data?.data);
   const currentUserId = data?.data?.id;
   const { data: chatRoomsData } = useChatRooms();
 

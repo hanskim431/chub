@@ -52,7 +52,7 @@ export function useInterviewRoom(roomId: string) {
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
   const [isConnected, setIsConnected] = useState(false);
-  const [opponentInfo, setOpponentInfo] = useState<OpponentInfo | null>(null);
+  const [opponentInfo, _setOpponentInfo] = useState<OpponentInfo | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [interviewStatus, setInterviewStatus] =
     useState<InterviewStatus>("WAITING");
