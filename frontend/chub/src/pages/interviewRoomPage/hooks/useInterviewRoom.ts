@@ -59,11 +59,14 @@ export function useInterviewRoom(roomId: string) {
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [tailQuestions, setTailQuestions] = useState<string[]>([]);
+  const [isLocalAudioEnabled, setIsLocalAudioEnabled] = useState(true);
+  const [isRemoteAudioEnabled, setIsRemoteAudioEnabled] = useState(true);
 
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const stompClientRef = useRef<Client | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
   const timerRef = useRef<number | null>(null);
+  const offerSentRef = useRef<boolean>(false); // offer 전송 여부 추적
 
   // WebRTC 설정 - Promise로 반환하여 로컬 스트림 로드 완료 보장
   const setupWebRTC = useCallback(async (): Promise<void> => {
@@ -214,10 +217,12 @@ export function useInterviewRoom(roomId: string) {
       onConnect: () => {
         console.log("WebSocket 연결됨");
 
-        // 면접방 입장 (joined 이벤트)
+        // 면접방 입장 (joined 이벤트) - userId 포함
         client.publish({
           destination: `/app/interview/${roomId}/joined`,
-          body: JSON.stringify({}),
+          body: JSON.stringify({
+            userId: userId,
+          }),
         });
 
         // 브로드캐스트 이벤트 구독 (/topic/interview/{interviewRequestId})
@@ -247,6 +252,9 @@ export function useInterviewRoom(roomId: string) {
               }
               case "user-joined": {
                 // 사용자 입장 알림
+                const joinData = wsMessage.data as { userId?: number };
+                const joinedUserId = joinData?.userId;
+
                 setMessages((prev) => [
                   ...prev,
                   {
@@ -260,6 +268,17 @@ export function useInterviewRoom(roomId: string) {
                     type: "SYSTEM",
                   },
                 ]);
+
+                // user-joined 이벤트를 받은 사람이 offer를 보냄
+                // (자신이 보낸 이벤트가 아닌 경우에만)
+                if (
+                  joinedUserId &&
+                  joinedUserId !== userId &&
+                  !offerSentRef.current
+                ) {
+                  console.log("user-joined 이벤트 수신, offer 전송 시작");
+                  sendOfferWhenReady();
+                }
                 break;
               }
               case "user-left": {
@@ -434,6 +453,12 @@ export function useInterviewRoom(roomId: string) {
 
         // 로컬 스트림이 준비된 후에만 offer 전송
         const sendOfferWhenReady = async () => {
+          // 이미 offer를 보냈으면 중복 전송 방지
+          if (offerSentRef.current) {
+            console.log("이미 offer를 전송했습니다.");
+            return;
+          }
+
           // 로컬 스트림과 peer connection이 준비될 때까지 대기
           const checkReady = () => {
             return new Promise<void>((resolve) => {
@@ -458,7 +483,7 @@ export function useInterviewRoom(roomId: string) {
             await checkReady();
             console.log("로컬 스트림 준비 완료, offer 전송");
 
-            if (pcRef.current) {
+            if (pcRef.current && !offerSentRef.current) {
               console.log("Offer 생성 및 전송 중...");
               // Offer 생성
               const offer = await pcRef.current.createOffer({
@@ -480,15 +505,13 @@ export function useInterviewRoom(roomId: string) {
                   userId,
                 }),
               });
+              offerSentRef.current = true;
               console.log("Offer 전송 완료");
             }
           } catch (err) {
             console.error("Offer 전송 실패:", err);
           }
         };
-
-        // offer 전송 시도
-        sendOfferWhenReady();
       },
       onStompError: (frame) => {
         console.error("STOMP 에러:", frame);
@@ -610,6 +633,22 @@ export function useInterviewRoom(roomId: string) {
     setInterviewStatus("COMPLETED");
   }, [roomId, userId]);
 
+  // 로컬 오디오 (마이크) on/off
+  const toggleLocalAudio = useCallback(() => {
+    if (localStreamRef.current) {
+      const audioTracks = localStreamRef.current.getAudioTracks();
+      audioTracks.forEach((track) => {
+        track.enabled = !isLocalAudioEnabled;
+      });
+      setIsLocalAudioEnabled(!isLocalAudioEnabled);
+    }
+  }, [isLocalAudioEnabled]);
+
+  // 원격 오디오 on/off
+  const toggleRemoteAudio = useCallback(() => {
+    setIsRemoteAudioEnabled(!isRemoteAudioEnabled);
+  }, [isRemoteAudioEnabled]);
+
   return {
     localStream,
     remoteStream,
@@ -623,5 +662,9 @@ export function useInterviewRoom(roomId: string) {
     endInterview,
     tailQuestions,
     error,
+    isLocalAudioEnabled,
+    isRemoteAudioEnabled,
+    toggleLocalAudio,
+    toggleRemoteAudio,
   };
 }
