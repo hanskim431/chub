@@ -95,7 +95,7 @@ function RecruiterListItem({
         onClose={() => setShowChatModal(false)}
         onConfirm={() => {
           createChatRoom(
-            { opponentId: recruiterOverview.id },
+            { opponentId: Number(recruiterOverview.id) },
             {
               onSuccess: (response) => {
                 if (response.success && response.data) {

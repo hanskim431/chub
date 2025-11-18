@@ -69,10 +69,9 @@ export function ChatMessages({
           <ChatMessageItem
             key={message.id}
             message={message}
-            isMyMessage={isMyMessage}
+            isMyMessage={!!isMyMessage}
             showUnreadDivider={showUnreadDivider}
             userAvatar={userAvatar}
-            currentUserId={currentUserId}
             unreadDividerRef={showUnreadDivider ? unreadDividerRef : undefined}
           />
         );

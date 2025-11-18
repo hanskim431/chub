@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Client, type Message as StompMessage } from "@stomp/stompjs";
+// @ts-ignore - sockjs-client 타입 정의 없음
 import SockJS from "sockjs-client";
 import { useMe } from "@/features/auth/api/me";
 
@@ -24,7 +25,7 @@ interface OpponentInfo {
 
 type InterviewStatus = "WAITING" | "QUESTION" | "ANSWER" | "COMPLETED";
 
-export function useInterviewRoom(roomId: string, navigate?: (path: string) => void) {
+export function useInterviewRoom(roomId: string) {
   const { data: userData } = useMe();
   const userId = userData?.data?.id;
 
@@ -40,7 +41,7 @@ export function useInterviewRoom(roomId: string, navigate?: (path: string) => vo
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const stompClientRef = useRef<Client | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<number | null>(null);
 
   // WebRTC 설정 - Promise로 반환하여 로컬 스트림 로드 완료 보장
   const setupWebRTC = useCallback(async (): Promise<void> => {

@@ -6,7 +6,6 @@ interface ChatMessageItemProps {
   isMyMessage: boolean;
   showUnreadDivider: boolean;
   userAvatar?: string;
-  currentUserId: number | undefined;
   unreadDividerRef?: React.RefObject<HTMLDivElement | null>;
 }
 
@@ -15,7 +14,6 @@ export function ChatMessageItem({
   isMyMessage,
   showUnreadDivider,
   userAvatar,
-  currentUserId,
   unreadDividerRef,
 }: ChatMessageItemProps) {
   const isUnread = message.isUnread;
