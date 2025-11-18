@@ -9,9 +9,10 @@ import { useRecruiterFilterStore } from "@/pages/recruiterListPage/model/recruit
 
 function RecruiterListPage() {
   const field = useRecruiterFilterStore((state) => state.field);
-  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [currentPage, setCurrentPage] = useState<number>(1); // UI 표시용 (1-based)
+  // API 요청은 0-based로 변환
   const { data: recruiterOverviewResponse } = useRecruiters(
-    currentPage,
+    currentPage - 1,
     6,
     field || ""
   );
@@ -26,6 +27,8 @@ function RecruiterListPage() {
   useEffect(() => {
     if (recruiterOverviewResponse?.pageInfo) {
       const totalPages = recruiterOverviewResponse.pageInfo.totalPages;
+      // pageInfo.page는 0-based이므로 1-based로 변환하여 비교
+      const displayedPage = recruiterOverviewResponse.pageInfo.page + 1;
       if (currentPage > totalPages && totalPages > 0) {
         setCurrentPage(totalPages);
       }
@@ -35,11 +38,12 @@ function RecruiterListPage() {
   useEffect(() => {
     const preFetchRecruiters = () => {
       if (!recruiterOverviewResponse) return;
-      const nextPage = recruiterOverviewResponse.pageInfo.page + 1;
-      if (nextPage > recruiterOverviewResponse.pageInfo.totalPages) return;
+      // pageInfo.page는 0-based이므로 다음 페이지는 +1
+      const nextPage0Based = recruiterOverviewResponse.pageInfo.page + 1;
+      if (nextPage0Based >= recruiterOverviewResponse.pageInfo.totalPages) return;
       queryClient.prefetchQuery({
-        queryKey: ["recruiters", nextPage, 6, field || ""],
-        queryFn: () => useRecruiters(nextPage, 6, field),
+        queryKey: ["recruiters", nextPage0Based, 6, field || ""],
+        queryFn: () => useRecruiters(nextPage0Based, 6, field),
       });
     };
     preFetchRecruiters();
