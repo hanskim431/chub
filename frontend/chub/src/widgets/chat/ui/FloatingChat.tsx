@@ -264,11 +264,43 @@ export function FloatingChat({ messages = [] }: FloatingChatProps) {
     chatRoomsData,
   ]);
 
+  // 외부에서 채팅방을 열도록 요청하는 이벤트 리스너
+  useEffect(() => {
+    const handleOpenChatRoom = (event: CustomEvent<string>) => {
+      const roomId = event.detail;
+      if (roomId) {
+        // 채팅창이 닫혀있으면 먼저 열기
+        if (!isOpen) {
+          setIsOpen(true);
+          localStorage.setItem(CHAT_OPEN_STORAGE_KEY, "true");
+        }
+        // 채팅방 선택 (스크롤 여부 초기화 및 읽음 처리 포함)
+        if (selectedRoomId !== roomId) {
+          scrolledRooms.current.delete(roomId);
+        }
+        setSelectedRoomId(roomId);
+        setReadRoomIds((prev) => new Set(prev).add(roomId));
+      }
+    };
+
+    window.addEventListener(
+      "openChatRoom",
+      handleOpenChatRoom as EventListener
+    );
+    return () => {
+      window.removeEventListener(
+        "openChatRoom",
+        handleOpenChatRoom as EventListener
+      );
+    };
+  }, [isOpen, selectedRoomId]);
+
   // 채팅창이 열릴 때 선택된 채팅 초기화
   useEffect(() => {
     if (isOpen && !isAnimating) {
       // 채팅창이 열릴 때 아무 채팅도 선택하지 않음
-      setSelectedRoomId(null);
+      // 단, 외부에서 채팅방을 열도록 요청한 경우는 제외
+      // (이미 handleOpenChatRoom에서 처리됨)
     }
   }, [isOpen, isAnimating]);
 

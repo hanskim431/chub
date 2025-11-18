@@ -117,7 +117,11 @@ export function InterviewRequestList() {
             <div className="mt-4">
                 {activeTab === "sent" && (
                     <SentInterviewRequests
-                        status={sentStatusFilter}
+                        status={
+                            role === "interviewee"
+                                ? "PENDING"
+                                : sentStatusFilter
+                        }
                         role={role}
                     />
                 )}
