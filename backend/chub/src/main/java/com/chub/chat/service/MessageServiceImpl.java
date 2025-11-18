@@ -1,10 +1,8 @@
 package com.chub.chat.service;
 
-import com.chub.chat.dto.response.MessageDto;
 import com.chub.chat.dto.response.*;
-import com.chub.chat.dto.response.PaginationDto;
-import com.chub.chat.dto.websocket.ChatMessageResponse;
 import com.chub.chat.dto.websocket.ChatMessageRequest;
+import com.chub.chat.dto.websocket.ChatMessageResponse;
 import com.chub.chat.dto.websocket.ReadReceiptRequest;
 import com.chub.chat.dto.websocket.ReadReceiptResponse;
 import com.chub.entity.ChatRoom;
@@ -14,19 +12,21 @@ import com.chub.exception.chat.ChatException;
 import com.chub.repository.UserRepository;
 import com.chub.repository.mongo.ChatRoomRepository;
 import com.chub.repository.mongo.MessageRepository;
+import com.chub.websocket.util.WebSocketHelper;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.chub.websocket.util.WebSocketHelper;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class MessageServiceImpl implements MessageService {
 
@@ -60,8 +60,9 @@ public class MessageServiceImpl implements MessageService {
         Map<String, ParticipantDto> participantDtoMap = createParticipantDtoMap(users);
 
         Pageable pageable = PageRequest.of(0, pageSize + 1);
+        LocalDateTime queryDate = cursor != null ? cursor : LocalDateTime.now().plusHours(1);
         List<Message> messages = messageRepository.findByRoomIdAndCreatedAtLessThanOrderByCreatedAtDesc(
-                roomId, cursor, pageable);
+                roomId, queryDate, pageable);
         List<MessageDto> messageDtos = createMessageDtoList(messages, pageSize);
 
         PaginationDto paginationDto = createPaginationDto(messages, pageSize);
@@ -73,7 +74,7 @@ public class MessageServiceImpl implements MessageService {
     public void sendMessage(ChatMessageRequest chatMessageRequest, Long userId) {
         String roomId = chatMessageRequest.roomId();
         String content = chatMessageRequest.content();
-
+        log.info("{" + roomId + "}" + userId + ":" + content);
         Message message = Message.of(roomId, userId, content);
         Message save = messageRepository.save(message);
         ChatMessageResponse response = ChatMessageResponse.from(save);
@@ -87,6 +88,7 @@ public class MessageServiceImpl implements MessageService {
     public void markReadReceipt(ReadReceiptRequest request, Long userId) {
         String roomId = request.roomId();
         LocalDateTime lastReadAt = LocalDateTime.now();
+        log.info("{" + roomId + "}" + userId + ": [mard-read]");
 
         chatRoomRepository.updateReadReceipt(roomId, userId, lastReadAt);
 

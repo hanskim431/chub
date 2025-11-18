@@ -2,6 +2,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { post } from "@/shared/api/api";
 import GoToLoginButton from "@/features/auth/ui/GoToLoginButton";
 import { useMe } from "@/features/auth/api/me";
+import { Link } from "react-router-dom";
 
 function UserMenu() {
     const qc = useQueryClient();
@@ -19,14 +20,20 @@ function UserMenu() {
                 <GoToLoginButton />
             ) : (
                 <>
-                    <img
-                        src={data?.data?.avatar}
-                        alt="user-avatar"
-                        className="w-8 h-8 rounded-full border border-gray-300"
-                    />
-                    <span className="text-sm font-bold text-gray-600">
-                        {nickname}님
-                    </span>
+                    <Link
+                        to="/my"
+                        className="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer"
+                        aria-label="마이페이지로 이동"
+                    >
+                        <img
+                            src={data?.data?.avatar}
+                            alt="user-avatar"
+                            className="w-8 h-8 rounded-full border border-gray-300"
+                        />
+                        <span className="text-sm font-bold text-gray-600">
+                            {nickname}님
+                        </span>
+                    </Link>
                     <button
                         onClick={handleLogout}
                         aria-label="logout-button"

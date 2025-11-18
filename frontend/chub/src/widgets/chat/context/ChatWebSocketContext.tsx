@@ -4,6 +4,7 @@ interface ChatWebSocketContextValue {
   wsConnected: boolean;
   sendMessage: (roomId: string, content: string) => boolean;
   markAsRead: (roomId: string) => boolean;
+  setOnMessageReceived: (callback: ((roomId: string) => void) | null) => void;
 }
 
 const ChatWebSocketContext = createContext<ChatWebSocketContextValue | null>(

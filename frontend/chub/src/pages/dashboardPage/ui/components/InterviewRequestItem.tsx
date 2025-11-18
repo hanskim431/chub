@@ -89,18 +89,8 @@ export function InterviewRequestItem({
                             <p className="text-sm text-text-gray mb-2">
                                 {opponentField}
                             </p>
-                            <p className="text-sm text-text-black line-clamp-2 mb-2">
+                            <p className="text-sm text-text-black line-clamp-2">
                                 {request.requestMessage}
-                            </p>
-                            <p className="text-xs text-text-gray">
-                                {new Date(request.createdAt).toLocaleDateString(
-                                    "ko-KR",
-                                    {
-                                        year: "numeric",
-                                        month: "long",
-                                        day: "numeric",
-                                    }
-                                )}
                             </p>
                         </div>
                     </div>
@@ -144,13 +134,7 @@ export function InterviewRequestItem({
                             ? "면접 요청 수락"
                             : "면접 요청 거절"
                     }
-                    subtitle={`${opponentName} · ${opponentField} · ${new Date(
-                        request.createdAt
-                    ).toLocaleDateString("ko-KR", {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                    })}`}
+                    subtitle={`${opponentName} · ${opponentField}`}
                     onClose={handleCloseModal}
                     contentRef={modalContentRef}
                 >

@@ -11,12 +11,14 @@ import com.chub.dto.response.ScheduledInterviewListData;
 import com.chub.dto.response.ScheduledInterviewResponse;
 import com.chub.entity.InterviewRequest;
 import com.chub.entity.InterviewerProfile;
+import com.chub.entity.Resume;
 import com.chub.entity.User;
 import com.chub.exception.interview.InterviewRequestException;
 import com.chub.exception.interviewer.InterviewerProfileException;
 import com.chub.exception.user.UserException;
 import com.chub.repository.InterviewRequestRepository;
 import com.chub.repository.InterviewerProfileRepository;
+import com.chub.repository.ResumeRepository;
 import com.chub.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -37,6 +39,7 @@ public class InterviewRequestServiceImpl implements InterviewRequestService {
     private final UserRepository userRepository;
     private final InterviewerProfileRepository interviewerProfileRepository;
     private final InterviewRequestRepository interviewRequestRepository;
+    private final ResumeRepository resumeRepository;
 
     @Override
     @Transactional
@@ -124,9 +127,15 @@ public class InterviewRequestServiceImpl implements InterviewRequestService {
             );
         }
 
-        // DTO 변환 - 신청자(User) 정보 표시
+        // DTO 변환 - 신청자(User) 정보 및 이력서 표시
         List<ReceivedInterviewRequestResponse> responses = requestPage.getContent().stream()
-                .map(ReceivedInterviewRequestResponse::from)
+                .map(request -> {
+                    // 신청자의 이력서 조회
+                    String resumeUrl = resumeRepository.findTopByUserIdOrderByUploadedAtDesc(request.getUser().getId())
+                            .map(Resume::getPdfUrl)
+                            .orElse(null);
+                    return ReceivedInterviewRequestResponse.from(request, resumeUrl);
+                })
                 .collect(Collectors.toList());
 
         // Wrapper로 감싸기
@@ -172,7 +181,20 @@ public class InterviewRequestServiceImpl implements InterviewRequestService {
 
         // DTO 변환
         List<ScheduledInterviewResponse> interviews = scheduledRequestsPage.getContent().stream()
-                .map(request -> ScheduledInterviewResponse.from(request, userId))
+                .map(request -> {
+                    // 현재 사용자가 면접관인지 판별
+                    boolean isInterviewer = request.getInterviewerProfile().getUser().getId().equals(userId);
+
+                    // 면접관일 경우에만 상대방(면접자)의 이력서 URL 조회
+                    String resumeUrl = null;
+                    if (isInterviewer) {
+                        resumeUrl = resumeRepository.findTopByUserIdOrderByUploadedAtDesc(request.getUser().getId())
+                                .map(Resume::getPdfUrl)
+                                .orElse(null);
+                    }
+
+                    return ScheduledInterviewResponse.from(request, userId, resumeUrl);
+                })
                 .collect(Collectors.toList());
 
         // Wrapper로 감싸기

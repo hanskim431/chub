@@ -14,8 +14,10 @@ function RecruiterListItem({
   recruiterOverview: RecruiterOverview;
 }) {
   const navigate = useNavigate();
-  const { mutate: createChatRoom, isPending: isCreatingChatRoom } = useCreateChatRoom();
-  const { mutate: createRequest, isPending: isCreatingRequest } = useCreateInterviewRequest();
+  const { mutate: createChatRoom, isPending: isCreatingChatRoom } =
+    useCreateChatRoom();
+  const { mutate: createRequest, isPending: isCreatingRequest } =
+    useCreateInterviewRequest();
   const [showChatModal, setShowChatModal] = useState(false);
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [requestMessage, setRequestMessage] = useState("");
@@ -112,7 +114,9 @@ function RecruiterListItem({
           <div className="flex flex-col gap-4">
             <div className="text-center py-4">
               <p className="text-lg text-text-black">
-                <span className="font-bold text-point">{recruiterOverview.name}</span>
+                <span className="font-bold text-point">
+                  {recruiterOverview.name}
+                </span>
                 님께 면접을 신청하시겠습니까?
               </p>
             </div>
@@ -146,7 +150,7 @@ function RecruiterListItem({
                   }
                   createRequest(
                     {
-                      interviewerId: Number(recruiterOverview.id),
+                      interviewerId: recruiterOverview.userId,
                       requestMessage: requestMessage.trim(),
                     },
                     {
@@ -179,7 +183,7 @@ function RecruiterListItem({
         onClose={() => setShowChatModal(false)}
         onConfirm={() => {
           createChatRoom(
-            { opponentId: Number(recruiterOverview.id) },
+            { opponentId: recruiterOverview.userId },
             {
               onSuccess: (response) => {
                 if (response.success && response.data) {

@@ -27,11 +27,13 @@ export const getChatMessages = async (
   roomId: string,
   cursor?: string
 ): Promise<ApiResponse<GetChatMessagesResponse>> => {
+  console.log("[getChatMessages] 요청 시작:", { roomId, cursor });
   const params = cursor ? { cursor } : {};
   const response = await api.get<ApiResponse<GetChatMessagesResponse>>(
     `/api/chat/rooms/${roomId}/messages`,
     { params }
   );
+  console.log("[getChatMessages] 응답 받음:", response.data);
   return response.data;
 };
 

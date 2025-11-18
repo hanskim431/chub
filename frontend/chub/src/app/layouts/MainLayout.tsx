@@ -21,27 +21,37 @@ function MainLayout() {
     }));
   }, [chatRoomsData?.data?.rooms]);
 
-  const { wsConnected, sendMessage, markAsRead } = useChatWebSocket({
+  const { wsConnected, sendMessage, markAsRead, setOnMessageReceived } = useChatWebSocket({
     currentUserId,
     chatRooms: chatRoomsForSubscription,
     enabled: isAuthenticated, // 로그인 시 바로 연결 (채팅방이 없어도 연결)
   });
 
-  return (
-    <ChatWebSocketProvider
-      value={{
-        wsConnected,
-        sendMessage,
-        markAsRead,
-      }}
-    >
-      <div className="flex h-full flex-col">
-        <Header />
-        <Outlet />
-        {isAuthenticated && <FloatingChat />}
-      </div>
-    </ChatWebSocketProvider>
+  const content = (
+    <div className="flex h-full flex-col">
+      <Header />
+      <Outlet />
+      {isAuthenticated && <FloatingChat />}
+    </div>
   );
+
+  // 로그인한 경우에만 ChatWebSocketProvider로 감싸기
+  if (isAuthenticated) {
+    return (
+      <ChatWebSocketProvider
+        value={{
+          wsConnected,
+          sendMessage,
+          markAsRead,
+          setOnMessageReceived,
+        }}
+      >
+        {content}
+      </ChatWebSocketProvider>
+    );
+  }
+
+  return content;
 }
 
 export default MainLayout;

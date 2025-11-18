@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { useMe } from "@/features/auth/api/me";
 import {
   useChatRooms,
@@ -14,9 +14,16 @@ import { ChatHeader } from "@/widgets/chat/ui/ChatHeader";
 import { ChatMessages } from "@/widgets/chat/ui/ChatMessages";
 import { ChatInput } from "@/widgets/chat/ui/ChatInput";
 import { EmptyChatState } from "@/widgets/chat/ui/EmptyChatState";
+import { X } from "lucide-react";
+
+const CHAT_OPEN_STORAGE_KEY = "chatWindowOpen";
 
 export function FloatingChat({ messages = [] }: FloatingChatProps) {
-  const [isOpen, setIsOpen] = useState(false);
+  // localStorage에서 채팅창 열림 상태 복원
+  const [isOpen, setIsOpen] = useState(() => {
+    const saved = localStorage.getItem(CHAT_OPEN_STORAGE_KEY);
+    return saved === "true";
+  });
   const [isAnimating, setIsAnimating] = useState(false);
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
   const [input, setInput] = useState("");
@@ -25,10 +32,17 @@ export function FloatingChat({ messages = [] }: FloatingChatProps) {
   const unreadDividerRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const isFirstRender = useRef(true);
-  const hasScrolledToUnread = useRef(false);
+  // 각 채팅방별로 스크롤 여부를 추적 (채팅방을 열었을 때 한 번만 스크롤)
+  const scrolledRooms = useRef<Set<string>>(new Set());
   const { data: meData } = useMe();
   const currentUserId = meData?.data?.id;
+  const isAuthenticated = !!(meData?.success && meData?.data);
   const { data: chatRoomsData } = useChatRooms();
+
+  // 로그인하지 않은 경우 아무것도 렌더링하지 않음
+  if (!isAuthenticated) {
+    return null;
+  }
 
   // 선택한 채팅방의 메시지 가져오기
   const {
@@ -38,6 +52,16 @@ export function FloatingChat({ messages = [] }: FloatingChatProps) {
   } = useChatMessages(selectedRoomId);
   const { data: opponentLastReadData, isLoading: isLoadingLastRead } =
     useOpponentLastRead(selectedRoomId);
+
+  // 디버깅: selectedRoomId 변경 시 로그
+  useEffect(() => {
+    if (selectedRoomId) {
+      console.log("[FloatingChat] selectedRoomId 변경:", selectedRoomId);
+      console.log("[FloatingChat] isLoadingMessages:", isLoadingMessages);
+      console.log("[FloatingChat] messagesData:", messagesData);
+      console.log("[FloatingChat] messagesError:", messagesError);
+    }
+  }, [selectedRoomId, isLoadingMessages, messagesData, messagesError]);
 
   // API에서 받은 채팅방 목록을 conversations로 변환
   const conversations = useMemo(() => {
@@ -98,6 +122,7 @@ export function FloatingChat({ messages = [] }: FloatingChatProps) {
     }
 
     // API 데이터를 사용하여 conversations 생성
+    // 가장 최근에 받은 채팅창부터 보여주기 위해 최신순 정렬
     return chatRoomsData.data.rooms
       .map(
         (room: ChatRoom): Conversation => ({
@@ -112,18 +137,42 @@ export function FloatingChat({ messages = [] }: FloatingChatProps) {
         })
       )
       .sort((a, b) => {
+        // lastMessageTime을 기준으로 최신순 정렬 (큰 값이 위로)
         const timeA = a.lastMessageTime
           ? new Date(a.lastMessageTime).getTime()
           : 0;
         const timeB = b.lastMessageTime
           ? new Date(b.lastMessageTime).getTime()
           : 0;
+        // 내림차순 정렬 (최신이 위로)
         return timeB - timeA;
       });
   }, [chatRoomsData, messages, currentUserId, readRoomIds]);
 
   // 웹소켓 함수 가져오기 (ProtectedLayout에서 초기화됨)
-  const { wsConnected, sendMessage, markAsRead } = useChatWebSocketContext();
+  const { wsConnected, sendMessage, markAsRead, setOnMessageReceived } =
+    useChatWebSocketContext();
+
+  // 메시지 수신 시 현재 열려있는 채팅방이면 자동으로 읽음 처리
+  const handleMessageReceived = useCallback(
+    (roomId: string) => {
+      // 현재 선택된 채팅방과 메시지가 온 채팅방이 같으면 자동으로 읽음 처리
+      if (selectedRoomId === roomId && isOpen) {
+        console.log("[FloatingChat] 메시지 수신 - 자동 읽음 처리:", roomId);
+        markAsRead(roomId);
+        setReadRoomIds((prev) => new Set(prev).add(roomId));
+      }
+    },
+    [selectedRoomId, isOpen, markAsRead]
+  );
+
+  // 메시지 수신 콜백 등록
+  useEffect(() => {
+    setOnMessageReceived(handleMessageReceived);
+    return () => {
+      setOnMessageReceived(null);
+    };
+  }, [handleMessageReceived, setOnMessageReceived]);
 
   // API에서 받은 메시지를 변환하고 안읽은 메시지 구분
   const { processedMessages, unreadIndex } = useMemo(() => {
@@ -152,9 +201,15 @@ export function FloatingChat({ messages = [] }: FloatingChatProps) {
     const unreadCount = originalRoom?.unreadCount || 0;
 
     // 메시지를 변환하고 안읽은 메시지 여부 판단
+    // 위에서부터 오래된 메시지가 오도록 시간 순서대로 정렬 (오래된 것부터)
+    const sortedMessages = [...messages].sort(
+      (a, b) =>
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    );
+
     const processed: Array<
       ChatMessage & { isUnread: boolean; senderName: string }
-    > = messages.map((msg) => {
+    > = sortedMessages.map((msg) => {
       const sender = participants[msg.senderId];
       const senderName = sender?.name || `User ${msg.senderId}`;
 
@@ -214,14 +269,12 @@ export function FloatingChat({ messages = [] }: FloatingChatProps) {
     if (isOpen && !isAnimating) {
       // 채팅창이 열릴 때 아무 채팅도 선택하지 않음
       setSelectedRoomId(null);
-      hasScrolledToUnread.current = false;
     }
   }, [isOpen, isAnimating]);
 
-  // 채팅방이 변경되면 스크롤 초기화 및 읽음 처리
+  // 채팅방이 변경되면 읽음 처리
   useEffect(() => {
     if (selectedRoomId) {
-      hasScrolledToUnread.current = false;
       // 채팅방을 열면 읽음 처리
       setReadRoomIds((prev) => new Set(prev).add(selectedRoomId));
       // 웹소켓으로 읽음 처리 전송
@@ -229,14 +282,14 @@ export function FloatingChat({ messages = [] }: FloatingChatProps) {
     }
   }, [selectedRoomId, markAsRead]);
 
-  // 안읽은 메시지로 스크롤 조정 (애니메이션 없이 즉시)
+  // 안읽은 메시지로 스크롤 조정 (채팅방을 열었을 때 한 번만)
   useEffect(() => {
     if (
       isOpen &&
       !isAnimating &&
       selectedRoomId &&
       processedMessages.length > 0 &&
-      !hasScrolledToUnread.current
+      !scrolledRooms.current.has(selectedRoomId)
     ) {
       // requestAnimationFrame을 사용하여 DOM이 완전히 렌더링된 후 스크롤
       requestAnimationFrame(() => {
@@ -254,13 +307,15 @@ export function FloatingChat({ messages = [] }: FloatingChatProps) {
 
             // 중앙에 오도록 즉시 스크롤
             container.scrollTop = dividerTop - containerHeight / 2;
-            hasScrolledToUnread.current = true;
+            // 이 채팅방에 대해 스크롤 완료 표시
+            scrolledRooms.current.add(selectedRoomId);
           } else if (messagesEndRef.current && messagesContainerRef.current) {
             // 안읽은 메시지가 없으면 맨 아래로 즉시 스크롤
             const container = messagesContainerRef.current;
             const endElement = messagesEndRef.current;
             container.scrollTop = endElement.offsetTop;
-            hasScrolledToUnread.current = true;
+            // 이 채팅방에 대해 스크롤 완료 표시
+            scrolledRooms.current.add(selectedRoomId);
           }
         });
       });
@@ -279,12 +334,14 @@ export function FloatingChat({ messages = [] }: FloatingChatProps) {
     setIsAnimating(true);
     setTimeout(() => {
       setIsOpen(false);
+      localStorage.setItem(CHAT_OPEN_STORAGE_KEY, "false");
       setIsAnimating(false);
     }, 150); // 300ms -> 150ms로 속도 향상
   };
 
   const handleOpen = () => {
     setIsOpen(true);
+    localStorage.setItem(CHAT_OPEN_STORAGE_KEY, "true");
     setIsAnimating(true);
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
@@ -295,23 +352,46 @@ export function FloatingChat({ messages = [] }: FloatingChatProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || !selectedRoomId || !wsConnected) return;
+    console.log("[FloatingChat] handleSubmit 호출:", {
+      input: input.trim(),
+      selectedRoomId,
+      wsConnected,
+    });
+
+    if (!input.trim()) {
+      console.warn("[FloatingChat] 입력값이 비어있습니다.");
+      return;
+    }
+    if (!selectedRoomId) {
+      console.warn("[FloatingChat] 선택된 채팅방이 없습니다.");
+      return;
+    }
+    if (!wsConnected) {
+      console.warn("[FloatingChat] WebSocket이 연결되지 않았습니다.");
+      return;
+    }
 
     // 웹소켓으로 메시지 전송
-    sendMessage(selectedRoomId, input.trim());
-    setInput("");
+    const result = sendMessage(selectedRoomId, input.trim());
+    console.log("[FloatingChat] sendMessage 결과:", result);
+    if (result) {
+      setInput("");
+    }
   };
 
   const handleSelectRoom = (roomId: string) => {
+    console.log("[FloatingChat] 채팅방 선택:", roomId);
+    // 다른 채팅방을 선택하면 스크롤 여부 초기화 (새 채팅방은 한 번 스크롤)
+    if (selectedRoomId !== roomId) {
+      scrolledRooms.current.delete(roomId);
+    }
     setSelectedRoomId(roomId);
-    hasScrolledToUnread.current = false;
     // 채팅방을 클릭하면 즉시 읽음 처리
     setReadRoomIds((prev) => new Set(prev).add(roomId));
   };
 
   const handleCloseChat = () => {
     setSelectedRoomId(null);
-    hasScrolledToUnread.current = false;
   };
 
   const selectedConversation = conversations.find(
@@ -333,7 +413,7 @@ export function FloatingChat({ messages = [] }: FloatingChatProps) {
 
       {isOpen && (
         <div
-          className={`fixed bottom-20 right-4 w-[500px] h-[400px] bg-white rounded-xl shadow-2xl border border-gray-300 overflow-hidden flex z-40 ${
+          className={`w-[500px] h-[400px] bg-white rounded-xl shadow-2xl border border-gray-300 overflow-hidden flex z-40 ${
             isAnimating && !isFirstRender.current
               ? "opacity-0 translate-y-4"
               : "opacity-100 translate-y-0"
@@ -345,13 +425,26 @@ export function FloatingChat({ messages = [] }: FloatingChatProps) {
             transition: "opacity 0.15s ease-out, transform 0.15s ease-out",
           }}
         >
+          {/* 채팅창 전체 닫기 버튼 (채팅이 선택되지 않았을 때만 표시) */}
+          {!selectedRoomId && (
+            <div className="absolute top-2 right-2 z-50">
+              <button
+                onClick={handleClose}
+                className="p-1.5 bg-white rounded-full shadow-md hover:bg-gray-100 transition-colors text-gray-600 hover:text-gray-900"
+                title="채팅창 닫기"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+
           <ChatList
             conversations={conversations}
             selectedRoomId={selectedRoomId}
             onSelectRoom={handleSelectRoom}
           />
 
-          <div className="flex-1 flex flex-col bg-white">
+          <div className="flex-1 flex flex-col bg-white min-h-0">
             {selectedRoomId && selectedConversation ? (
               <>
                 <ChatHeader

@@ -32,6 +32,7 @@ export interface Recruiter {
 
 export interface RecruiterOverview {
     id: string;
+    userId: number;
     name: string;
     avatar: string;
     field: string;
