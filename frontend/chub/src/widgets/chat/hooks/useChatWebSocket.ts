@@ -21,7 +21,7 @@ export function useChatWebSocket({
 
   // 웹소켓 연결 및 구독
   useEffect(() => {
-    if (!currentUserId || !enabled || !chatRooms.length) return;
+    if (!currentUserId || !enabled) return;
 
     const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8080";
     const socket = new SockJS(`${apiUrl}/ws`);
@@ -33,30 +33,32 @@ export function useChatWebSocket({
       onConnect: () => {
         setWsConnected(true);
 
-        // 모든 채팅방에 대한 메시지 수신 구독
-        chatRooms.forEach((room) => {
-          client.subscribe(
-            `/topic/chat/rooms/${room.roomId}`,
-            (message: StompMessage) => {
-              const data = JSON.parse(message.body);
-              if (data.type === "message.received") {
-                // 새 메시지 수신 시 메시지 목록 갱신
-                queryClient.invalidateQueries({
-                  queryKey: ["chatMessages", room.roomId],
-                });
-                // 채팅방 목록도 갱신
-                queryClient.invalidateQueries({ queryKey: ["chatRooms"] });
-              } else if (data.type === "read.receipt") {
-                // 읽음 처리 이벤트 수신 시 상대방 마지막 읽은 시간 갱신
-                if (data.data.readerId !== currentUserId) {
+        // 모든 채팅방에 대한 메시지 수신 구독 (채팅방이 있을 때만)
+        if (chatRooms.length > 0) {
+          chatRooms.forEach((room) => {
+            client.subscribe(
+              `/topic/chat/rooms/${room.roomId}`,
+              (message: StompMessage) => {
+                const data = JSON.parse(message.body);
+                if (data.type === "message.received") {
+                  // 새 메시지 수신 시 메시지 목록 갱신
                   queryClient.invalidateQueries({
-                    queryKey: ["opponentLastRead", room.roomId],
+                    queryKey: ["chatMessages", room.roomId],
                   });
+                  // 채팅방 목록도 갱신
+                  queryClient.invalidateQueries({ queryKey: ["chatRooms"] });
+                } else if (data.type === "read.receipt") {
+                  // 읽음 처리 이벤트 수신 시 상대방 마지막 읽은 시간 갱신
+                  if (data.data.readerId !== currentUserId) {
+                    queryClient.invalidateQueries({
+                      queryKey: ["opponentLastRead", room.roomId],
+                    });
+                  }
                 }
               }
-            }
-          );
-        });
+            );
+          });
+        }
 
         // 개인 큐 구독 (토스트 알림용)
         client.subscribe(
