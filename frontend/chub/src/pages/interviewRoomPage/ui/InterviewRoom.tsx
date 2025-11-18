@@ -97,7 +97,7 @@ export function InterviewRoom({
   };
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50">
+    <div className="h-[calc(100vh-4rem)] flex flex-col bg-gray-50">
       {/* 헤더 */}
       <InterviewHeader
         timeRemaining={timeRemaining}
@@ -107,7 +107,7 @@ export function InterviewRoom({
         isConnected={isConnected}
       />
 
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden min-h-0">
         {/* 왼쪽: 면접관 정보 */}
         <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
           {opponentInfo && (
@@ -122,7 +122,7 @@ export function InterviewRoom({
           )}
 
           {/* 채팅 패널 */}
-          <div className="flex-1 border-t border-gray-200">
+          <div className="flex-1 border-t border-gray-200 min-h-0 flex flex-col">
             <ChatPanel
               messages={messages}
               onSendMessage={onSendMessage}
