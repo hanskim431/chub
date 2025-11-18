@@ -27,8 +27,6 @@ function RecruiterListPage() {
   useEffect(() => {
     if (recruiterOverviewResponse?.pageInfo) {
       const totalPages = recruiterOverviewResponse.pageInfo.totalPages;
-      // pageInfo.page는 0-based이므로 1-based로 변환하여 비교
-      const displayedPage = recruiterOverviewResponse.pageInfo.page + 1;
       if (currentPage > totalPages && totalPages > 0) {
         setCurrentPage(totalPages);
       }
