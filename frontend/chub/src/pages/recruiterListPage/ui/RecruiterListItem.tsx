@@ -1,18 +1,25 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import type { RecruiterOverview } from "@mocks/model/constants";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useCreateChatRoom } from "@/entities/chat/api/query";
 import { CreateChatRoomModal } from "@/widgets/chat/ui/CreateChatRoomModal";
+import { useCreateInterviewRequest } from "@/pages/interviewerDetailPage/api/query";
 import Card from "@/shared/ui/Card";
 import Pill from "@/shared/ui/Pill";
+import Modal from "@/shared/ui/Modal";
 
 function RecruiterListItem({
   recruiterOverview,
 }: {
   recruiterOverview: RecruiterOverview;
 }) {
+  const navigate = useNavigate();
   const { mutate: createChatRoom, isPending: isCreatingChatRoom } = useCreateChatRoom();
+  const { mutate: createRequest, isPending: isCreatingRequest } = useCreateInterviewRequest();
   const [showChatModal, setShowChatModal] = useState(false);
+  const [showRequestModal, setShowRequestModal] = useState(false);
+  const [requestMessage, setRequestMessage] = useState("");
+  const modalContentRef = useRef<HTMLDivElement>(null);
   return (
     <Card
       width="full"
@@ -67,13 +74,16 @@ function RecruiterListItem({
         </div>
         <div className="flex items-center justify-between gap-3 w-full mt-auto z-1 pt-2">
           <button
-            onClick={() => {
-              // todo: 면접 신청하기 기능 추가
-              console.log("면접 신청하기");
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setShowRequestModal(true);
+              setRequestMessage("");
             }}
+            disabled={isCreatingRequest}
             className="flex-1 rounded-lg border-2 border-point-400 bg-white px-4 py-2.5 text-sm font-semibold text-point-400 shadow-sm transition-all duration-300 hover:cursor-pointer hover:bg-point-100 hover:border-point-500 hover:text-point-500 hover:shadow-lg hover:scale-[1.02] hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-point-500/60 focus-visible:outline-none active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 z-10 relative"
           >
-            면접 신청하기
+            {isCreatingRequest ? "신청 중..." : "면접 신청하기"}
           </button>
           <button
             onClick={(e) => {
@@ -87,6 +97,80 @@ function RecruiterListItem({
           </button>
         </div>
       </div>
+
+      {/* 면접 신청 모달 */}
+      {showRequestModal && (
+        <Modal
+          title="면접 신청"
+          subtitle={`${recruiterOverview.name} · ${recruiterOverview.field}`}
+          onClose={() => {
+            setShowRequestModal(false);
+            setRequestMessage("");
+          }}
+          contentRef={modalContentRef}
+        >
+          <div className="flex flex-col gap-4">
+            <div className="text-center py-4">
+              <p className="text-lg text-text-black">
+                <span className="font-bold text-point">{recruiterOverview.name}</span>
+                님께 면접을 신청하시겠습니까?
+              </p>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                면접 신청 메시지
+              </label>
+              <textarea
+                value={requestMessage}
+                onChange={(e) => setRequestMessage(e.target.value)}
+                placeholder="면접 신청과 함께 전달할 메시지를 입력해주세요."
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-point focus:border-point resize-none"
+                rows={5}
+              />
+            </div>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => {
+                  setShowRequestModal(false);
+                  setRequestMessage("");
+                }}
+                className="px-6 py-2 border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-colors"
+              >
+                돌아가기
+              </button>
+              <button
+                onClick={() => {
+                  if (!requestMessage.trim()) {
+                    alert("면접 신청 메시지를 입력해주세요.");
+                    return;
+                  }
+                  createRequest(
+                    {
+                      interviewerId: Number(recruiterOverview.id),
+                      requestMessage: requestMessage.trim(),
+                    },
+                    {
+                      onSuccess: () => {
+                        setShowRequestModal(false);
+                        setRequestMessage("");
+                        alert("면접 신청이 완료되었습니다.");
+                        navigate("/dashboard");
+                      },
+                      onError: () => {
+                        alert("면접 신청에 실패했습니다. 다시 시도해주세요.");
+                      },
+                    }
+                  );
+                }}
+                disabled={isCreatingRequest || !requestMessage.trim()}
+                className="px-6 py-2 bg-point text-white rounded-lg font-semibold hover:bg-point-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isCreatingRequest ? "신청 중..." : "신청하기"}
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
 
       {/* 메시지 보내기 모달 */}
       <CreateChatRoomModal

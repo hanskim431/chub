@@ -10,7 +10,7 @@ export function useRecruiters(page: number, size: number, field: string) {
     staleTime: 30 * 60 * 1000,
     refetchInterval: 30 * 60 * 1000,
     refetchIntervalInBackground: false,
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true,
   });
   return { data };
 }
