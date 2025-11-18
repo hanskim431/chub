@@ -125,7 +125,7 @@ export function useChatWebSocket({
 
     try {
       stompClientRef.current.publish({
-        destination: "/chat/send",
+        destination: "/app/chat/send",
         body: JSON.stringify({
           roomId,
           content,
@@ -144,7 +144,7 @@ export function useChatWebSocket({
     if (!stompClientRef.current?.connected) return false;
 
     stompClientRef.current.publish({
-      destination: "/chat/mark-read",
+      destination: "/app/chat/mark-read",
       body: JSON.stringify({ roomId }),
     });
     return true;
