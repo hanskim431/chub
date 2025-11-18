@@ -21,6 +21,9 @@ export function useChatWebSocket({
   const stompClientRef = useRef<Client | null>(null);
   const [wsConnected, setWsConnected] = useState(false);
   const onMessageReceivedRef = useRef<((roomId: string) => void) | null>(null);
+  // 이미 구독한 채팅방 목록 추적 (중복 구독 방지)
+  const subscribedRoomsRef = useRef<Set<string>>(new Set());
+  const userQueueSubscribedRef = useRef<boolean>(false);
 
   // 웹소켓 연결 (한 번만 연결)
   useEffect(() => {
@@ -45,6 +48,9 @@ export function useChatWebSocket({
       onDisconnect: () => {
         console.log("[useChatWebSocket] WebSocket 연결 해제됨");
         setWsConnected(false);
+        // 연결 해제 시 구독 목록 초기화
+        subscribedRoomsRef.current.clear();
+        userQueueSubscribedRef.current = false;
       },
     });
 
@@ -55,22 +61,42 @@ export function useChatWebSocket({
       if (stompClientRef.current) {
         stompClientRef.current.deactivate();
         stompClientRef.current = null;
+        // 연결 해제 시 구독 목록 초기화
+        subscribedRoomsRef.current.clear();
+        userQueueSubscribedRef.current = false;
       }
     };
   }, [currentUserId, enabled]);
 
-  // 채팅방 구독 (연결 후 채팅방 목록이 변경될 때만)
+  // 채팅방 구독 (연결 후 한 번만, 새로운 채팅방만 추가 구독)
   useEffect(() => {
     if (!wsConnected || !stompClientRef.current?.connected || !currentUserId)
       return;
 
-    const subscriptions: Array<{ unsubscribe: () => void }> = [];
+    // 개인 큐 구독 (한 번만)
+    if (!userQueueSubscribedRef.current) {
+      stompClientRef.current.subscribe(
+        `/user/${currentUserId}/queue/messages`,
+        (message: StompMessage) => {
+          const data = JSON.parse(message.body);
+          if (data.type === "message.received") {
+            // 토스트 알림 표시 (선택사항)
+          }
+        }
+      );
+      userQueueSubscribedRef.current = true;
+    }
 
-    // 모든 채팅방에 대한 메시지 수신 구독
+    // 새로운 채팅방만 구독 (이미 구독한 채팅방은 스킵)
     if (chatRooms.length > 0) {
       chatRooms.forEach((room) => {
-        // roomId에 특수 문자(:)가 포함되어 있으므로 URL 인코딩
-        const subscription = stompClientRef.current!.subscribe(
+        // 이미 구독한 채팅방은 스킵
+        if (subscribedRoomsRef.current.has(room.roomId)) {
+          return;
+        }
+
+        // 새 채팅방 구독 (구독 객체는 저장하지 않음 - 연결 해제 시 자동으로 해제됨)
+        stompClientRef.current!.subscribe(
           `/topic/chat/rooms/${room.roomId}`,
           (message: StompMessage) => {
             const data = JSON.parse(message.body);
@@ -100,26 +126,10 @@ export function useChatWebSocket({
             }
           }
         );
-        subscriptions.push(subscription);
+        // 구독한 채팅방 목록에 추가
+        subscribedRoomsRef.current.add(room.roomId);
       });
     }
-
-    // 개인 큐 구독 (토스트 알림용)
-    const userQueueSubscription = stompClientRef.current.subscribe(
-      `/user/${currentUserId}/queue/messages`,
-      (message: StompMessage) => {
-        const data = JSON.parse(message.body);
-        if (data.type === "message.received") {
-          // 토스트 알림 표시 (선택사항)
-        }
-      }
-    );
-    subscriptions.push(userQueueSubscription);
-
-    return () => {
-      // 구독 해제
-      subscriptions.forEach((sub) => sub.unsubscribe());
-    };
   }, [wsConnected, currentUserId, chatRooms, queryClient, onMessageReceived]);
 
   // 메시지 전송
