@@ -60,7 +60,7 @@ export const recruiterHandlers = [
             .slice(pageNum * sizeNum, (pageNum + 1) * sizeNum)
             .map((recruiter: Recruiter) => ({
               id: recruiter.id,
-              userId: Number(recruiter.id),
+              userId: recruiter.userId,
               name: recruiter.name,
               avatar: recruiter.avatar,
               field: recruiter.field,
@@ -87,7 +87,7 @@ export const recruiterHandlers = [
   http.get(
     `${import.meta.env.VITE_API_URL}/api/profiles/interviewers/:id`,
     async ({ params }) => {
-      const id = params.id as string;
+      const id = Number(params.id);
       const data = mockManyRecruiters;
       const recruiter = data.find((recruiter) => recruiter.id === id);
       if (!recruiter) {
@@ -115,7 +115,11 @@ export const recruiterHandlers = [
     `${import.meta.env.VITE_API_URL}/api/profiles/interviewers/:id`,
     async ({ request }) => {
       const url = new URL(request.url);
-      const id = url.pathname.split("/").pop();
+      const idStr = url.pathname.split("/").pop();
+      if (!idStr) {
+        return HttpResponse.error();
+      }
+      const id = Number(idStr);
       const data = mockManyRecruiters;
       const recruiter = data.find((recruiter) => recruiter.id === id);
       if (!recruiter) {
@@ -138,8 +142,8 @@ export const recruiterHandlers = [
       // 기본 프로필 데이터 생성
       const baseProfile = mockRecruiters[0];
       myInterviewerProfile = {
-        id: parseInt(baseProfile.id),
-        userId: parseInt(baseProfile.id),
+        id: baseProfile.id,
+        userId: baseProfile.userId,
         name: body.name || baseProfile.name,
         email: body.email || baseProfile.email,
         avatar: body.avatar ?? baseProfile.avatar,
