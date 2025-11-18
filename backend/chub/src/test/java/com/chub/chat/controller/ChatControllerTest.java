@@ -64,7 +64,7 @@ class ChatControllerTest {
         when(chatRoomService.findOrCreateChatRoom(USER_ID, OPPONENT_ID)).thenReturn(response);
 
         // when & then
-        mockMvc.perform(post("/chat/rooms/create")
+        mockMvc.perform(post("/api/chat/rooms/create")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"opponentId\": " + OPPONENT_ID + "}")
                 .with(csrf()))
@@ -100,7 +100,7 @@ class ChatControllerTest {
                     .thenReturn(response);
 
             // When & Then
-            mockMvc.perform(get("/chat/rooms/{roomId}/messages", CHAT_ROOM_ID)
+            mockMvc.perform(get("/api/chat/rooms/{roomId}/messages", CHAT_ROOM_ID)
                     .param("cursor", "2025-01-02T03:04:00Z")
                     .param("pageSize", String.valueOf(PAGE_SIZE)))
                     .andExpect(status().isOk())
@@ -131,7 +131,7 @@ class ChatControllerTest {
                     .thenReturn(response);
 
             // When & Then: cursor 없이 요청
-            mockMvc.perform(get("/chat/rooms/{roomId}/messages", CHAT_ROOM_ID))
+            mockMvc.perform(get("/api/chat/rooms/{roomId}/messages", CHAT_ROOM_ID))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.success", is(true)))
                     .andExpect(jsonPath("$.data.roomId", is(CHAT_ROOM_ID)));
@@ -155,7 +155,7 @@ class ChatControllerTest {
                     .thenReturn(response);
 
             // When & Then: pageSize 없이 요청
-            mockMvc.perform(get("/chat/rooms/{roomId}/messages", CHAT_ROOM_ID)
+            mockMvc.perform(get("/api/chat/rooms/{roomId}/messages", CHAT_ROOM_ID)
                     .param("cursor", "2025-01-02T03:04:00Z"))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.data.pagination.pageSize", is(20)));
@@ -190,7 +190,7 @@ class ChatControllerTest {
                     .thenReturn(response);
 
             // When & Then
-            mockMvc.perform(get("/chat/rooms/{roomId}/messages/opponent-last-read", CHAT_ROOM_ID)
+            mockMvc.perform(get("/api/chat/rooms/{roomId}/messages/opponent-last-read", CHAT_ROOM_ID)
                     .param("roomId", CHAT_ROOM_ID))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.success", is(true)))
@@ -207,7 +207,7 @@ class ChatControllerTest {
                     .thenReturn(response);
 
             // When & Then
-            mockMvc.perform(get("/chat/rooms/{roomId}/messages/opponent-last-read", CHAT_ROOM_ID)
+            mockMvc.perform(get("/api/chat/rooms/{roomId}/messages/opponent-last-read", CHAT_ROOM_ID)
                     .param("roomId", CHAT_ROOM_ID))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.success", is(true)))
