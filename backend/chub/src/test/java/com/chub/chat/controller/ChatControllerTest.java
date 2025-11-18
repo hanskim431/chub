@@ -96,7 +96,7 @@ class ChatControllerTest {
                     .pagination(new PaginationDto(PAGE_SIZE, true, BASE_TIME.minusMinutes(3)))
                     .build();
 
-            when(messageService.findByRoomIdBeforeDate(CHAT_ROOM_ID, BASE_TIME, PAGE_SIZE))
+            when(messageService.findByRoomIdBeforeDate(CHAT_ROOM_ID, BASE_TIME, PAGE_SIZE, USER_ID))
                     .thenReturn(response);
 
             // When & Then
@@ -127,7 +127,7 @@ class ChatControllerTest {
                     .pagination(new PaginationDto(20, false, null))
                     .build();
 
-            lenient().when(messageService.findByRoomIdBeforeDate(anyString(), isNull(), anyInt()))
+            lenient().when(messageService.findByRoomIdBeforeDate(anyString(), isNull(), anyInt(), anyLong()))
                     .thenReturn(response);
 
             // When & Then: cursor 없이 요청
@@ -151,7 +151,7 @@ class ChatControllerTest {
                     .pagination(new PaginationDto(20, false, null))
                     .build();
 
-            when(messageService.findByRoomIdBeforeDate(CHAT_ROOM_ID, BASE_TIME, 20))
+            when(messageService.findByRoomIdBeforeDate(CHAT_ROOM_ID, BASE_TIME, 20, USER_ID))
                     .thenReturn(response);
 
             // When & Then: pageSize 없이 요청

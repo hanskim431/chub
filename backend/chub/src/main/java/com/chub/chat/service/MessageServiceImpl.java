@@ -52,7 +52,7 @@ public class MessageServiceImpl implements MessageService {
     @Transactional(readOnly = true)
     @Override
     public MessageListResponse findByRoomIdBeforeDate(
-            String roomId, LocalDateTime cursor, Integer pageSize
+            String roomId, LocalDateTime cursor, Integer pageSize, Long userId
     ) {
         ChatRoom room = getChatRoom(roomId);
 
@@ -60,9 +60,12 @@ public class MessageServiceImpl implements MessageService {
         Map<String, ParticipantDto> participantDtoMap = createParticipantDtoMap(users);
 
         Pageable pageable = PageRequest.of(0, pageSize + 1);
-        LocalDateTime queryDate = cursor != null ? cursor : LocalDateTime.now().plusHours(1);
+        if (cursor == null) {
+            cursor = LocalDateTime.now().plusHours(1);
+            markReadReceiptByRoomIdAndUserId(roomId, userId);
+        }
         List<Message> messages = messageRepository.findByRoomIdAndCreatedAtLessThanOrderByCreatedAtDesc(
-                roomId, queryDate, pageable);
+                roomId, cursor, pageable);
         List<MessageDto> messageDtos = createMessageDtoList(messages, pageSize);
 
         PaginationDto paginationDto = createPaginationDto(messages, pageSize);
@@ -87,12 +90,8 @@ public class MessageServiceImpl implements MessageService {
     @Override
     public void markReadReceipt(ReadReceiptRequest request, Long userId) {
         String roomId = request.roomId();
-        LocalDateTime lastReadAt = LocalDateTime.now();
         log.info("{" + roomId + "}" + userId + ": [mard-read]");
-
-        chatRoomRepository.updateReadReceipt(roomId, userId, lastReadAt);
-
-        notifyMessageReceipt(roomId, userId, lastReadAt);
+        markReadReceiptByRoomIdAndUserId(roomId, userId);
     }
 
     @Override
@@ -112,6 +111,12 @@ public class MessageServiceImpl implements MessageService {
         ChatRoom.ParticipantInfo opponentInfo = participants.get(opponentId);
 
         return OpponentLastReadResponse.of(roomId, opponentInfo.getLastReadAt());
+    }
+
+    private void markReadReceiptByRoomIdAndUserId(String roomId, Long userId) {
+        LocalDateTime lastReadAt = LocalDateTime.now();
+        chatRoomRepository.updateReadReceipt(roomId, userId, lastReadAt);
+        notifyMessageReceipt(roomId, userId, lastReadAt);
     }
 
     private void notifyMessageReceipt(String roomId, Long readerId, LocalDateTime lastReadAt) {
