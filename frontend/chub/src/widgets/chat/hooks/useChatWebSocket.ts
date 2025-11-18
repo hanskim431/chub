@@ -115,6 +115,5 @@ export function useChatWebSocket({
     wsConnected,
     sendMessage,
     markAsRead,
-    isConnected: stompClientRef.current?.connected || false,
   };
 }

@@ -1,5 +1,3 @@
-import { useRef } from "react";
-
 interface ChatInputProps {
   input: string;
   wsConnected: boolean;
@@ -13,13 +11,10 @@ export function ChatInput({
   onInputChange,
   onSubmit,
 }: ChatInputProps) {
-  const inputRef = useRef<HTMLInputElement>(null);
-
   return (
     <form onSubmit={onSubmit} className="border-t border-gray-200 p-2 bg-white">
       <div className="flex gap-2">
         <input
-          ref={inputRef}
           type="text"
           value={input}
           onChange={(e) => onInputChange(e.target.value)}
