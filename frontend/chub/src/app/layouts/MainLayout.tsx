@@ -8,7 +8,7 @@ import { ChatWebSocketProvider } from "@/widgets/chat/context/ChatWebSocketConte
 
 function MainLayout() {
   const { data } = useMe();
-  const isAuthenticated = data?.success && data?.data;
+  const isAuthenticated = !!(data?.success && data?.data);
   const currentUserId = data?.data?.id;
   const { data: chatRoomsData } = useChatRooms();
 
@@ -21,7 +21,7 @@ function MainLayout() {
   const { wsConnected, sendMessage, markAsRead } = useChatWebSocket({
     currentUserId,
     chatRooms: chatRoomsForSubscription,
-    enabled: isAuthenticated && chatRooms.length > 0,
+    enabled: isAuthenticated, // 로그인 시 바로 연결 (채팅방이 없어도 연결)
   });
 
   return (

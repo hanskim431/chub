@@ -3,7 +3,7 @@ import { X } from "lucide-react";
 interface InterviewHeaderProps {
   timeRemaining: number;
   formattedTime: string;
-  interviewStatus: "WAITING" | "QUESTION" | "ANSWER" | "COMPLETED";
+  interviewStatus: "WAITING" | "QUESTION" | "ANSWER" | "COMPLETED" | string;
   onEndInterview: () => void;
   isConnected: boolean;
 }

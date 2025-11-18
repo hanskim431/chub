@@ -69,6 +69,8 @@ pipeline {
                     touch .env
                     echo 'VITE_API_URL=https://chub.ai.kr' >> .env
                     echo 'VITE_API_MOCK=false' >> .env
+                    echo 'VITE_STUN_SERVER=stun:chub.ai.kr:3478' >> .env
+                    echo 'VITE_TURN_SERVER=turn:chub.ai.kr:3478' >> .env
 
                     echo "프로덕션 빌드..."
                     npm run build
