@@ -72,10 +72,11 @@ public class ChatController {
             @RequestParam(required = false)
             @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'")
             LocalDateTime cursor,
-            @RequestParam(required = false, defaultValue = PAGE_SIZE) Integer pageSize
+            @RequestParam(required = false, defaultValue = PAGE_SIZE) Integer pageSize,
+            @LoginUser Long userId
     ) {
         MessageListResponse response = messageService.findByRoomIdBeforeDate(
-                roomId, cursor, pageSize
+                roomId, cursor, pageSize, userId
         );
         return ResponseEntity.ok(CommonApiResponse.success(response));
     }

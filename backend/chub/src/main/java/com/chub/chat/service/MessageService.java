@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @Service
 public interface MessageService {
 
-    MessageListResponse findByRoomIdBeforeDate(String roomId, LocalDateTime cursor, Integer pageSize);
+    MessageListResponse findByRoomIdBeforeDate(String roomId, LocalDateTime cursor, Integer pageSize, Long userId);
 
     void sendMessage(ChatMessageRequest message, Long userId);
 
