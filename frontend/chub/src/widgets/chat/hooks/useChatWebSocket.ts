@@ -8,16 +8,19 @@ interface UseChatWebSocketProps {
   currentUserId: number | undefined;
   chatRooms: Array<{ roomId: string }>;
   enabled?: boolean;
+  onMessageReceived?: (roomId: string) => void; // 메시지 수신 시 콜백
 }
 
 export function useChatWebSocket({
   currentUserId,
   chatRooms,
   enabled = true,
+  onMessageReceived,
 }: UseChatWebSocketProps) {
   const queryClient = useQueryClient();
   const stompClientRef = useRef<Client | null>(null);
   const [wsConnected, setWsConnected] = useState(false);
+  const onMessageReceivedRef = useRef<((roomId: string) => void) | null>(null);
 
   // 웹소켓 연결 (한 번만 연결)
   useEffect(() => {
@@ -76,8 +79,17 @@ export function useChatWebSocket({
               queryClient.invalidateQueries({
                 queryKey: ["chatMessages", room.roomId],
               });
-              // 채팅방 목록도 갱신
+              // 채팅방 목록 쿼리 stale 상태 초기화 및 즉시 refetch
               queryClient.invalidateQueries({ queryKey: ["chatRooms"] });
+              queryClient.refetchQueries({ queryKey: ["chatRooms"] });
+              // 메시지 수신 콜백 호출 (현재 열려있는 채팅방이면 자동 읽음 처리용)
+              if (onMessageReceived) {
+                onMessageReceived(room.roomId);
+              }
+              // Context를 통해 등록된 콜백 호출
+              if (onMessageReceivedRef.current) {
+                onMessageReceivedRef.current(room.roomId);
+              }
             } else if (data.type === "read.receipt") {
               // 읽음 처리 이벤트 수신 시 상대방 마지막 읽은 시간 갱신
               if (data.data.readerId !== currentUserId) {
@@ -108,7 +120,7 @@ export function useChatWebSocket({
       // 구독 해제
       subscriptions.forEach((sub) => sub.unsubscribe());
     };
-  }, [wsConnected, currentUserId, chatRooms, queryClient]);
+  }, [wsConnected, currentUserId, chatRooms, queryClient, onMessageReceived]);
 
   // 메시지 전송
   const sendMessage = (roomId: string, content: string) => {
@@ -150,9 +162,17 @@ export function useChatWebSocket({
     return true;
   };
 
+  // 콜백 등록 함수
+  const setOnMessageReceived = (
+    callback: ((roomId: string) => void) | null
+  ) => {
+    onMessageReceivedRef.current = callback;
+  };
+
   return {
     wsConnected,
     sendMessage,
     markAsRead,
+    setOnMessageReceived,
   };
 }
