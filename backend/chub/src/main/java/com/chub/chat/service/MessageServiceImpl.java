@@ -60,8 +60,9 @@ public class MessageServiceImpl implements MessageService {
         Map<String, ParticipantDto> participantDtoMap = createParticipantDtoMap(users);
 
         Pageable pageable = PageRequest.of(0, pageSize + 1);
+        LocalDateTime queryDate = cursor != null ? cursor : LocalDateTime.now().plusHours(1);
         List<Message> messages = messageRepository.findByRoomIdAndCreatedAtLessThanOrderByCreatedAtDesc(
-                roomId, cursor, pageable);
+                roomId, queryDate, pageable);
         List<MessageDto> messageDtos = createMessageDtoList(messages, pageSize);
 
         PaginationDto paginationDto = createPaginationDto(messages, pageSize);
