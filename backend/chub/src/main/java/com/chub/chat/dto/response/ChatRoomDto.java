@@ -15,7 +15,7 @@ public class ChatRoomDto {
     private ParticipantDto opponent;
     private LastMessageDto lastMessage;
     private int unreadCount;
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'")
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
     private LocalDateTime updatedAt;
 
 
@@ -23,7 +23,7 @@ public class ChatRoomDto {
     @Getter
     public static class LastMessageDto {
         private String content;
-        @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'")
+        @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
         private LocalDateTime timestamp;
     }
 

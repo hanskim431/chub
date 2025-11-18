@@ -8,7 +8,7 @@ public record PaginationDto(
         int pageSize,
         boolean hasNext,
 
-        @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'")
+        @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
         LocalDateTime nextCursor
 ) {
     public static PaginationDto of(int pageSize, boolean hasNext, LocalDateTime nextCursor) {

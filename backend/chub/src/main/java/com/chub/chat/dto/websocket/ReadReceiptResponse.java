@@ -8,7 +8,7 @@ public record ReadReceiptResponse(
 
         Long readerId,
 
-        @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'")
+        @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
         LocalDateTime lastReadAt
 ) {
     public static ReadReceiptResponse of(Long readerId, LocalDateTime localDateTime) {

@@ -9,7 +9,7 @@ public record MessageDto(
         String id,
         String senderId,
         String content,
-        @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'")
+        @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
         LocalDateTime createdAt
 ) {
     public static MessageDto from(Message message) {
