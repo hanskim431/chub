@@ -14,6 +14,7 @@ import type {
   CreateInterviewerProfileRequest,
   UpdateInterviewerProfileRequest,
   ExperienceDto,
+  EducationDto,
 } from "@/entities/interviewer/model/types";
 import { Plus, X } from "lucide-react";
 
@@ -44,6 +45,7 @@ export function InterviewerProfileSection() {
     languages: [] as string[],
     availableTimeSlots: [] as string[],
     experiences: [] as ExperienceDto[],
+    education: [] as EducationDto[],
   });
 
   // 프로필 데이터 로드 시 폼 초기화
@@ -61,6 +63,7 @@ export function InterviewerProfileSection() {
         languages: profile.languages || [],
         availableTimeSlots: profile.availableTimeSlots || [],
         experiences: profile.experiences || [],
+        education: profile.education || [],
       });
 
       // 프로필 데이터에 isActive가 있으면 사용, 없으면 localStorage에서 복원
@@ -527,6 +530,165 @@ export function InterviewerProfileSection() {
             >
               <Plus className="w-4 h-4" />
               경력 추가
+            </button>
+          </div>
+        </div>
+
+        {/* 학력 */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            학력
+          </label>
+          <div className="space-y-3">
+            {formData.education.map((edu, index) => (
+              <div
+                key={index}
+                className="flex gap-2 p-3 border border-gray-300 rounded-md bg-gray-50"
+              >
+                <div className="flex-1 grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-xs text-gray-600 mb-1">
+                      학교명
+                    </label>
+                    <input
+                      type="text"
+                      value={edu.school}
+                      onChange={(e) => {
+                        const newEducation = [...formData.education];
+                        newEducation[index] = {
+                          ...newEducation[index],
+                          school: e.target.value,
+                        };
+                        setFormData({ ...formData, education: newEducation });
+                      }}
+                      disabled={isDisabled}
+                      placeholder="예: 서울대학교"
+                      className={`w-full px-2 py-1 text-sm border rounded focus:outline-none focus:ring-1 focus:ring-blue-500 ${
+                        isDisabled
+                          ? "bg-gray-100 text-gray-500 cursor-not-allowed opacity-50"
+                          : "bg-white"
+                      }`}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-600 mb-1">
+                      학위
+                    </label>
+                    <input
+                      type="text"
+                      value={edu.role}
+                      onChange={(e) => {
+                        const newEducation = [...formData.education];
+                        newEducation[index] = {
+                          ...newEducation[index],
+                          role: e.target.value,
+                        };
+                        setFormData({ ...formData, education: newEducation });
+                      }}
+                      disabled={isDisabled}
+                      placeholder="예: 컴퓨터공학과 학사"
+                      className={`w-full px-2 py-1 text-sm border rounded focus:outline-none focus:ring-1 focus:ring-blue-500 ${
+                        isDisabled
+                          ? "bg-gray-100 text-gray-500 cursor-not-allowed opacity-50"
+                          : "bg-white"
+                      }`}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-600 mb-1">
+                      시작 연도
+                    </label>
+                    <input
+                      type="number"
+                      value={edu.startedYear || ""}
+                      onChange={(e) => {
+                        const newEducation = [...formData.education];
+                        newEducation[index] = {
+                          ...newEducation[index],
+                          startedYear: parseInt(e.target.value) || null,
+                        };
+                        setFormData({ ...formData, education: newEducation });
+                      }}
+                      disabled={isDisabled}
+                      placeholder="예: 2010"
+                      min="1900"
+                      max="2100"
+                      className={`w-full px-2 py-1 text-sm border rounded focus:outline-none focus:ring-1 focus:ring-blue-500 ${
+                        isDisabled
+                          ? "bg-gray-100 text-gray-500 cursor-not-allowed opacity-50"
+                          : "bg-white"
+                      }`}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-600 mb-1">
+                      종료 연도
+                    </label>
+                    <input
+                      type="number"
+                      value={edu.endedYear || ""}
+                      onChange={(e) => {
+                        const newEducation = [...formData.education];
+                        newEducation[index] = {
+                          ...newEducation[index],
+                          endedYear: parseInt(e.target.value) || null,
+                        };
+                        setFormData({ ...formData, education: newEducation });
+                      }}
+                      disabled={isDisabled}
+                      placeholder="예: 2014"
+                      min="1900"
+                      max="2100"
+                      className={`w-full px-2 py-1 text-sm border rounded focus:outline-none focus:ring-1 focus:ring-blue-500 ${
+                        isDisabled
+                          ? "bg-gray-100 text-gray-500 cursor-not-allowed opacity-50"
+                          : "bg-white"
+                      }`}
+                    />
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const newEducation = formData.education.filter(
+                      (_, i) => i !== index
+                    );
+                    setFormData({ ...formData, education: newEducation });
+                  }}
+                  disabled={isDisabled}
+                  className={`self-start mt-6 p-1 rounded hover:bg-red-100 transition-colors ${
+                    isDisabled
+                      ? "text-gray-400 cursor-not-allowed"
+                      : "text-red-600 hover:text-red-700"
+                  }`}
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={() => {
+                const newEducation = [
+                  ...formData.education,
+                  {
+                    school: "",
+                    role: "",
+                    startedYear: null,
+                    endedYear: null,
+                  },
+                ];
+                setFormData({ ...formData, education: newEducation });
+              }}
+              disabled={isDisabled}
+              className={`w-full py-2 px-3 border-2 border-dashed border-gray-300 rounded-md flex items-center justify-center gap-2 text-sm font-medium transition-colors ${
+                isDisabled
+                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  : "text-gray-600 hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50"
+              }`}
+            >
+              <Plus className="w-4 h-4" />
+              학력 추가
             </button>
           </div>
         </div>
