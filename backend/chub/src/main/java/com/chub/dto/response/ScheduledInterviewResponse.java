@@ -18,6 +18,9 @@ public record ScheduledInterviewResponse(
         @Schema(description = "상대방 정보")
         OpponentInfo opponent,
 
+        @Schema(description = "이력서 URL (면접관일 때만 제공)")
+        String resumeUrl,
+
         @Schema(description = "내 역할", example = "interviewer")
         String role,
 
@@ -50,7 +53,7 @@ public record ScheduledInterviewResponse(
         }
     }
 
-    public static ScheduledInterviewResponse from(InterviewRequest request, Long currentUserId) {
+    public static ScheduledInterviewResponse from(InterviewRequest request, Long currentUserId, String resumeUrl) {
         InterviewerProfile profile = request.getInterviewerProfile();
         User interviewer = profile.getUser();
         User interviewee = request.getUser();
@@ -64,6 +67,7 @@ public record ScheduledInterviewResponse(
                 request.getId(),
                 request.getMessage(),
                 OpponentInfo.from(opponent),
+                resumeUrl,
                 role,
                 request.getScheduledAt(),
                 "scheduled",

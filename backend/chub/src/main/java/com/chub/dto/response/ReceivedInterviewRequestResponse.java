@@ -14,6 +14,9 @@ public record ReceivedInterviewRequestResponse(
         @Schema(description = "면접 신청자 정보")
         IntervieweeInfo interviewee,
 
+        @Schema(description = "이력서 URL")
+        String resumeUrl,
+
         @Schema(description = "신청 상태", example = "PENDING")
         String status,
 
@@ -43,12 +46,13 @@ public record ReceivedInterviewRequestResponse(
         }
     }
 
-    public static ReceivedInterviewRequestResponse from(InterviewRequest request) {
+    public static ReceivedInterviewRequestResponse from(InterviewRequest request, String resumeUrl) {
         User interviewee = request.getUser();
 
         return new ReceivedInterviewRequestResponse(
                 request.getId(),
                 IntervieweeInfo.from(interviewee),
+                resumeUrl,
                 request.getStatus(),
                 request.getMessage(),
                 request.getCreatedAt()
