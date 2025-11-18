@@ -37,6 +37,10 @@ interface InterviewRoomProps {
   timeRemaining: number; // 초 단위
   onSendMessage: (message: string) => void;
   onEndInterview: () => void;
+  isLocalAudioEnabled: boolean;
+  isRemoteAudioEnabled: boolean;
+  onToggleLocalAudio: () => void;
+  onToggleRemoteAudio: () => void;
 }
 
 export function InterviewRoom({
@@ -49,6 +53,10 @@ export function InterviewRoom({
   timeRemaining,
   onSendMessage,
   onEndInterview,
+  isLocalAudioEnabled,
+  isRemoteAudioEnabled,
+  onToggleLocalAudio,
+  onToggleRemoteAudio,
 }: InterviewRoomProps) {
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
@@ -62,8 +70,10 @@ export function InterviewRoom({
   useEffect(() => {
     if (remoteVideoRef.current && remoteStream) {
       remoteVideoRef.current.srcObject = remoteStream;
+      // 원격 오디오 on/off 제어
+      remoteVideoRef.current.muted = !isRemoteAudioEnabled;
     }
-  }, [remoteStream]);
+  }, [remoteStream, isRemoteAudioEnabled]);
 
   const formatTime = (seconds: number) => {
     const hours = Math.floor(seconds / 3600);
@@ -115,23 +125,119 @@ export function InterviewRoom({
         <div className="flex-1 flex flex-col bg-gray-900">
           <div className="flex-1 flex items-center justify-center p-4 gap-4">
             {/* 원격 비디오 (면접관) */}
-            <div className="flex-1 h-full max-w-4xl">
+            <div className="flex-1 h-full max-w-4xl relative">
               <VideoPlayer
                 ref={remoteVideoRef}
                 label={opponentInfo?.name || "면접관"}
                 isLocal={false}
                 isConnected={isConnected}
               />
+              {/* 상대방 음성 on/off 버튼 */}
+              <button
+                onClick={onToggleRemoteAudio}
+                className={`absolute top-4 right-4 p-3 rounded-full shadow-lg transition-all ${
+                  isRemoteAudioEnabled
+                    ? "bg-blue-600 hover:bg-blue-700 text-white"
+                    : "bg-red-600 hover:bg-red-700 text-white"
+                }`}
+                title={isRemoteAudioEnabled ? "상대방 음성 끄기" : "상대방 음성 켜기"}
+              >
+                {isRemoteAudioEnabled ? (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-6 w-6"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
+                    />
+                  </svg>
+                ) : (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-6 w-6"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"
+                    />
+                  </svg>
+                )}
+              </button>
             </div>
 
             {/* 로컬 비디오 (나) */}
-            <div className="w-64 h-48 rounded-lg overflow-hidden border-2 border-white shadow-lg">
+            <div className="w-64 h-48 rounded-lg overflow-hidden border-2 border-white shadow-lg relative">
               <VideoPlayer
                 ref={localVideoRef}
                 label="나"
                 isLocal={true}
                 isConnected={isConnected}
               />
+              {/* 내 마이크 on/off 버튼 */}
+              <button
+                onClick={onToggleLocalAudio}
+                className={`absolute top-2 right-2 p-2 rounded-full shadow-lg transition-all ${
+                  isLocalAudioEnabled
+                    ? "bg-blue-600 hover:bg-blue-700 text-white"
+                    : "bg-red-600 hover:bg-red-700 text-white"
+                }`}
+                title={isLocalAudioEnabled ? "마이크 끄기" : "마이크 켜기"}
+              >
+                {isLocalAudioEnabled ? (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
+                    />
+                  </svg>
+                ) : (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"
+                    />
+                  </svg>
+                )}
+              </button>
             </div>
           </div>
         </div>

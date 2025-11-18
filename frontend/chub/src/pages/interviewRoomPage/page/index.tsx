@@ -16,7 +16,11 @@ export default function InterviewRoomPage() {
     timeRemaining,
     sendMessage,
     endInterview,
-    error
+    error,
+    isLocalAudioEnabled,
+    isRemoteAudioEnabled,
+    toggleLocalAudio,
+    toggleRemoteAudio,
   } = useInterviewRoom(roomId || "");
 
   useEffect(() => {
@@ -68,6 +72,10 @@ export default function InterviewRoomPage() {
       timeRemaining={timeRemaining}
       onSendMessage={sendMessage}
       onEndInterview={handleEndInterview}
+      isLocalAudioEnabled={isLocalAudioEnabled}
+      isRemoteAudioEnabled={isRemoteAudioEnabled}
+      onToggleLocalAudio={toggleLocalAudio}
+      onToggleRemoteAudio={toggleRemoteAudio}
     />
   );
 }
