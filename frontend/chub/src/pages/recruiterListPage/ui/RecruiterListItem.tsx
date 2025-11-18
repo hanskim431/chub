@@ -152,7 +152,7 @@ function RecruiterListItem({
                   }
                   createRequest(
                     {
-                      interviewerId: recruiterOverview.userId,
+                      interviewerId: recruiterOverview.id,
                       requestMessage: requestMessage.trim(),
                     },
                     {

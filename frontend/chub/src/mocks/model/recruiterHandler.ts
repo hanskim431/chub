@@ -139,6 +139,7 @@ export const recruiterHandlers = [
       const baseProfile = mockRecruiters[0];
       myInterviewerProfile = {
         id: parseInt(baseProfile.id),
+        userId: parseInt(baseProfile.id),
         name: body.name || baseProfile.name,
         email: body.email || baseProfile.email,
         avatar: body.avatar ?? baseProfile.avatar,

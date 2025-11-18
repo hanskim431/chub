@@ -19,10 +19,11 @@ export const useCreateChatRoom = () => {
   });
 };
 
-export const useChatRooms = () => {
+export const useChatRooms = (options?: { enabled?: boolean }) => {
   return useQuery({
     queryKey: ["chatRooms"],
     queryFn: () => getChatRooms(),
+    enabled: options?.enabled !== false, // 기본값은 true
   });
 };
 
