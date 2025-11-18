@@ -152,8 +152,8 @@ public class ChatRoomServiceImpl implements ChatRoomService {
     private ChatRoom.ParticipantInfo generateParticipantInfo() {
         return ChatRoom.ParticipantInfo.builder()
                 .unreadCount(ZERO)
-                .lastReadAt(LocalDateTime.MIN)
-                .countedAt(LocalDateTime.MIN)
+                .lastReadAt(null)
+                .countedAt(null)
                 .build();
 
     }

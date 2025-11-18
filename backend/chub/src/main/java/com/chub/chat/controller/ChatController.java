@@ -90,7 +90,7 @@ public class ChatController {
     @GetMapping("/rooms/{roomId}/messages/opponent-last-read")
     public ResponseEntity<CommonApiResponse<OpponentLastReadResponse>> getOpponentLastRead(
             @LoginUser Long userId,
-            @RequestParam("roomId") String roomId
+            @PathVariable("roomId") String roomId
     ) {
         OpponentLastReadResponse response = messageService.findOpponentLastReadTime(userId, roomId);
         return ResponseEntity.ok(CommonApiResponse.success(response));
