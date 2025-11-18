@@ -8,7 +8,6 @@ import {
   leaveInterviewRoom,
   createQuestion,
   submitAnswer,
-  type InterviewRoomResponse,
 } from "@/pages/interviewRoomPage/api/requests";
 
 interface ChatMessage {
