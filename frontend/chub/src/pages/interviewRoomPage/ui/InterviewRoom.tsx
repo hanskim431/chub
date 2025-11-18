@@ -6,11 +6,13 @@ import { InterviewerInfo } from "./InterviewerInfo";
 
 interface Message {
   id: string;
-  senderId: number;
-  senderName: string;
+  senderId: number | null;
+  senderName: string | null;
+  receiverId?: number | null;
+  receiverNickname?: string | null;
   content: string;
   timestamp: string;
-  type: "CHAT" | "SYSTEM";
+  type: "USER" | "SYSTEM" | "SYSTEM_QUESTION" | "SYSTEM_ANSWER";
 }
 
 interface OpponentInfo {
@@ -23,7 +25,7 @@ interface OpponentInfo {
   interviewStyle?: string;
 }
 
-type InterviewStatus = "WAITING" | "QUESTION" | "ANSWER" | "COMPLETED";
+type InterviewStatus = "WAITING" | "QUESTION" | "ANSWER" | "COMPLETED" | string;
 
 interface InterviewRoomProps {
   localStream: MediaStream | null;

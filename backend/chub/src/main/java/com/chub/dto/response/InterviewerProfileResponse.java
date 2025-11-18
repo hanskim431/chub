@@ -14,6 +14,9 @@ public record InterviewerProfileResponse(
         @Schema(description = "면접관 프로필 ID", example = "1")
         Long id,
 
+        @Schema(description = "사용자 ID", example = "123")
+        Long userId,
+
         @Schema(description = "이름", example = "김민준")
         String name,
 
@@ -62,6 +65,7 @@ public record InterviewerProfileResponse(
     public static InterviewerProfileResponse from(User user, InterviewerProfile profile) {
         return new InterviewerProfileResponse(
                 profile.getId(),
+                user.getId(),
                 user.getUsername(),
                 profile.getEmail(),
                 user.getAvatarUrl(),

@@ -21,4 +21,10 @@ public interface InterviewerProfileRepository extends JpaRepository<InterviewerP
     Page<InterviewerProfile> findByDepartmentContaining(String department, Pageable pageable);
 
     Page<InterviewerProfile> findByFieldContaining(String field, Pageable pageable);
+
+    // isActive=true인 면접관 조회 (자기 자신 제외)
+    Page<InterviewerProfile> findByIsActiveTrueAndUserIdNot(Long userId, Pageable pageable);
+
+    // field 필터링 + isActive=true + 자기 자신 제외
+    Page<InterviewerProfile> findByFieldContainingAndIsActiveTrueAndUserIdNot(String field, Long userId, Pageable pageable);
 }

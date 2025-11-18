@@ -126,14 +126,16 @@ public class InterviewerProfileServiceImpl implements InterviewerProfileService 
     }
 
     @Override
-    public PageResponse<InterviewerProfileListData> getInterviewerProfiles(String field, int page, int size) {
+    public PageResponse<InterviewerProfileListData> getInterviewerProfiles(Long userId, String field, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
 
         Page<InterviewerProfile> profilePage;
         if (field != null && !field.isBlank()) {
-            profilePage = interviewerProfileRepository.findByFieldContaining(field, pageable);
+            // field 필터링 + isActive=true + 자기 자신 제외
+            profilePage = interviewerProfileRepository.findByFieldContainingAndIsActiveTrueAndUserIdNot(field, userId, pageable);
         } else {
-            profilePage = interviewerProfileRepository.findAll(pageable);
+            // isActive=true + 자기 자신 제외
+            profilePage = interviewerProfileRepository.findByIsActiveTrueAndUserIdNot(userId, pageable);
         }
 
         // Entity -> DTO 변환
