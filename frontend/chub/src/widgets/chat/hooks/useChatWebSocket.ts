@@ -32,12 +32,15 @@ export function useChatWebSocket({
       heartbeatIncoming: 4000,
       heartbeatOutgoing: 4000,
       onConnect: () => {
+        console.log("[useChatWebSocket] WebSocket 연결됨");
         setWsConnected(true);
       },
-      onStompError: () => {
+      onStompError: (frame) => {
+        console.error("[useChatWebSocket] STOMP 에러:", frame);
         setWsConnected(false);
       },
       onDisconnect: () => {
+        console.log("[useChatWebSocket] WebSocket 연결 해제됨");
         setWsConnected(false);
       },
     });
@@ -64,9 +67,8 @@ export function useChatWebSocket({
     if (chatRooms.length > 0) {
       chatRooms.forEach((room) => {
         // roomId에 특수 문자(:)가 포함되어 있으므로 URL 인코딩
-        const encodedRoomId = encodeURIComponent(room.roomId);
         const subscription = stompClientRef.current!.subscribe(
-          `/topic/chat/rooms/${encodedRoomId}`,
+          `/topic/chat/rooms/${room.roomId}`,
           (message: StompMessage) => {
             const data = JSON.parse(message.body);
             if (data.type === "message.received") {
@@ -110,16 +112,31 @@ export function useChatWebSocket({
 
   // 메시지 전송
   const sendMessage = (roomId: string, content: string) => {
-    if (!stompClientRef.current?.connected) return false;
-
-    stompClientRef.current.publish({
-      destination: "/chat/send",
-      body: JSON.stringify({
-        roomId,
-        content,
-      }),
+    console.log("[useChatWebSocket] sendMessage 호출:", { roomId, content });
+    console.log("[useChatWebSocket] WebSocket 연결 상태:", {
+      connected: stompClientRef.current?.connected,
+      wsConnected,
     });
-    return true;
+
+    if (!stompClientRef.current?.connected) {
+      console.error("[useChatWebSocket] WebSocket이 연결되지 않았습니다.");
+      return false;
+    }
+
+    try {
+      stompClientRef.current.publish({
+        destination: "/app/chat/send",
+        body: JSON.stringify({
+          roomId,
+          content,
+        }),
+      });
+      console.log("[useChatWebSocket] 메시지 전송 성공:", { roomId, content });
+      return true;
+    } catch (error) {
+      console.error("[useChatWebSocket] 메시지 전송 실패:", error);
+      return false;
+    }
   };
 
   // 읽음 처리 전송
@@ -127,7 +144,7 @@ export function useChatWebSocket({
     if (!stompClientRef.current?.connected) return false;
 
     stompClientRef.current.publish({
-      destination: "/chat/mark-read",
+      destination: "/app/chat/mark-read",
       body: JSON.stringify({ roomId }),
     });
     return true;

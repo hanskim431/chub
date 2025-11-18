@@ -311,11 +311,31 @@ export function FloatingChat({ messages = [] }: FloatingChatProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || !selectedRoomId || !wsConnected) return;
+    console.log("[FloatingChat] handleSubmit 호출:", {
+      input: input.trim(),
+      selectedRoomId,
+      wsConnected,
+    });
+
+    if (!input.trim()) {
+      console.warn("[FloatingChat] 입력값이 비어있습니다.");
+      return;
+    }
+    if (!selectedRoomId) {
+      console.warn("[FloatingChat] 선택된 채팅방이 없습니다.");
+      return;
+    }
+    if (!wsConnected) {
+      console.warn("[FloatingChat] WebSocket이 연결되지 않았습니다.");
+      return;
+    }
 
     // 웹소켓으로 메시지 전송
-    sendMessage(selectedRoomId, input.trim());
-    setInput("");
+    const result = sendMessage(selectedRoomId, input.trim());
+    console.log("[FloatingChat] sendMessage 결과:", result);
+    if (result) {
+      setInput("");
+    }
   };
 
   const handleSelectRoom = (roomId: string) => {
