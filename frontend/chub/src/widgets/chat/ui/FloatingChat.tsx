@@ -16,8 +16,14 @@ import { ChatInput } from "@/widgets/chat/ui/ChatInput";
 import { EmptyChatState } from "@/widgets/chat/ui/EmptyChatState";
 import { X } from "lucide-react";
 
+const CHAT_OPEN_STORAGE_KEY = "chatWindowOpen";
+
 export function FloatingChat({ messages = [] }: FloatingChatProps) {
-  const [isOpen, setIsOpen] = useState(false);
+  // localStorage에서 채팅창 열림 상태 복원
+  const [isOpen, setIsOpen] = useState(() => {
+    const saved = localStorage.getItem(CHAT_OPEN_STORAGE_KEY);
+    return saved === "true";
+  });
   const [isAnimating, setIsAnimating] = useState(false);
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
   const [input, setInput] = useState("");
@@ -327,12 +333,14 @@ export function FloatingChat({ messages = [] }: FloatingChatProps) {
     setIsAnimating(true);
     setTimeout(() => {
       setIsOpen(false);
+      localStorage.setItem(CHAT_OPEN_STORAGE_KEY, "false");
       setIsAnimating(false);
     }, 150); // 300ms -> 150ms로 속도 향상
   };
 
   const handleOpen = () => {
     setIsOpen(true);
+    localStorage.setItem(CHAT_OPEN_STORAGE_KEY, "true");
     setIsAnimating(true);
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
