@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { useMe } from "@/features/auth/api/me";
 import {
   useChatRooms,
@@ -114,6 +114,7 @@ export function FloatingChat({ messages = [] }: FloatingChatProps) {
     }
 
     // API 데이터를 사용하여 conversations 생성
+    // 가장 최근에 받은 채팅창부터 보여주기 위해 최신순 정렬
     return chatRoomsData.data.rooms
       .map(
         (room: ChatRoom): Conversation => ({
@@ -128,18 +129,42 @@ export function FloatingChat({ messages = [] }: FloatingChatProps) {
         })
       )
       .sort((a, b) => {
+        // lastMessageTime을 기준으로 최신순 정렬 (큰 값이 위로)
         const timeA = a.lastMessageTime
           ? new Date(a.lastMessageTime).getTime()
           : 0;
         const timeB = b.lastMessageTime
           ? new Date(b.lastMessageTime).getTime()
           : 0;
+        // 내림차순 정렬 (최신이 위로)
         return timeB - timeA;
       });
   }, [chatRoomsData, messages, currentUserId, readRoomIds]);
 
   // 웹소켓 함수 가져오기 (ProtectedLayout에서 초기화됨)
-  const { wsConnected, sendMessage, markAsRead } = useChatWebSocketContext();
+  const { wsConnected, sendMessage, markAsRead, setOnMessageReceived } =
+    useChatWebSocketContext();
+
+  // 메시지 수신 시 현재 열려있는 채팅방이면 자동으로 읽음 처리
+  const handleMessageReceived = useCallback(
+    (roomId: string) => {
+      // 현재 선택된 채팅방과 메시지가 온 채팅방이 같으면 자동으로 읽음 처리
+      if (selectedRoomId === roomId && isOpen) {
+        console.log("[FloatingChat] 메시지 수신 - 자동 읽음 처리:", roomId);
+        markAsRead(roomId);
+        setReadRoomIds((prev) => new Set(prev).add(roomId));
+      }
+    },
+    [selectedRoomId, isOpen, markAsRead]
+  );
+
+  // 메시지 수신 콜백 등록
+  useEffect(() => {
+    setOnMessageReceived(handleMessageReceived);
+    return () => {
+      setOnMessageReceived(null);
+    };
+  }, [handleMessageReceived, setOnMessageReceived]);
 
   // API에서 받은 메시지를 변환하고 안읽은 메시지 구분
   const { processedMessages, unreadIndex } = useMemo(() => {
