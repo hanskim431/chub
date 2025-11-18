@@ -13,7 +13,7 @@ public record ChatMessageResponse(
         Long senderId,
         String content,
 
-        @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'")
+        @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
         LocalDateTime createdAt
 ) {
     public static ChatMessageResponse from(Message message) {
