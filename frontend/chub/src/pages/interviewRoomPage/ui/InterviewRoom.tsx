@@ -41,6 +41,10 @@ interface InterviewRoomProps {
   isRemoteAudioEnabled: boolean;
   onToggleLocalAudio: () => void;
   onToggleRemoteAudio: () => void;
+  isRecording: boolean;
+  onToggleRecording: () => void;
+  tailQuestions: string[];
+  userRole: "INTERVIEWER" | "INTERVIEWEE" | null;
 }
 
 export function InterviewRoom({
@@ -57,6 +61,10 @@ export function InterviewRoom({
   isRemoteAudioEnabled,
   onToggleLocalAudio,
   onToggleRemoteAudio,
+  isRecording,
+  onToggleRecording,
+  tailQuestions,
+  userRole,
 }: InterviewRoomProps) {
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
@@ -79,9 +87,11 @@ export function InterviewRoom({
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
-    
+
     if (hours > 0) {
-      return `${hours}:${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+      return `${hours}:${minutes.toString().padStart(2, "0")}:${secs
+        .toString()
+        .padStart(2, "0")}`;
     }
     return `${minutes}:${secs.toString().padStart(2, "0")}`;
   };
@@ -110,7 +120,7 @@ export function InterviewRoom({
               interviewStyle={opponentInfo.interviewStyle}
             />
           )}
-          
+
           {/* 채팅 패널 */}
           <div className="flex-1 border-t border-gray-200">
             <ChatPanel
@@ -140,7 +150,9 @@ export function InterviewRoom({
                     ? "bg-blue-600 hover:bg-blue-700 text-white"
                     : "bg-red-600 hover:bg-red-700 text-white"
                 }`}
-                title={isRemoteAudioEnabled ? "상대방 음성 끄기" : "상대방 음성 켜기"}
+                title={
+                  isRemoteAudioEnabled ? "상대방 음성 끄기" : "상대방 음성 켜기"
+                }
               >
                 {isRemoteAudioEnabled ? (
                   <svg
@@ -240,9 +252,89 @@ export function InterviewRoom({
               </button>
             </div>
           </div>
+
+          {/* 녹음 버튼 및 꼬리 질문 영역 */}
+          <div className="p-4 bg-gray-800 border-t border-gray-700">
+            {/* 녹음 버튼 */}
+            <div className="flex justify-center mb-4">
+              <button
+                onClick={onToggleRecording}
+                disabled={!isConnected}
+                className={`px-6 py-3 rounded-full font-semibold transition-all ${
+                  isRecording
+                    ? "bg-red-600 hover:bg-red-700 text-white animate-pulse"
+                    : "bg-blue-600 hover:bg-blue-700 text-white disabled:bg-gray-600 disabled:cursor-not-allowed"
+                }`}
+                title={
+                  userRole === "INTERVIEWER"
+                    ? isRecording
+                      ? "질문 녹음 종료"
+                      : "질문 녹음 시작"
+                    : isRecording
+                    ? "답변 녹음 종료"
+                    : "답변 녹음 시작"
+                }
+              >
+                {isRecording ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-white rounded-full"></div>
+                    <span>
+                      {userRole === "INTERVIEWER"
+                        ? "질문 녹음 중..."
+                        : "답변 녹음 중..."}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
+                      />
+                    </svg>
+                    <span>
+                      {userRole === "INTERVIEWER"
+                        ? "질문 녹음 시작"
+                        : "답변 녹음 시작"}
+                    </span>
+                  </div>
+                )}
+              </button>
+            </div>
+
+            {/* 꼬리 질문 (면접관에게만 표시) */}
+            {userRole === "INTERVIEWER" && tailQuestions.length > 0 && (
+              <div className="mt-4">
+                <h3 className="text-white font-semibold mb-2">
+                  꼬리 질문 선택지
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {tailQuestions.map((question, index) => (
+                    <button
+                      key={index}
+                      onClick={() => {
+                        // 꼬리 질문을 채팅으로 전송
+                        onSendMessage(question);
+                      }}
+                      className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg text-sm transition-colors"
+                    >
+                      {question}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
   );
 }
-

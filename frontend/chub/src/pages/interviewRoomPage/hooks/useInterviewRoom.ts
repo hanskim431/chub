@@ -3,6 +3,12 @@ import { Client, type Message as StompMessage } from "@stomp/stompjs";
 // @ts-ignore - sockjs-client 타입 정의 없음
 import SockJS from "sockjs-client";
 import { useMe } from "@/features/auth/api/me";
+import {
+  joinInterviewRoom,
+  leaveInterviewRoom,
+  createQuestion,
+  submitAnswer,
+} from "@/pages/interviewRoomPage/api/requests";
 
 interface ChatMessage {
   id: string;
@@ -61,12 +67,18 @@ export function useInterviewRoom(roomId: string) {
   const [tailQuestions, setTailQuestions] = useState<string[]>([]);
   const [isLocalAudioEnabled, setIsLocalAudioEnabled] = useState(true);
   const [isRemoteAudioEnabled, setIsRemoteAudioEnabled] = useState(true);
+  const [isRecording, setIsRecording] = useState(false);
+  const [userRole, setUserRole] = useState<
+    "INTERVIEWER" | "INTERVIEWEE" | null
+  >(null);
 
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const stompClientRef = useRef<Client | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
   const timerRef = useRef<number | null>(null);
   const offerSentRef = useRef<boolean>(false); // offer 전송 여부 추적
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const recordedChunksRef = useRef<Blob[]>([]);
 
   // WebRTC 설정 - Promise로 반환하여 로컬 스트림 로드 완료 보장
   const setupWebRTC = useCallback(async (): Promise<void> => {
@@ -155,7 +167,7 @@ export function useInterviewRoom(roomId: string) {
         if (event.candidate && stompClientRef.current?.connected) {
           // ICE candidate를 WebSocket을 통해 전송
           stompClientRef.current.publish({
-            destination: `/app/interview/${roomId}/ice-candidate`,
+            destination: `/app/webrtc/${roomId}/ice`,
             body: JSON.stringify({
               candidate: event.candidate.toJSON(),
               userId,
@@ -366,87 +378,71 @@ export function useInterviewRoom(roomId: string) {
           });
         }
 
-        // WebRTC 시그널링 구독
-        // Offer 수신 (상대방이 offer를 보냈을 때)
+        // WebRTC 시그널링 구독 (/topic/webrtc/{interviewRequestId})
         client.subscribe(
-          `/user/interview/${roomId}/offer`,
+          `/topic/webrtc/${roomId}`,
           async (message: StompMessage) => {
             try {
-              const data = JSON.parse(message.body);
-              // 자신이 보낸 offer는 무시
+              const wsMessage: WebSocketMessage = JSON.parse(message.body);
+              const data = wsMessage.data as any;
+
+              // 자신이 보낸 메시지는 무시
               if (data.userId === userId) return;
 
-              if (pcRef.current && data.offer) {
-                console.log("Offer 수신, Answer 생성 중...");
-                // 원격 offer 설정
-                await pcRef.current.setRemoteDescription(
-                  new RTCSessionDescription(data.offer)
-                );
+              switch (wsMessage.type) {
+                case "offer": {
+                  // Offer 수신 (상대방이 offer를 보냈을 때)
+                  if (pcRef.current && data.offer) {
+                    console.log("Offer 수신, Answer 생성 중...");
+                    // 원격 offer 설정
+                    await pcRef.current.setRemoteDescription(
+                      new RTCSessionDescription(data.offer)
+                    );
 
-                // Answer 생성 및 전송
-                const answer = await pcRef.current.createAnswer();
-                await pcRef.current.setLocalDescription(answer);
+                    // Answer 생성 및 전송
+                    const answer = await pcRef.current.createAnswer();
+                    await pcRef.current.setLocalDescription(answer);
 
-                client.publish({
-                  destination: `/app/interview/${roomId}/answer`,
-                  body: JSON.stringify({
-                    answer: {
-                      type: answer.type,
-                      sdp: answer.sdp,
-                    },
-                    userId,
-                  }),
-                });
-                console.log("Answer 전송 완료");
+                    client.publish({
+                      destination: `/app/webrtc/${roomId}/answer`,
+                      body: JSON.stringify({
+                        answer: {
+                          type: answer.type,
+                          sdp: answer.sdp,
+                        },
+                        userId,
+                      }),
+                    });
+                    console.log("Answer 전송 완료");
+                  }
+                  break;
+                }
+                case "answer": {
+                  // Answer 수신 (상대방이 answer를 보냈을 때)
+                  if (pcRef.current && data.answer) {
+                    console.log("Answer 수신");
+                    // 원격 answer 설정
+                    await pcRef.current.setRemoteDescription(
+                      new RTCSessionDescription(data.answer)
+                    );
+                  }
+                  break;
+                }
+                case "ice-candidate": {
+                  // ICE candidate 수신
+                  if (pcRef.current && data.candidate) {
+                    // 원격 ICE candidate 추가
+                    await pcRef.current.addIceCandidate(
+                      new RTCIceCandidate(data.candidate)
+                    );
+                    console.log("ICE candidate 추가됨");
+                  }
+                  break;
+                }
               }
             } catch (error) {
-              console.error("Offer 처리 실패:", error);
+              console.error("WebRTC 시그널링 처리 실패:", error);
               setError("WebRTC 연결 설정에 실패했습니다.");
-            }
-          }
-        );
-
-        // Answer 수신 (상대방이 answer를 보냈을 때)
-        client.subscribe(
-          `/user/interview/${roomId}/answer`,
-          async (message: StompMessage) => {
-            try {
-              const data = JSON.parse(message.body);
-              // 자신이 보낸 answer는 무시
-              if (data.userId === userId) return;
-
-              if (pcRef.current && data.answer) {
-                console.log("Answer 수신");
-                // 원격 answer 설정
-                await pcRef.current.setRemoteDescription(
-                  new RTCSessionDescription(data.answer)
-                );
-              }
-            } catch (error) {
-              console.error("Answer 처리 실패:", error);
-              setError("WebRTC 연결 설정에 실패했습니다.");
-            }
-          }
-        );
-
-        // ICE candidate 수신
-        client.subscribe(
-          `/user/interview/${roomId}/ice-candidate`,
-          async (message: StompMessage) => {
-            try {
-              const data = JSON.parse(message.body);
-              // 자신이 보낸 candidate는 무시
-              if (data.userId === userId) return;
-
-              if (pcRef.current && data.candidate) {
-                // 원격 ICE candidate 추가
-                await pcRef.current.addIceCandidate(
-                  new RTCIceCandidate(data.candidate)
-                );
-                console.log("ICE candidate 추가됨");
-              }
-            } catch (error) {
-              console.error("ICE candidate 처리 실패:", error);
             }
           }
         );
@@ -496,7 +492,7 @@ export function useInterviewRoom(roomId: string) {
 
               // Offer 전송
               client.publish({
-                destination: `/app/interview/${roomId}/offer`,
+                destination: `/app/webrtc/${roomId}/offer`,
                 body: JSON.stringify({
                   offer: {
                     type: offer.type,
@@ -546,6 +542,48 @@ export function useInterviewRoom(roomId: string) {
     // 먼저 로컬 스트림을 설정하고, 완료된 후에 WebSocket 연결
     const initialize = async () => {
       try {
+        // 면접방 입장 API 호출
+        const roomData = await joinInterviewRoom(roomId);
+        if (roomData.success && roomData.data) {
+          const data = roomData.data;
+
+          // 상대방 정보 설정
+          _setOpponentInfo({
+            id: data.opponent.id,
+            name: data.opponent.name,
+            avatar: data.opponent.avatar,
+          });
+
+          // 면접 상태 설정
+          setInterviewStatus(data.status);
+
+          // 채팅 히스토리 설정
+          const chatHistory: ChatMessage[] = data.chatHistory.map((msg) => ({
+            id: Date.now().toString() + Math.random(),
+            senderId: msg.senderId,
+            senderName: msg.senderNickname,
+            receiverId: msg.receiverId,
+            receiverNickname: msg.receiverNickname,
+            content: msg.message,
+            timestamp: msg.createdAt,
+            type: msg.type,
+          }));
+          setMessages(chatHistory);
+
+          // 사용자 역할 확인 (면접관인지 면접자인지)
+          // opponent.id와 userId를 비교하여 역할 판단
+          // 실제로는 API 응답에서 역할 정보를 받아야 함
+          // 임시로 opponent.id !== userId로 판단
+          // TODO: API 응답에 역할 정보 추가 필요
+          // 면접관은 opponent.id와 다르고, 면접자는 opponent.id와 같거나 다를 수 있음
+          // 일단 임시로 opponent.id !== userId면 면접관으로 설정
+          if (data.opponent.id !== userId) {
+            setUserRole("INTERVIEWER");
+          } else {
+            setUserRole("INTERVIEWEE");
+          }
+        }
+
         // 로컬 스트림 먼저 설정 (연결 상태와 관계없이 비디오 표시)
         await setupWebRTC();
         console.log("로컬 스트림 설정 완료");
@@ -554,6 +592,7 @@ export function useInterviewRoom(roomId: string) {
         connectWebSocket();
       } catch (err) {
         console.error("초기화 실패:", err);
+        setError("면접방 입장에 실패했습니다.");
         // 에러가 발생해도 WebSocket은 연결 시도 (채팅 등은 가능)
         connectWebSocket();
       }
@@ -565,9 +604,22 @@ export function useInterviewRoom(roomId: string) {
     startTimer(60 * 60);
 
     return () => {
+      // 면접방 퇴장 API 호출
+      if (roomId) {
+        leaveInterviewRoom(roomId).catch((err) => {
+          console.error("면접방 퇴장 실패:", err);
+        });
+      }
+
       // 정리
       if (timerRef.current) {
         clearInterval(timerRef.current);
+      }
+      if (
+        mediaRecorderRef.current &&
+        mediaRecorderRef.current.state !== "inactive"
+      ) {
+        mediaRecorderRef.current.stop();
       }
       if (localStreamRef.current) {
         localStreamRef.current.getTracks().forEach((track) => track.stop());
@@ -608,7 +660,16 @@ export function useInterviewRoom(roomId: string) {
   }, []);
 
   // 면접 종료 (end 이벤트)
-  const endInterview = useCallback(() => {
+  const endInterview = useCallback(async () => {
+    // 면접방 퇴장 API 호출
+    if (roomId) {
+      try {
+        await leaveInterviewRoom(roomId);
+      } catch (err) {
+        console.error("면접방 퇴장 실패:", err);
+      }
+    }
+
     if (stompClientRef.current?.connected) {
       stompClientRef.current.publish({
         destination: `/app/interview/end`,
@@ -617,6 +678,12 @@ export function useInterviewRoom(roomId: string) {
     }
 
     // 정리
+    if (
+      mediaRecorderRef.current &&
+      mediaRecorderRef.current.state !== "inactive"
+    ) {
+      mediaRecorderRef.current.stop();
+    }
     if (localStreamRef.current) {
       localStreamRef.current.getTracks().forEach((track) => track.stop());
     }
@@ -649,6 +716,79 @@ export function useInterviewRoom(roomId: string) {
     setIsRemoteAudioEnabled(!isRemoteAudioEnabled);
   }, [isRemoteAudioEnabled]);
 
+  // 음성 녹음 시작/종료
+  const toggleRecording = useCallback(async () => {
+    if (!localStreamRef.current) {
+      setError("마이크 스트림이 없습니다.");
+      return;
+    }
+
+    if (isRecording) {
+      // 녹음 종료
+      if (
+        mediaRecorderRef.current &&
+        mediaRecorderRef.current.state !== "inactive"
+      ) {
+        mediaRecorderRef.current.stop();
+        setIsRecording(false);
+      }
+    } else {
+      // 녹음 시작
+      try {
+        const audioTracks = localStreamRef.current.getAudioTracks();
+        if (audioTracks.length === 0) {
+          setError("오디오 트랙을 찾을 수 없습니다.");
+          return;
+        }
+
+        // 오디오 스트림 생성
+        const audioStream = new MediaStream(audioTracks);
+
+        // MediaRecorder 생성
+        const mediaRecorder = new MediaRecorder(audioStream, {
+          mimeType: "audio/webm;codecs=opus",
+        });
+
+        recordedChunksRef.current = [];
+
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0) {
+            recordedChunksRef.current.push(event.data);
+          }
+        };
+
+        mediaRecorder.onstop = async () => {
+          const audioBlob = new Blob(recordedChunksRef.current, {
+            type: "audio/webm",
+          });
+
+          try {
+            // 사용자 역할에 따라 다른 API 호출
+            if (userRole === "INTERVIEWER") {
+              // 면접관: 질문 생성
+              await createQuestion(audioBlob);
+              // 질문 생성 후 꼬리 질문 목록 비우기
+              setTailQuestions([]);
+            } else {
+              // 면접자: 답변 제출
+              await submitAnswer(audioBlob);
+            }
+          } catch (err) {
+            console.error("음성 제출 실패:", err);
+            setError("음성 제출에 실패했습니다.");
+          }
+        };
+
+        mediaRecorderRef.current = mediaRecorder;
+        mediaRecorder.start();
+        setIsRecording(true);
+      } catch (err) {
+        console.error("녹음 시작 실패:", err);
+        setError("녹음을 시작할 수 없습니다.");
+      }
+    }
+  }, [isRecording, userRole]);
+
   return {
     localStream,
     remoteStream,
@@ -666,5 +806,8 @@ export function useInterviewRoom(roomId: string) {
     isRemoteAudioEnabled,
     toggleLocalAudio,
     toggleRemoteAudio,
+    isRecording,
+    toggleRecording,
+    userRole,
   };
 }

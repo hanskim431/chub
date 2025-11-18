@@ -6,10 +6,10 @@ import { useInterviewRoom } from "@/pages/interviewRoomPage/hooks/useInterviewRo
 export default function InterviewRoomPage() {
   const { roomId } = useParams<{ roomId: string }>();
   const navigate = useNavigate();
-  const { 
-    localStream, 
-    remoteStream, 
-    isConnected, 
+  const {
+    localStream,
+    remoteStream,
+    isConnected,
     opponentInfo,
     messages,
     interviewStatus,
@@ -21,6 +21,10 @@ export default function InterviewRoomPage() {
     isRemoteAudioEnabled,
     toggleLocalAudio,
     toggleRemoteAudio,
+    isRecording,
+    toggleRecording,
+    tailQuestions,
+    userRole,
   } = useInterviewRoom(roomId || "");
 
   useEffect(() => {
@@ -76,7 +80,10 @@ export default function InterviewRoomPage() {
       isRemoteAudioEnabled={isRemoteAudioEnabled}
       onToggleLocalAudio={toggleLocalAudio}
       onToggleRemoteAudio={toggleRemoteAudio}
+      isRecording={isRecording}
+      onToggleRecording={toggleRecording}
+      tailQuestions={tailQuestions}
+      userRole={userRole}
     />
   );
 }
-
