@@ -12,13 +12,9 @@ interface ScheduledInterviewsProps {
 export function ScheduledInterviews({ role }: ScheduledInterviewsProps) {
   const { data, isLoading } = useScheduledInterviews();
 
-  if (isLoading) {
-    return <LoadingState />;
-  }
-
   const allInterviews = data?.data?.interviews ?? [];
 
-  // 현재 역할에 맞는 예정된 면접만 필터링
+  // 현재 역할에 맞는 예정된 면접만 필터링 (조건부 렌더링 전에 훅 호출)
   const interviews = useMemo(() => {
     return allInterviews.filter((interview) => {
       // API 응답에 myRole이 있으면 그것을 사용
@@ -29,6 +25,10 @@ export function ScheduledInterviews({ role }: ScheduledInterviewsProps) {
       return true;
     });
   }, [allInterviews, role]);
+
+  if (isLoading) {
+    return <LoadingState />;
+  }
 
   if (interviews.length === 0) {
     return <EmptyState message="예정된 면접이 없습니다." />;

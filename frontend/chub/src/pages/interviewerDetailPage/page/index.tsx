@@ -1,6 +1,9 @@
 import { useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useInterviewerDetail, useCreateInterviewRequest } from "@/pages/interviewerDetailPage/api/query";
+import {
+  useInterviewerDetail,
+  useCreateInterviewRequest,
+} from "@/pages/interviewerDetailPage/api/query";
 import { useCreateChatRoom } from "@/entities/chat/api/query";
 import { CreateChatRoomModal } from "@/widgets/chat/ui/CreateChatRoomModal";
 import Card from "@/shared/ui/Card";
@@ -12,7 +15,8 @@ export default function InterviewerDetailPage() {
   const navigate = useNavigate();
   const { data, isLoading, error } = useInterviewerDetail(Number(id));
   const { mutate: createRequest, isPending } = useCreateInterviewRequest();
-  const { mutate: createChatRoom, isPending: isCreatingChatRoom } = useCreateChatRoom();
+  const { mutate: createChatRoom, isPending: isCreatingChatRoom } =
+    useCreateChatRoom();
   const [showModal, setShowModal] = useState(false);
   const [showChatModal, setShowChatModal] = useState(false);
   const [requestMessage, setRequestMessage] = useState("");
@@ -137,9 +141,15 @@ export default function InterviewerDetailPage() {
             <div className="flex items-center gap-4 pb-2 border-b border-gray-200">
               <div className="flex-shrink-0 w-1"></div>
               <div className="flex-1 flex items-center gap-4">
-                <p className="text-sm font-semibold text-gray-600 min-w-[200px]">회사</p>
-                <p className="text-sm font-semibold text-gray-600 flex-1">직무</p>
-                <p className="text-sm font-semibold text-gray-600 whitespace-nowrap">기간</p>
+                <p className="text-sm font-semibold text-gray-600 min-w-[200px]">
+                  회사
+                </p>
+                <p className="text-sm font-semibold text-gray-600 flex-1">
+                  직무
+                </p>
+                <p className="text-sm font-semibold text-gray-600 whitespace-nowrap">
+                  기간
+                </p>
               </div>
             </div>
             {/* 경력 항목 */}
@@ -147,7 +157,9 @@ export default function InterviewerDetailPage() {
               <div key={index} className="flex items-center gap-4">
                 <div className="flex-shrink-0 w-1 h-12 bg-point-200 rounded"></div>
                 <div className="flex-1 flex items-center gap-4">
-                  <p className="font-semibold text-lg min-w-[200px]">{experience.company}</p>
+                  <p className="font-semibold text-lg min-w-[200px]">
+                    {experience.company}
+                  </p>
                   <p className="text-gray-600 flex-1">{experience.role}</p>
                   <p className="text-sm text-gray-500 whitespace-nowrap">
                     {experience.startedYear} -{" "}
@@ -169,9 +181,15 @@ export default function InterviewerDetailPage() {
             <div className="flex items-center gap-4 pb-2 border-b border-gray-200">
               <div className="flex-shrink-0 w-1"></div>
               <div className="flex-1 flex items-center gap-4">
-                <p className="text-sm font-semibold text-gray-600 min-w-[200px]">학교</p>
-                <p className="text-sm font-semibold text-gray-600 flex-1">학위</p>
-                <p className="text-sm font-semibold text-gray-600 whitespace-nowrap">기간</p>
+                <p className="text-sm font-semibold text-gray-600 min-w-[200px]">
+                  학교
+                </p>
+                <p className="text-sm font-semibold text-gray-600 flex-1">
+                  학위
+                </p>
+                <p className="text-sm font-semibold text-gray-600 whitespace-nowrap">
+                  기간
+                </p>
               </div>
             </div>
             {/* 학력 항목 */}
@@ -179,7 +197,9 @@ export default function InterviewerDetailPage() {
               <div key={index} className="flex items-center gap-4">
                 <div className="flex-shrink-0 w-1 h-12 bg-point-200 rounded"></div>
                 <div className="flex-1 flex items-center gap-4">
-                  <p className="font-semibold text-lg min-w-[200px]">{edu.school}</p>
+                  <p className="font-semibold text-lg min-w-[200px]">
+                    {edu.school}
+                  </p>
                   <p className="text-gray-600 flex-1">{edu.role}</p>
                   <p className="text-sm text-gray-500 whitespace-nowrap">
                     {edu.startedYear && edu.endedYear
@@ -266,7 +286,9 @@ export default function InterviewerDetailPage() {
       {showModal && (
         <Modal
           title="면접 신청"
-          subtitle={`${interviewer.name} · ${interviewer.field} · ${interviewer.price.toLocaleString()}원`}
+          subtitle={`${interviewer.name} · ${
+            interviewer.field
+          } · ${interviewer.price.toLocaleString()}원`}
           onClose={handleCloseModal}
           contentRef={modalContentRef}
         >
@@ -315,7 +337,7 @@ export default function InterviewerDetailPage() {
         onClose={() => setShowChatModal(false)}
         onConfirm={() => {
           createChatRoom(
-            { opponentId: interviewer.id },
+            { opponentId: interviewer.userId },
             {
               onSuccess: (response) => {
                 if (response.success && response.data) {
@@ -336,4 +358,3 @@ export default function InterviewerDetailPage() {
     </div>
   );
 }
-

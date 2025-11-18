@@ -23,6 +23,7 @@ export interface CertificationDto {
 // API Response
 export interface InterviewerProfileResponse {
   id: number;
+  userId: number;
   name: string;
   email: string;
   avatar: string | null;

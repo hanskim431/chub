@@ -37,21 +37,25 @@ export function FloatingChat({ messages = [] }: FloatingChatProps) {
   const { data: meData } = useMe();
   const currentUserId = meData?.data?.id;
   const isAuthenticated = !!(meData?.success && meData?.data);
-  const { data: chatRoomsData } = useChatRooms();
+
+  // 인증된 경우에만 채팅 관련 훅 호출
+  const { data: chatRoomsData } = useChatRooms({
+    enabled: isAuthenticated,
+  });
+
+  // 선택한 채팅방의 메시지 가져오기 (인증된 경우에만)
+  const {
+    data: messagesData,
+    isLoading: isLoadingMessages,
+    error: messagesError,
+  } = useChatMessages(selectedRoomId, undefined);
+  const { data: opponentLastReadData, isLoading: isLoadingLastRead } =
+    useOpponentLastRead(selectedRoomId);
 
   // 로그인하지 않은 경우 아무것도 렌더링하지 않음
   if (!isAuthenticated) {
     return null;
   }
-
-  // 선택한 채팅방의 메시지 가져오기
-  const {
-    data: messagesData,
-    isLoading: isLoadingMessages,
-    error: messagesError,
-  } = useChatMessages(selectedRoomId);
-  const { data: opponentLastReadData, isLoading: isLoadingLastRead } =
-    useOpponentLastRead(selectedRoomId);
 
   // 디버깅: selectedRoomId 변경 시 로그
   useEffect(() => {

@@ -11,7 +11,11 @@ function MainLayout() {
   const { data } = useMe();
   const isAuthenticated = !!(data?.success && data?.data);
   const currentUserId = data?.data?.id;
-  const { data: chatRoomsData } = useChatRooms();
+  
+  // 인증된 경우에만 채팅 관련 훅 호출
+  const { data: chatRoomsData } = useChatRooms({
+    enabled: isAuthenticated,
+  });
 
   // 로그인 시 모든 채팅방 구독 (메모이제이션으로 불필요한 재생성 방지)
   const chatRoomsForSubscription = useMemo(() => {

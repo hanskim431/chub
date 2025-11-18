@@ -79,8 +79,8 @@ const getInterviewerInfo = (
     };
   }
 
-  // 면접관 목록에서 찾기
-  const interviewer = mockRecruiters.find((r) => r.id === String(opponentId));
+  // 면접관 목록에서 찾기 (userId로 찾기)
+  const interviewer = mockRecruiters.find((r) => r.userId === opponentId);
   if (interviewer) {
     return {
       name: interviewer.name,
