@@ -21,6 +21,9 @@ export default defineConfig({
       "@tests": path.resolve(__dirname, "./src/test"),
     },
   },
+  define: {
+    global: "globalThis",
+  },
   envPrefix: "VITE_",
   test: {
     globals: true,

@@ -162,22 +162,28 @@ export const interviewHandlers = [
     http.get(
         `${import.meta.env.VITE_API_URL}/api/interviews/scheduled`,
         async () => {
-            const scheduledInterviews = interviewer.map((iv, index) => ({
-                id: parseInt(iv.id) + 100,
-                requestId: parseInt(iv.id),
-                requestMessage: `안녕하세요, ${iv.name}님과의 면접이 예정되어 있습니다.`,
-                opponent: {
-                    id: 1, // 면접 신청자 ID (면접관이 받은 요청일 때)
-                    name: "이찬",
-                    avatar: "/logo.png",
-                    field: "백엔드 개발자",
-                },
-                scheduledAt: new Date(
-                    Date.now() + (index + 1) * 24 * 60 * 60 * 1000
-                ).toISOString(),
-                status: "scheduled",
-                roomID: parseInt(iv.id) + 1000,
-            }));
+            const scheduledInterviews = interviewer.map((iv, index) => {
+                // 첫 번째 면접은 지금 시작할 수 있는 시간으로 설정 (현재 시간 - 1시간)
+                // 나머지는 미래 시간으로 설정
+                const scheduledTime = index === 0 
+                    ? new Date(Date.now() - 60 * 60 * 1000) // 1시간 전 (30분 전부터 시작 가능)
+                    : new Date(Date.now() + (index + 1) * 24 * 60 * 60 * 1000); // 미래 시간
+                
+                return {
+                    id: parseInt(iv.id) + 100,
+                    requestId: parseInt(iv.id),
+                    requestMessage: `안녕하세요, ${iv.name}님과의 면접이 예정되어 있습니다.`,
+                    opponent: {
+                        id: 1, // 면접 신청자 ID (면접관이 받은 요청일 때)
+                        name: "이찬",
+                        avatar: "/logo.png",
+                        field: "백엔드 개발자",
+                    },
+                    scheduledAt: scheduledTime.toISOString(),
+                    status: "scheduled",
+                    roomID: parseInt(iv.id) + 1000,
+                };
+            });
 
             return HttpResponse.json({
                 success: true,
