@@ -47,22 +47,26 @@ export function ChatPanel({
   };
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="px-4 py-3 border-b border-gray-200">
+    <div className="flex flex-col h-full min-h-0">
+      <div className="px-4 py-3 border-b border-gray-200 flex-shrink-0">
         <h3 className="text-sm font-semibold text-gray-700">채팅</h3>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-3">
+      <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-0">
         {messages.length === 0 ? (
-          <div className="text-center text-gray-400 text-sm py-8">
-            메시지가 없습니다.
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center text-gray-400 text-sm">
+              메시지가 없습니다.
+            </div>
           </div>
         ) : (
           messages.map((message) => (
             <div
               key={message.id}
               className={`flex flex-col ${
-                message.type === "SYSTEM" ? "items-center" : "items-start"
+                message.type === "SYSTEM" || message.type === "SYSTEM_QUESTION" || message.type === "SYSTEM_ANSWER"
+                  ? "items-center"
+                  : "items-start"
               }`}
             >
               {message.type === "SYSTEM" || message.type === "SYSTEM_QUESTION" || message.type === "SYSTEM_ANSWER" ? (
@@ -90,7 +94,7 @@ export function ChatPanel({
         <div ref={messagesEndRef} />
       </div>
 
-      <form onSubmit={handleSubmit} className="border-t border-gray-200 p-4">
+      <form onSubmit={handleSubmit} className="border-t border-gray-200 p-4 flex-shrink-0">
         <div className="flex gap-2">
           <input
             type="text"
