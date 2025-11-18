@@ -7,7 +7,7 @@ interface ChatHeaderProps {
 
 export function ChatHeader({ userName, onClose }: ChatHeaderProps) {
   return (
-    <div className="px-3 py-2 bg-linear-to-r from-blue-600 via-blue-600 to-blue-700 text-white shadow-md flex items-center justify-between">
+    <div className="px-3 py-2 bg-linear-to-r from-blue-600 via-blue-600 to-blue-700 text-white shadow-md flex items-center justify-between flex-shrink-0">
       <h3 className="font-bold text-sm">{userName}</h3>
       <button
         onClick={onClose}

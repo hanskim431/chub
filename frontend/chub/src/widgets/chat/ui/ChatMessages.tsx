@@ -58,7 +58,7 @@ export function ChatMessages({
   return (
     <div
       ref={messagesContainerRef}
-      className="flex-1 overflow-y-auto p-3 space-y-4 bg-linear-to-b from-gray-50 to-white"
+      className="flex-1 overflow-y-auto p-3 space-y-4 bg-linear-to-b from-gray-50 to-white min-h-0"
     >
       {messages.map((message, index) => {
         const isMyMessage =
@@ -80,4 +80,3 @@ export function ChatMessages({
     </div>
   );
 }
-

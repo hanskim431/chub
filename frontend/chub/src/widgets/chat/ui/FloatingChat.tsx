@@ -14,6 +14,7 @@ import { ChatHeader } from "@/widgets/chat/ui/ChatHeader";
 import { ChatMessages } from "@/widgets/chat/ui/ChatMessages";
 import { ChatInput } from "@/widgets/chat/ui/ChatInput";
 import { EmptyChatState } from "@/widgets/chat/ui/EmptyChatState";
+import { X } from "lucide-react";
 
 export function FloatingChat({ messages = [] }: FloatingChatProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -395,7 +396,7 @@ export function FloatingChat({ messages = [] }: FloatingChatProps) {
 
       {isOpen && (
         <div
-          className={`fixed bottom-20 right-4 w-[500px] h-[400px] bg-white rounded-xl shadow-2xl border border-gray-300 overflow-hidden flex z-40 ${
+          className={`w-[500px] h-[400px] bg-white rounded-xl shadow-2xl border border-gray-300 overflow-hidden flex z-40 ${
             isAnimating && !isFirstRender.current
               ? "opacity-0 translate-y-4"
               : "opacity-100 translate-y-0"
@@ -407,13 +408,26 @@ export function FloatingChat({ messages = [] }: FloatingChatProps) {
             transition: "opacity 0.15s ease-out, transform 0.15s ease-out",
           }}
         >
+          {/* 채팅창 전체 닫기 버튼 (채팅이 선택되지 않았을 때만 표시) */}
+          {!selectedRoomId && (
+            <div className="absolute top-2 right-2 z-50">
+              <button
+                onClick={handleClose}
+                className="p-1.5 bg-white rounded-full shadow-md hover:bg-gray-100 transition-colors text-gray-600 hover:text-gray-900"
+                title="채팅창 닫기"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+
           <ChatList
             conversations={conversations}
             selectedRoomId={selectedRoomId}
             onSelectRoom={handleSelectRoom}
           />
 
-          <div className="flex-1 flex flex-col bg-white">
+          <div className="flex-1 flex flex-col bg-white min-h-0">
             {selectedRoomId && selectedConversation ? (
               <>
                 <ChatHeader
