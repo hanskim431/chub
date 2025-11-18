@@ -28,7 +28,13 @@ export function FloatingChat({ messages = [] }: FloatingChatProps) {
   const hasScrolledToUnread = useRef(false);
   const { data: meData } = useMe();
   const currentUserId = meData?.data?.id;
+  const isAuthenticated = !!(meData?.success && meData?.data);
   const { data: chatRoomsData } = useChatRooms();
+
+  // 로그인하지 않은 경우 아무것도 렌더링하지 않음
+  if (!isAuthenticated) {
+    return null;
+  }
 
   // 선택한 채팅방의 메시지 가져오기
   const {
@@ -38,6 +44,16 @@ export function FloatingChat({ messages = [] }: FloatingChatProps) {
   } = useChatMessages(selectedRoomId);
   const { data: opponentLastReadData, isLoading: isLoadingLastRead } =
     useOpponentLastRead(selectedRoomId);
+
+  // 디버깅: selectedRoomId 변경 시 로그
+  useEffect(() => {
+    if (selectedRoomId) {
+      console.log("[FloatingChat] selectedRoomId 변경:", selectedRoomId);
+      console.log("[FloatingChat] isLoadingMessages:", isLoadingMessages);
+      console.log("[FloatingChat] messagesData:", messagesData);
+      console.log("[FloatingChat] messagesError:", messagesError);
+    }
+  }, [selectedRoomId, isLoadingMessages, messagesData, messagesError]);
 
   // API에서 받은 채팅방 목록을 conversations로 변환
   const conversations = useMemo(() => {
@@ -303,6 +319,7 @@ export function FloatingChat({ messages = [] }: FloatingChatProps) {
   };
 
   const handleSelectRoom = (roomId: string) => {
+    console.log("[FloatingChat] 채팅방 선택:", roomId);
     setSelectedRoomId(roomId);
     hasScrolledToUnread.current = false;
     // 채팅방을 클릭하면 즉시 읽음 처리

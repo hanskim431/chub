@@ -10,6 +10,7 @@ let recruiters: Recruiter = mockRecruiters[0];
 
 const mockRecruiter: RecruiterOverview = {
   id: recruiters.id,
+  userId: Number(recruiters.id),
   name: recruiters.name,
   avatar: recruiters.avatar,
   field: recruiters.field,

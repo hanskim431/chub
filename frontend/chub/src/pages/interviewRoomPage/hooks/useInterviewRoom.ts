@@ -116,17 +116,13 @@ export function useInterviewRoom(roomId: string) {
         iceServers.push({ urls: stunServer });
       }
 
-      // TURN 서버 추가 (인증 정보가 있으면 포함)
-      if (turnServer) {
-        if (turnUsername && turnPassword) {
-          iceServers.push({
-            urls: turnServer,
-            username: turnUsername,
-            credential: turnPassword,
-          });
-        } else {
-          iceServers.push({ urls: turnServer });
-        }
+      // TURN 서버 추가 (인증 정보가 필수이므로 둘 다 있을 때만 추가)
+      if (turnServer && turnUsername && turnPassword) {
+        iceServers.push({
+          urls: turnServer,
+          username: turnUsername,
+          credential: turnPassword,
+        });
       }
 
       // 기본 STUN 서버 (환경 변수가 없을 경우 fallback)
