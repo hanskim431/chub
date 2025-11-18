@@ -51,18 +51,8 @@ export function CompletedInterviewRequestItem({
                             <p className="text-sm text-text-gray mb-2">
                                 {opponentField}
                             </p>
-                            <p className="text-sm text-text-black line-clamp-2 mb-2">
+                            <p className="text-sm text-text-black line-clamp-2">
                                 {request.requestMessage}
-                            </p>
-                            <p className="text-xs text-text-gray">
-                                {new Date(request.createdAt).toLocaleDateString(
-                                    "ko-KR",
-                                    {
-                                        year: "numeric",
-                                        month: "long",
-                                        day: "numeric",
-                                    }
-                                )}
                             </p>
                         </div>
                     </div>
