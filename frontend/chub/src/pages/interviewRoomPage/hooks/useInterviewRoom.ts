@@ -58,7 +58,8 @@ export function useInterviewRoom(roomId: string) {
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
   const [isConnected, setIsConnected] = useState(false);
-  const [opponentInfo, _setOpponentInfo] = useState<OpponentInfo | null>(null);
+  const [opponentInfo, setOpponentInfo] = useState<OpponentInfo | null>(null);
+  const opponentInfoRef = useRef<OpponentInfo | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [interviewStatus, setInterviewStatus] =
     useState<InterviewStatus>("WAITING");
@@ -260,13 +261,34 @@ export function useInterviewRoom(roomId: string) {
               // 채팅 메시지 수신
               console.log("[Chat] 메시지 수신:", wsMessage);
               const chatData = wsMessage.data as InterviewRoomChatMessage;
+
+              // senderName이 없으면 기본값 설정 (ID 노출 방지)
+              let senderName = chatData.senderNickname;
+              if (!senderName) {
+                if (chatData.senderId === userId) {
+                  senderName = "나";
+                } else if (
+                  opponentInfoRef.current &&
+                  chatData.senderId === opponentInfoRef.current.id
+                ) {
+                  senderName = opponentInfoRef.current.name;
+                } else {
+                  senderName = "사용자";
+                }
+              }
+
+              // 메시지 내용에서 "User {id}" 같은 패턴 제거 (ID 노출 방지)
+              let messageContent = chatData.message;
+              messageContent = messageContent.replace(/User\s+\d+/gi, "사용자");
+              messageContent = messageContent.replace(/user\s+\d+/gi, "사용자");
+
               const newMessage = {
                 id: Date.now().toString() + Math.random(),
                 senderId: chatData.senderId,
-                senderName: chatData.senderNickname,
+                senderName: senderName,
                 receiverId: chatData.receiverId,
                 receiverNickname: chatData.receiverNickname,
-                content: chatData.message,
+                content: messageContent,
                 timestamp: chatData.createdAt,
                 type: chatData.type,
               };
@@ -290,9 +312,12 @@ export function useInterviewRoom(roomId: string) {
               } else if (joinedUserId === userId) {
                 // 자신이 입장한 경우
                 userName = "나";
-              } else if (opponentInfo && joinedUserId === opponentInfo.id) {
+              } else if (
+                opponentInfoRef.current &&
+                joinedUserId === opponentInfoRef.current.id
+              ) {
                 // 상대방이 입장한 경우
-                userName = opponentInfo.name;
+                userName = opponentInfoRef.current.name;
               }
 
               setMessages((prev) => [
@@ -310,21 +335,43 @@ export function useInterviewRoom(roomId: string) {
               ]);
 
               // user-joined 이벤트를 받은 사람이 offer를 보냄
-              // (자신이 보낸 이벤트가 아닌 경우에만)
+              // (자신이 보낸 이벤트가 아닌 경우에만, 즉 이미 방에 있던 사람이 새로 입장한 사람에게 offer를 보냄)
               if (
                 joinedUserId &&
                 joinedUserId !== userId &&
                 !offerSentRef.current
               ) {
                 console.log(
-                  "[WebRTC] user-joined 이벤트 수신, offer 전송 시작"
+                  "[WebRTC] user-joined 이벤트 수신, offer 전송 시작",
+                  {
+                    joinedUserId,
+                    currentUserId: userId,
+                    offerAlreadySent: offerSentRef.current,
+                  }
                 );
                 if (sendOfferWhenReadyRef.current) {
-                  sendOfferWhenReadyRef.current();
+                  // 약간의 지연을 두어 로컬 스트림이 완전히 준비되도록 함
+                  setTimeout(() => {
+                    sendOfferWhenReadyRef.current?.();
+                  }, 500);
                 } else {
                   console.warn(
-                    "[WebRTC] sendOfferWhenReady 함수가 아직 준비되지 않았습니다."
+                    "[WebRTC] sendOfferWhenReady 함수가 아직 준비되지 않았습니다. 재시도 중..."
                   );
+                  // sendOfferWhenReady가 아직 준비되지 않았다면 잠시 후 재시도
+                  const retryInterval = setInterval(() => {
+                    if (sendOfferWhenReadyRef.current) {
+                      clearInterval(retryInterval);
+                      console.log(
+                        "[WebRTC] sendOfferWhenReady 준비 완료, offer 전송 시작"
+                      );
+                      sendOfferWhenReadyRef.current();
+                    }
+                  }, 100);
+                  // 5초 후에도 준비되지 않으면 재시도 중단
+                  setTimeout(() => {
+                    clearInterval(retryInterval);
+                  }, 5000);
                 }
               }
               break;
@@ -345,9 +392,12 @@ export function useInterviewRoom(roomId: string) {
               } else if (leftUserId === userId) {
                 // 자신이 퇴장한 경우
                 userName = "나";
-              } else if (opponentInfo && leftUserId === opponentInfo.id) {
+              } else if (
+                opponentInfoRef.current &&
+                leftUserId === opponentInfoRef.current.id
+              ) {
                 // 상대방이 퇴장한 경우
-                userName = opponentInfo.name;
+                userName = opponentInfoRef.current.name;
               }
 
               setMessages((prev) => [
@@ -631,11 +681,13 @@ export function useInterviewRoom(roomId: string) {
           const data = roomData.data;
 
           // 상대방 정보 설정
-          _setOpponentInfo({
+          const opponent = {
             id: data.opponent.id,
             name: data.opponent.name,
             avatar: data.opponent.avatar,
-          });
+          };
+          setOpponentInfo(opponent);
+          opponentInfoRef.current = opponent;
 
           // 면접 상태 설정
           setInterviewStatus(data.status);

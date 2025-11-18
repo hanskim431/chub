@@ -48,11 +48,11 @@ export function ChatPanel({
 
   return (
     <div className="flex flex-col h-full min-h-0">
-      <div className="px-4 py-3 border-b border-gray-200 flex-shrink-0">
+      <div className="px-4 py-3 border-b border-gray-200 shrink-0">
         <h3 className="text-sm font-semibold text-gray-700">채팅</h3>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-0">
+      <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-0 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
         {messages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
             <div className="text-center text-gray-400 text-sm">
@@ -64,22 +64,24 @@ export function ChatPanel({
             <div
               key={message.id}
               className={`flex flex-col ${
-                message.type === "SYSTEM" || message.type === "SYSTEM_QUESTION" || message.type === "SYSTEM_ANSWER"
+                message.type === "SYSTEM" ||
+                message.type === "SYSTEM_QUESTION" ||
+                message.type === "SYSTEM_ANSWER"
                   ? "items-center"
                   : "items-start"
               }`}
             >
-              {message.type === "SYSTEM" || message.type === "SYSTEM_QUESTION" || message.type === "SYSTEM_ANSWER" ? (
+              {message.type === "SYSTEM" ||
+              message.type === "SYSTEM_QUESTION" ||
+              message.type === "SYSTEM_ANSWER" ? (
                 <div className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
                   {message.content}
                 </div>
               ) : (
                 <div className="max-w-[80%]">
-                  {message.senderName && (
-                    <div className="text-xs text-gray-500 mb-1">
-                      {message.senderName}
-                    </div>
-                  )}
+                  <div className="text-xs text-gray-500 mb-1">
+                    {message.senderName || "사용자"}
+                  </div>
                   <div className="bg-blue-50 rounded-lg px-3 py-2 text-sm text-gray-900">
                     {message.content}
                   </div>
@@ -94,7 +96,10 @@ export function ChatPanel({
         <div ref={messagesEndRef} />
       </div>
 
-      <form onSubmit={handleSubmit} className="border-t border-gray-200 p-4 flex-shrink-0">
+      <form
+        onSubmit={handleSubmit}
+        className="border-t border-gray-200 p-4 shrink-0"
+      >
         <div className="flex gap-2">
           <input
             type="text"
@@ -116,4 +121,3 @@ export function ChatPanel({
     </div>
   );
 }
-
