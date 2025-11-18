@@ -194,9 +194,15 @@ export function FloatingChat({ messages = [] }: FloatingChatProps) {
     const unreadCount = originalRoom?.unreadCount || 0;
 
     // 메시지를 변환하고 안읽은 메시지 여부 판단
+    // 위에서부터 오래된 메시지가 오도록 시간 순서대로 정렬 (오래된 것부터)
+    const sortedMessages = [...messages].sort(
+      (a, b) =>
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    );
+
     const processed: Array<
       ChatMessage & { isUnread: boolean; senderName: string }
-    > = messages.map((msg) => {
+    > = sortedMessages.map((msg) => {
       const sender = participants[msg.senderId];
       const senderName = sender?.name || `User ${msg.senderId}`;
 
