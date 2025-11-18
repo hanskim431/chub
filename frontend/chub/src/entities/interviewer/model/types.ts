@@ -38,6 +38,7 @@ export interface InterviewerProfileResponse {
   interviewStyle: string | null;
   availableTimeSlots: string[];
   price: number;
+  isActive?: boolean;
 }
 
 // API Request - 생성

@@ -1,6 +1,8 @@
 import { useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useInterviewerDetail, useCreateInterviewRequest } from "@/pages/interviewerDetailPage/api/query";
+import { useCreateChatRoom } from "@/entities/chat/api/query";
+import { CreateChatRoomModal } from "@/widgets/chat/ui/CreateChatRoomModal";
 import Card from "@/shared/ui/Card";
 import Pill from "@/shared/ui/Pill";
 import Modal from "@/shared/ui/Modal";
@@ -10,7 +12,9 @@ export default function InterviewerDetailPage() {
   const navigate = useNavigate();
   const { data, isLoading, error } = useInterviewerDetail(Number(id));
   const { mutate: createRequest, isPending } = useCreateInterviewRequest();
+  const { mutate: createChatRoom, isPending: isCreatingChatRoom } = useCreateChatRoom();
   const [showModal, setShowModal] = useState(false);
+  const [showChatModal, setShowChatModal] = useState(false);
   const [requestMessage, setRequestMessage] = useState("");
   const modalContentRef = useRef<HTMLDivElement>(null);
 
@@ -248,8 +252,7 @@ export default function InterviewerDetailPage() {
             </button>
             <button
               onClick={() => {
-                // TODO: 메시지 보내기 기능 추가
-                console.log("메시지 보내기", interviewer.id);
+                setShowChatModal(true);
               }}
               className="flex-1 px-6 py-3 border-2 border-point text-point rounded-lg font-semibold hover:bg-point-100 transition-colors"
             >
@@ -304,6 +307,32 @@ export default function InterviewerDetailPage() {
           </div>
         </Modal>
       )}
+
+      {/* 메시지 보내기 모달 */}
+      <CreateChatRoomModal
+        isOpen={showChatModal}
+        interviewerName={interviewer.name}
+        onClose={() => setShowChatModal(false)}
+        onConfirm={() => {
+          createChatRoom(
+            { opponentId: interviewer.id },
+            {
+              onSuccess: (response) => {
+                if (response.success && response.data) {
+                  setShowChatModal(false);
+                  // 채팅창 열기 (FloatingChat에서 처리)
+                  // TODO: 채팅창을 열고 해당 roomId로 이동
+                  console.log("채팅방 생성 완료:", response.data.roomId);
+                }
+              },
+              onError: () => {
+                alert("채팅방 생성에 실패했습니다. 다시 시도해주세요.");
+              },
+            }
+          );
+        }}
+        isPending={isCreatingChatRoom}
+      />
     </div>
   );
 }

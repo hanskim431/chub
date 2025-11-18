@@ -125,6 +125,7 @@ export function ResumePdfViewer({
         >
           <Page
             pageNumber={pageNumber}
+            width={Math.min(800, window.innerWidth - 64)}
             renderTextLayer={true}
             renderAnnotationLayer={true}
             className="mx-auto"

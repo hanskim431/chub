@@ -1,4 +1,5 @@
-import { Document, pdfjs } from "react-pdf";
+import { useState } from "react";
+import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 
@@ -16,8 +17,24 @@ export function ResumePreviewModal({
     resumeName,
     onClose,
 }: ResumePreviewModalProps) {
+    const [numPages, setNumPages] = useState<number>(0);
+    const [pageNumber, setPageNumber] = useState<number>(1);
+
     const handleDownload = () => {
         window.open(pdfUrl, "_blank");
+    };
+
+    const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
+        setNumPages(numPages);
+        setPageNumber(1);
+    };
+
+    const goToPreviousPage = () => {
+        setPageNumber((prev) => Math.max(prev - 1, 1));
+    };
+
+    const goToNextPage = () => {
+        setPageNumber((prev) => Math.min(prev + 1, numPages));
     };
 
     return (
@@ -79,9 +96,10 @@ export function ResumePreviewModal({
 
                 {/* PDF 뷰어 */}
                 <div className="flex-1 overflow-auto p-4 bg-gray-100">
-                    <div className="flex justify-center">
+                    <div className="flex flex-col items-center">
                         <Document
                             file={pdfUrl}
+                            onLoadSuccess={onDocumentLoadSuccess}
                             loading={
                                 <div className="flex items-center justify-center h-96">
                                     <div className="text-gray-500">
@@ -96,9 +114,41 @@ export function ResumePreviewModal({
                                     </div>
                                 </div>
                             }
-                        ></Document>
+                        >
+                            <Page
+                                pageNumber={pageNumber}
+                                width={Math.min(800, window.innerWidth - 64)}
+                                renderTextLayer={true}
+                                renderAnnotationLayer={true}
+                            />
+                        </Document>
                     </div>
                 </div>
+
+                {/* 페이지 네비게이션 */}
+                {numPages > 0 && (
+                    <div className="flex items-center justify-center gap-4 p-4 border-t border-gray-200">
+                        <button
+                            type="button"
+                            onClick={goToPreviousPage}
+                            disabled={pageNumber <= 1}
+                            className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            이전
+                        </button>
+                        <span className="text-sm text-gray-700">
+                            {pageNumber} / {numPages}
+                        </span>
+                        <button
+                            type="button"
+                            onClick={goToNextPage}
+                            disabled={pageNumber >= numPages}
+                            className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            다음
+                        </button>
+                    </div>
+                )}
             </div>
         </div>
     );

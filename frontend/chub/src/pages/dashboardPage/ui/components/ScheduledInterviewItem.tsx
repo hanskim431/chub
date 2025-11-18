@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import Card from "@/shared/ui/Card";
 import type { ScheduledInterview } from "@/pages/dashboardPage/api/interviewRequests";
 import { ResumeButton } from "@/pages/dashboardPage/ui/components/ResumeButton";
@@ -12,8 +13,42 @@ export function ScheduledInterviewItem({
     interview,
     role,
 }: ScheduledInterviewItemProps) {
+    const navigate = useNavigate();
     const intervieweeId =
         role === "interviewer" ? interview.opponent.id : undefined;
+
+    // 면접 시작 가능 여부 확인 (30분 전부터 활성화)
+    const scheduledTime = new Date(interview.scheduledAt).getTime();
+    const currentTime = new Date().getTime();
+    const thirtyMinutesBefore = scheduledTime - 30 * 60 * 1000;
+    const canStart = currentTime >= thirtyMinutesBefore;
+
+    // 남은 시간 계산
+    const getTimeUntilStart = () => {
+        if (canStart) return null;
+        
+        const timeDiff = thirtyMinutesBefore - currentTime;
+        const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+        
+        const parts: string[] = [];
+        if (days > 0) {
+            parts.push(`${days}일`);
+        }
+        if (hours > 0) {
+            parts.push(`${hours}시간`);
+        }
+        if (minutes > 0 || parts.length === 0) {
+            parts.push(`${minutes}분`);
+        }
+        
+        return `${parts.join(" ")} 후 시작 가능`;
+    };
+
+    const handleStartInterview = () => {
+        navigate(`/interviews/room/${interview.roomID}`);
+    };
 
     return (
         <Card className="p-0 hover:shadow-lg transition-shadow overflow-hidden">
@@ -60,16 +95,32 @@ export function ScheduledInterviewItem({
                     </div>
                 </div>
 
-                {/* 면접관일 때 이력서 보기 버튼 */}
-                {role === "interviewer" && (
-                    <div className="flex-shrink-0 p-4">
+                {/* 오른쪽 버튼 영역 */}
+                <div className="flex-shrink-0 p-4 flex flex-col gap-2 justify-center">
+                    {/* 면접 시작 버튼 */}
+                    {canStart ? (
+                        <button
+                            onClick={handleStartInterview}
+                            className="px-4 py-2 rounded-md font-medium transition-colors bg-blue-600 text-white hover:bg-blue-700"
+                            title="면접 시작하기"
+                        >
+                            면접 시작하기
+                        </button>
+                    ) : (
+                        <div className="px-4 py-2 rounded-md font-medium bg-gray-100 text-gray-600 text-center text-sm">
+                            {getTimeUntilStart()}
+                        </div>
+                    )}
+
+                    {/* 면접관일 때 이력서 보기 버튼 */}
+                    {role === "interviewer" && (
                         <ResumeButton
                             userId={intervieweeId}
                             userName={interview.opponent.name}
                             role={role}
                         />
-                    </div>
-                )}
+                    )}
+                </div>
             </div>
         </Card>
     );

@@ -10,17 +10,29 @@ import type {
  * 내 면접관 프로필 조회
  * GET /api/profiles/interviewers/me
  */
-export const getMyInterviewerProfile = async (): Promise<ApiResponse<InterviewerProfileResponse> | null> => {
-  try {
-    const response = await api.get<ApiResponse<InterviewerProfileResponse>>(
-      "/api/profiles/interviewers/me"
-    );
-    return response.data;
-  } catch (error) {
-    console.warn("getMyInterviewerProfile API 호출 실패:", error);
-    return null;
-  }
-};
+export const getMyInterviewerProfile =
+  async (): Promise<ApiResponse<InterviewerProfileResponse> | null> => {
+    try {
+      const response = await api.get<ApiResponse<InterviewerProfileResponse>>(
+        "/api/profiles/interviewers/me"
+      );
+      return response.data;
+    } catch (error: any) {
+      // 404 에러인 경우 응답 데이터를 반환 (MSW에서 success: false로 반환)
+      if (error.response?.status === 404) {
+        return (
+          error.response.data || {
+            success: false,
+            status: 404,
+            errorMessage: "면접관 프로필을 찾을 수 없습니다.",
+            timestamp: new Date().toISOString(),
+          }
+        );
+      }
+      console.warn("getMyInterviewerProfile API 호출 실패:", error);
+      return null;
+    }
+  };
 
 /**
  * 면접관 프로필 생성

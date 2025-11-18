@@ -1,12 +1,18 @@
+import { useState } from "react";
 import type { RecruiterOverview } from "@mocks/model/constants";
 import { Link } from "react-router-dom";
+import { useCreateChatRoom } from "@/entities/chat/api/query";
+import { CreateChatRoomModal } from "@/widgets/chat/ui/CreateChatRoomModal";
 import Card from "@/shared/ui/Card";
 import Pill from "@/shared/ui/Pill";
+
 function RecruiterListItem({
   recruiterOverview,
 }: {
   recruiterOverview: RecruiterOverview;
 }) {
+  const { mutate: createChatRoom, isPending: isCreatingChatRoom } = useCreateChatRoom();
+  const [showChatModal, setShowChatModal] = useState(false);
   return (
     <Card
       width="full"
@@ -70,9 +76,10 @@ function RecruiterListItem({
             면접 신청하기
           </button>
           <button
-            onClick={() => {
-              // todo: 메세지 보내기 기능 추가
-              console.log("메세지 보내기");
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setShowChatModal(true);
             }}
             className="flex-1 rounded-lg border-2 border-point-400 bg-white px-4 py-2.5 text-sm font-semibold text-point-400 shadow-sm transition-all duration-300 hover:cursor-pointer hover:bg-point-100 hover:border-point-500 hover:text-point-500 hover:shadow-lg hover:scale-[1.02] hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-point-500/60 focus-visible:outline-none active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 z-10 relative"
           >
@@ -80,6 +87,31 @@ function RecruiterListItem({
           </button>
         </div>
       </div>
+
+      {/* 메시지 보내기 모달 */}
+      <CreateChatRoomModal
+        isOpen={showChatModal}
+        interviewerName={recruiterOverview.name}
+        onClose={() => setShowChatModal(false)}
+        onConfirm={() => {
+          createChatRoom(
+            { opponentId: recruiterOverview.id },
+            {
+              onSuccess: (response) => {
+                if (response.success && response.data) {
+                  setShowChatModal(false);
+                  // 채팅창 열기 (FloatingChat에서 처리)
+                  console.log("채팅방 생성 완료:", response.data.roomId);
+                }
+              },
+              onError: () => {
+                alert("채팅방 생성에 실패했습니다. 다시 시도해주세요.");
+              },
+            }
+          );
+        }}
+        isPending={isCreatingChatRoom}
+      />
     </Card>
   );
 }

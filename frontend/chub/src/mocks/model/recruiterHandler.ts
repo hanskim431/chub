@@ -1,7 +1,41 @@
 import { http, HttpResponse } from "msw";
 import { mockRecruiters, mockManyRecruiters } from "@mocks/model/constants";
 import type { Recruiter } from "@mocks/model/constants";
+import type {
+  InterviewerProfileResponse,
+  UpdateInterviewerProfileRequest,
+  CreateInterviewerProfileRequest,
+} from "@/entities/interviewer/model/types";
+
+// 내 면접관 프로필 상태 저장 (MSW 핸들러 간 상태 공유)
+let myInterviewerProfile: InterviewerProfileResponse | null = null;
+
 export const recruiterHandlers = [
+  // 내 면접관 프로필 조회 (더 구체적인 경로를 먼저 등록)
+  http.get(
+    `${import.meta.env.VITE_API_URL}/api/profiles/interviewers/me`,
+    async () => {
+      if (!myInterviewerProfile) {
+        return HttpResponse.json(
+          {
+            success: false,
+            status: 404,
+            errorMessage: "면접관 프로필을 찾을 수 없습니다.",
+            timestamp: new Date().toISOString(),
+          },
+          { status: 404 }
+        );
+      }
+
+      return HttpResponse.json({
+        success: true,
+        status: 200,
+        data: myInterviewerProfile,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  ),
+  // 면접관 목록 조회
   http.get(
     `${import.meta.env.VITE_API_URL}/api/profiles/interviewers`,
     async ({ request }) => {
@@ -54,7 +88,7 @@ export const recruiterHandlers = [
       });
     }
   ),
-  // 면접관 상세 조회
+  // 면접관 상세 조회 (동적 파라미터는 나중에 등록)
   http.get(
     `${import.meta.env.VITE_API_URL}/api/profiles/interviewers/:id`,
     async ({ params }) => {
@@ -83,7 +117,7 @@ export const recruiterHandlers = [
   ),
   // 면접관 상세 조회 (레거시 엔드포인트)
   http.get(
-    `${import.meta.env.VITE_API_URL}/api/profiles/recruiters/:id`,
+    `${import.meta.env.VITE_API_URL}/api/profiles/interviewers/:id`,
     async ({ request }) => {
       const url = new URL(request.url);
       const id = url.pathname.split("/").pop();
@@ -100,21 +134,113 @@ export const recruiterHandlers = [
       });
     }
   ),
-  // 내 면접관 프로필 조회
-  http.get(
+  // 내 면접관 프로필 생성
+  http.post(
     `${import.meta.env.VITE_API_URL}/api/profiles/interviewers/me`,
-    async () => {
+    async ({ request }) => {
+      const body = (await request.json()) as CreateInterviewerProfileRequest;
+
+      // 기본 프로필 데이터 생성
+      const baseProfile = mockRecruiters[0];
+      myInterviewerProfile = {
+        id: parseInt(baseProfile.id),
+        name: body.name || baseProfile.name,
+        email: body.email || baseProfile.email,
+        avatar: body.avatar ?? baseProfile.avatar,
+        field: body.field || baseProfile.field,
+        company: body.company ?? baseProfile.company,
+        position: body.position ?? baseProfile.position,
+        bio: body.bio ?? baseProfile.bio,
+        experiences:
+          body.experiences ||
+          baseProfile.experiences.map((experience) => ({
+            company: experience.company,
+            startedYear: experience.startedYear,
+            endedYear:
+              experience.endedYear !== undefined
+                ? String(experience.endedYear)
+                : null,
+            role: experience.role,
+          })),
+        specialties: body.specialties || baseProfile.specialties,
+        education:
+          body.education ||
+          baseProfile.education.map((education) => ({
+            school: education.school,
+            startedYear: education.startedYear,
+            endedYear: education.endedYear ?? null,
+            role: education.role,
+          })),
+        certifications:
+          body.certifications ||
+          baseProfile.certifications.map((certification) => ({
+            name: certification.name,
+            year: certification.year,
+          })),
+        languages: body.languages || baseProfile.languages,
+        interviewStyle: body.interviewStyle ?? baseProfile.interviewStyle,
+        availableTimeSlots:
+          body.availableTimeSlots || baseProfile.availableTimeSlots,
+        price: body.price ?? baseProfile.price,
+        isActive: true, // 기본값
+      };
+
       return HttpResponse.json({
         success: true,
         status: 200,
-        data: mockRecruiters[0],
+        timestamp: new Date().toISOString(),
       });
     }
   ),
   // 내 면접관 프로필 수정
-  http.post(
+  http.patch(
     `${import.meta.env.VITE_API_URL}/api/profiles/interviewers/me`,
-    async () => {
+    async ({ request }) => {
+      if (!myInterviewerProfile) {
+        return HttpResponse.json(
+          {
+            success: false,
+            status: 404,
+            errorMessage: "면접관 프로필을 찾을 수 없습니다.",
+            timestamp: new Date().toISOString(),
+          },
+          { status: 404 }
+        );
+      }
+
+      const body = (await request.json()) as UpdateInterviewerProfileRequest;
+
+      // 프로필 데이터 업데이트
+      myInterviewerProfile = {
+        ...myInterviewerProfile,
+        ...(body.name !== undefined && { name: body.name }),
+        ...(body.email !== undefined && { email: body.email }),
+        ...(body.avatar !== undefined && { avatar: body.avatar }),
+        ...(body.field !== undefined && { field: body.field }),
+        ...(body.company !== undefined && { company: body.company }),
+        ...(body.position !== undefined && { position: body.position }),
+        ...(body.bio !== undefined && { bio: body.bio }),
+        ...(body.experiences !== undefined && {
+          experiences: body.experiences,
+        }),
+        ...(body.specialties !== undefined && {
+          specialties: body.specialties,
+        }),
+        ...(body.education !== undefined && { education: body.education }),
+        ...(body.certifications !== undefined && {
+          certifications: body.certifications,
+        }),
+        ...(body.languages !== undefined && { languages: body.languages }),
+        ...(body.interviewStyle !== undefined && {
+          interviewStyle: body.interviewStyle,
+        }),
+        ...(body.availableTimeSlots !== undefined && {
+          availableTimeSlots: body.availableTimeSlots,
+        }),
+        ...(body.price !== undefined && { price: body.price }),
+        ...(body.isActive !== undefined && { isActive: body.isActive }),
+      };
+
       return HttpResponse.json({
         success: true,
         status: 200,
