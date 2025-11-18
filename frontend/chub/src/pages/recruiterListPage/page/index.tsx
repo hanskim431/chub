@@ -16,6 +16,22 @@ function RecruiterListPage() {
     field || ""
   );
   const queryClient = useQueryClient();
+  
+  // 필터가 변경되면 첫 페이지로 리셋
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [field]);
+
+  // 현재 페이지가 totalPages보다 크면 마지막 페이지로 이동
+  useEffect(() => {
+    if (recruiterOverviewResponse?.pageInfo) {
+      const totalPages = recruiterOverviewResponse.pageInfo.totalPages;
+      if (currentPage > totalPages && totalPages > 0) {
+        setCurrentPage(totalPages);
+      }
+    }
+  }, [recruiterOverviewResponse, currentPage]);
+
   useEffect(() => {
     const preFetchRecruiters = () => {
       if (!recruiterOverviewResponse) return;
@@ -27,7 +43,7 @@ function RecruiterListPage() {
       });
     };
     preFetchRecruiters();
-  }, [recruiterOverviewResponse, currentPage, queryClient]);
+  }, [recruiterOverviewResponse, currentPage, queryClient, field]);
   const recruiters = recruiterOverviewResponse?.data?.profiles;
   const pageInfo = recruiterOverviewResponse?.pageInfo;
   const totalPages = pageInfo?.totalPages;
@@ -44,18 +60,28 @@ function RecruiterListPage() {
         </h2>
       </div>
       <RecruiterFilter />
-      <div className="grid grid-cols-1 md:grid-cols-2 items-stretch justify-start w-full max-w-7xl gap-4">
-        {recruiters?.map((recruiter: RecruiterOverview) => (
-          <RecruiterListItem key={recruiter.id} recruiterOverview={recruiter} />
-        ))}
-      </div>
-      <Pagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={(page) => {
-          setCurrentPage(page);
-        }}
-      />
+      {recruiters && recruiters.length > 0 ? (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 items-stretch justify-start w-full max-w-7xl gap-4">
+            {recruiters.map((recruiter: RecruiterOverview) => (
+              <RecruiterListItem key={recruiter.id} recruiterOverview={recruiter} />
+            ))}
+          </div>
+          {totalPages && totalPages > 0 && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={(page) => {
+                setCurrentPage(page);
+              }}
+            />
+          )}
+        </>
+      ) : (
+        <div className="flex items-center justify-center w-full max-w-7xl py-12">
+          <p className="text-gray-500 text-lg">면접관이 없습니다.</p>
+        </div>
+      )}
     </main>
   );
 }
