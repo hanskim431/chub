@@ -19,9 +19,10 @@ export function useChatWebSocket({
   const stompClientRef = useRef<Client | null>(null);
   const [wsConnected, setWsConnected] = useState(false);
 
-  // 웹소켓 연결 및 구독
+  // 웹소켓 연결 (한 번만 연결)
   useEffect(() => {
     if (!currentUserId || !enabled) return;
+    if (stompClientRef.current) return; // 이미 연결되어 있으면 스킵
 
     const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:8080";
     const socket = new SockJS(`${apiUrl}/ws`);
@@ -32,44 +33,6 @@ export function useChatWebSocket({
       heartbeatOutgoing: 4000,
       onConnect: () => {
         setWsConnected(true);
-
-        // 모든 채팅방에 대한 메시지 수신 구독 (채팅방이 있을 때만)
-        if (chatRooms.length > 0) {
-          chatRooms.forEach((room) => {
-            client.subscribe(
-              `/topic/chat/rooms/${room.roomId}`,
-              (message: StompMessage) => {
-                const data = JSON.parse(message.body);
-                if (data.type === "message.received") {
-                  // 새 메시지 수신 시 메시지 목록 갱신
-                  queryClient.invalidateQueries({
-                    queryKey: ["chatMessages", room.roomId],
-                  });
-                  // 채팅방 목록도 갱신
-                  queryClient.invalidateQueries({ queryKey: ["chatRooms"] });
-                } else if (data.type === "read.receipt") {
-                  // 읽음 처리 이벤트 수신 시 상대방 마지막 읽은 시간 갱신
-                  if (data.data.readerId !== currentUserId) {
-                    queryClient.invalidateQueries({
-                      queryKey: ["opponentLastRead", room.roomId],
-                    });
-                  }
-                }
-              }
-            );
-          });
-        }
-
-        // 개인 큐 구독 (토스트 알림용)
-        client.subscribe(
-          `/user/${currentUserId}/queue/messages`,
-          (message: StompMessage) => {
-            const data = JSON.parse(message.body);
-            if (data.type === "message.received") {
-              // 토스트 알림 표시 (선택사항)
-            }
-          }
-        );
       },
       onStompError: () => {
         setWsConnected(false);
@@ -83,10 +46,65 @@ export function useChatWebSocket({
     stompClientRef.current = client;
 
     return () => {
-      client.deactivate();
-      stompClientRef.current = null;
+      if (stompClientRef.current) {
+        stompClientRef.current.deactivate();
+        stompClientRef.current = null;
+      }
     };
-  }, [currentUserId, enabled, chatRooms, queryClient]);
+  }, [currentUserId, enabled]);
+
+  // 채팅방 구독 (연결 후 채팅방 목록이 변경될 때만)
+  useEffect(() => {
+    if (!wsConnected || !stompClientRef.current?.connected || !currentUserId)
+      return;
+
+    const subscriptions: Array<{ unsubscribe: () => void }> = [];
+
+    // 모든 채팅방에 대한 메시지 수신 구독
+    if (chatRooms.length > 0) {
+      chatRooms.forEach((room) => {
+        const subscription = stompClientRef.current!.subscribe(
+          `/topic/chat/rooms/${room.roomId}`,
+          (message: StompMessage) => {
+            const data = JSON.parse(message.body);
+            if (data.type === "message.received") {
+              // 새 메시지 수신 시 메시지 목록 갱신
+              queryClient.invalidateQueries({
+                queryKey: ["chatMessages", room.roomId],
+              });
+              // 채팅방 목록도 갱신
+              queryClient.invalidateQueries({ queryKey: ["chatRooms"] });
+            } else if (data.type === "read.receipt") {
+              // 읽음 처리 이벤트 수신 시 상대방 마지막 읽은 시간 갱신
+              if (data.data.readerId !== currentUserId) {
+                queryClient.invalidateQueries({
+                  queryKey: ["opponentLastRead", room.roomId],
+                });
+              }
+            }
+          }
+        );
+        subscriptions.push(subscription);
+      });
+    }
+
+    // 개인 큐 구독 (토스트 알림용)
+    const userQueueSubscription = stompClientRef.current.subscribe(
+      `/user/${currentUserId}/queue/messages`,
+      (message: StompMessage) => {
+        const data = JSON.parse(message.body);
+        if (data.type === "message.received") {
+          // 토스트 알림 표시 (선택사항)
+        }
+      }
+    );
+    subscriptions.push(userQueueSubscription);
+
+    return () => {
+      // 구독 해제
+      subscriptions.forEach((sub) => sub.unsubscribe());
+    };
+  }, [wsConnected, currentUserId, chatRooms, queryClient]);
 
   // 메시지 전송
   const sendMessage = (roomId: string, content: string) => {

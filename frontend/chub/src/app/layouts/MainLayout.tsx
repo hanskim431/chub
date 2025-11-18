@@ -1,4 +1,5 @@
 import { Outlet } from "react-router-dom";
+import { useMemo } from "react";
 import Header from "@/widgets/header";
 import { FloatingChat } from "@/widgets/chat";
 import { useMe } from "@/features/auth/api/me";
@@ -12,11 +13,13 @@ function MainLayout() {
   const currentUserId = data?.data?.id;
   const { data: chatRoomsData } = useChatRooms();
 
-  // 로그인 시 모든 채팅방 구독
-  const chatRooms = chatRoomsData?.data?.rooms || [];
-  const chatRoomsForSubscription = chatRooms.map((room) => ({
-    roomId: room.roomId,
-  }));
+  // 로그인 시 모든 채팅방 구독 (메모이제이션으로 불필요한 재생성 방지)
+  const chatRoomsForSubscription = useMemo(() => {
+    const chatRooms = chatRoomsData?.data?.rooms || [];
+    return chatRooms.map((room) => ({
+      roomId: room.roomId,
+    }));
+  }, [chatRoomsData?.data?.rooms]);
 
   const { wsConnected, sendMessage, markAsRead } = useChatWebSocket({
     currentUserId,
