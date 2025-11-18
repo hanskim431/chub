@@ -77,13 +77,8 @@ export const recruiterHandlers = [
           size: parseInt(size),
           totalElements: data.length,
           totalPages: Math.ceil(data.length / parseInt(size)),
-          first: page === "0",
-          last:
-            parseInt(page) ===
-            Math.ceil(
-              Math.ceil(data.length / parseInt(size)) / parseInt(size)
-            ) -
-              1,
+          first: parseInt(page) === 1,
+          last: parseInt(page) === Math.ceil(data.length / parseInt(size)),
         },
       });
     }
