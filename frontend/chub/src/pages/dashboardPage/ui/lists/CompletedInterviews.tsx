@@ -1,4 +1,4 @@
-import { useInterviewRequests } from "@/pages/dashboardPage/api/interviewQuery";
+import { useInterviewRecords } from "@/pages/dashboardPage/api/interviewQuery";
 import { CompletedInterviewRequestItem } from "@/pages/dashboardPage/ui/components/CompletedInterviewRequestItem";
 import { LoadingState } from "@/pages/dashboardPage/ui/components/LoadingState";
 import { EmptyState } from "@/pages/dashboardPage/ui/components/EmptyState";
@@ -13,8 +13,7 @@ export function CompletedInterviews({
     role,
     activeTab,
 }: CompletedInterviewsProps) {
-    const { data, isLoading } = useInterviewRequests({
-        status: "COMPLETED",
+    const { data, isLoading } = useInterviewRecords({
         page: 0,
         size: 10,
     });

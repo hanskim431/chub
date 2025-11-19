@@ -176,3 +176,40 @@ export const updateInterviewRequestStatus = async (
     return null;
   }
 };
+
+// 완료된 면접 기록 응답 타입 (InterviewRequest와 동일한 구조로 가정)
+export interface InterviewRecordsResponse {
+  success: boolean;
+  status: string;
+  data: {
+    interviewRequests: InterviewRequest[];
+  };
+  pageInfo?: PageInfo;
+  timestamp: string;
+}
+
+// 완료된 면접 기록 조회
+export const getInterviewRecords = async ({
+  page = 0,
+  size = 10,
+}: {
+  page?: number;
+  size?: number;
+}): Promise<InterviewRecordsResponse | null> => {
+  try {
+    const params: Record<string, string> = {
+      page: page.toString(),
+      size: size.toString(),
+    };
+    const response = await api.get<InterviewRecordsResponse>(
+      "/api/interviews/records",
+      {
+        params,
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.warn("getInterviewRecords API 호출 실패:", error);
+    return null;
+  }
+};
