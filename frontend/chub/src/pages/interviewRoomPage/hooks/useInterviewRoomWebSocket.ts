@@ -85,6 +85,9 @@ export function useInterviewRoomWebSocket({
   const subscribeRef = useRef(subscribe);
   const unsubscribeRef = useRef(unsubscribe);
   const publishRefForHook = useRef(publish);
+  
+  // ICE candidate 큐 (setRemoteDescription 전에 받은 candidate들을 저장)
+  const iceCandidateQueueRef = useRef<RTCIceCandidateInit[]>([]);
 
   useEffect(() => {
     subscribeRef.current = subscribe;
@@ -563,6 +566,25 @@ export function useInterviewRoomWebSocket({
               );
               console.log("[WebRTC] Remote description 설정 완료");
 
+              // 큐에 있는 ICE candidate들을 모두 추가 (offer 수신 후)
+              console.log(
+                "[WebRTC] Offer 수신 후 큐에 있는 ICE candidate 개수:",
+                iceCandidateQueueRef.current.length
+              );
+              for (const candidate of iceCandidateQueueRef.current) {
+                try {
+                  await pc.addIceCandidate(new RTCIceCandidate(candidate));
+                  console.log("[WebRTC] Offer 수신 후 큐에서 ICE candidate 추가 완료");
+                } catch (error) {
+                  console.error(
+                    "[WebRTC] Offer 수신 후 큐에서 ICE candidate 추가 실패:",
+                    error
+                  );
+                }
+              }
+              // 큐 비우기
+              iceCandidateQueueRef.current = [];
+
               // Answer 생성 및 전송
               const answer = await pc.createAnswer();
               console.log("[WebRTC] Answer 생성 완료:", answer.type);
@@ -722,6 +744,27 @@ export function useInterviewRoomWebSocket({
                 iceConnectionState: pcRef.current.iceConnectionState,
               });
 
+              // 큐에 있는 ICE candidate들을 모두 추가
+              console.log(
+                "[WebRTC] 큐에 있는 ICE candidate 개수:",
+                iceCandidateQueueRef.current.length
+              );
+              for (const candidate of iceCandidateQueueRef.current) {
+                try {
+                  await pcRef.current.addIceCandidate(
+                    new RTCIceCandidate(candidate)
+                  );
+                  console.log("[WebRTC] 큐에서 ICE candidate 추가 완료");
+                } catch (error) {
+                  console.error(
+                    "[WebRTC] 큐에서 ICE candidate 추가 실패:",
+                    error
+                  );
+                }
+              }
+              // 큐 비우기
+              iceCandidateQueueRef.current = [];
+
               callbacksRef.current.onWebRTCAnswer?.(answerData);
             } catch (error) {
               console.error("[WebRTC] ========== Answer 처리 실패 ==========");
@@ -807,48 +850,39 @@ export function useInterviewRoomWebSocket({
               });
               console.log("[WebRTC] Candidate 데이터:", candidateData);
 
-              // signalingState가 "stable"이 아니면 대기 (setRemoteDescription이 설정되어야 함)
-              if (
+              // signalingState가 준비되었는지 확인
+              const canAddIceCandidate =
                 pcRef.current.signalingState === "stable" ||
                 pcRef.current.signalingState === "have-local-offer" ||
                 pcRef.current.signalingState === "have-remote-offer" ||
                 pcRef.current.signalingState === "have-local-pranswer" ||
-                pcRef.current.signalingState === "have-remote-pranswer"
-              ) {
+                pcRef.current.signalingState === "have-remote-pranswer";
+
+              if (canAddIceCandidate) {
                 // 원격 ICE candidate 추가
-                await pcRef.current.addIceCandidate(
-                  new RTCIceCandidate(candidateData)
-                );
+                try {
+                  await pcRef.current.addIceCandidate(
+                    new RTCIceCandidate(candidateData)
+                  );
+                  console.log(
+                    "[WebRTC] ========== ICE candidate 추가 완료 =========="
+                  );
+                } catch (error) {
+                  console.error(
+                    "[WebRTC] ICE candidate 추가 실패:",
+                    error,
+                    "큐에 추가합니다."
+                  );
+                  // 추가 실패 시 큐에 저장
+                  iceCandidateQueueRef.current.push(candidateData);
+                }
               } else {
                 console.warn(
-                  "[WebRTC] signalingState가 아직 준비되지 않음, ICE candidate 추가 대기:",
+                  "[WebRTC] signalingState가 아직 준비되지 않음, ICE candidate를 큐에 추가:",
                   pcRef.current.signalingState
                 );
-                // 잠시 후 재시도
-                setTimeout(async () => {
-                  try {
-                    if (
-                      pcRef.current &&
-                      (pcRef.current.signalingState === "stable" ||
-                        pcRef.current.signalingState === "have-local-offer" ||
-                        pcRef.current.signalingState === "have-remote-offer" ||
-                        pcRef.current.signalingState ===
-                          "have-local-pranswer" ||
-                        pcRef.current.signalingState === "have-remote-pranswer")
-                    ) {
-                      await pcRef.current.addIceCandidate(
-                        new RTCIceCandidate(candidateData)
-                      );
-                      console.log("[WebRTC] ICE candidate 재시도 후 추가 완료");
-                    }
-                  } catch (retryError) {
-                    console.error(
-                      "[WebRTC] ICE candidate 재시도 실패:",
-                      retryError
-                    );
-                  }
-                }, 500);
-                break;
+                // 큐에 저장 (setRemoteDescription 후에 추가됨)
+                iceCandidateQueueRef.current.push(candidateData);
               }
               console.log(
                 "[WebRTC] ========== ICE candidate 추가 완료 =========="
