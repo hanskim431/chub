@@ -141,7 +141,7 @@ public class InterviewRoomServiceImpl implements InterviewRoomService {
 
         InterviewRoomChatMessage chatMessage = InterviewRoomChatMessage.builder()
                 .type(SYSTEM)
-                .message("User " + userId + " Joined")
+                .message(interviewRoomManager.getNickname(userId) + " 님이 입장했습니다.")
                 .createdAt(LocalDateTime.now())
                 .build();
 
