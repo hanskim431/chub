@@ -184,10 +184,7 @@ export function InterviewRoom({
             tailQuestions.length > 0 &&
             (interviewStatus === "ANSWER" ||
               interviewStatus === "QUESTION") && (
-              <div className="px-6 py-4 bg-gray-800 border-b border-gray-700">
-                <h3 className="text-white font-semibold mb-3 text-lg">
-                  다음 질문 선택지
-                </h3>
+              <div className="px-6 py-3 bg-gray-800 border-b border-gray-700 flex-shrink-0">
                 <div className="flex flex-wrap gap-2">
                   {tailQuestions.map((question, index) => (
                     <div
@@ -201,7 +198,7 @@ export function InterviewRoom({
               </div>
             )}
 
-          <div className="flex-1 flex items-center justify-center p-4 gap-4 min-w-0">
+          <div className="flex-1 flex items-center justify-center p-4 gap-4 min-w-0 min-h-0 overflow-hidden">
             {/* 원격 비디오 (면접관) */}
             <div className="flex-1 h-full min-w-0 relative flex items-center justify-center">
               <div className="w-full h-full max-w-full max-h-full">
@@ -324,7 +321,7 @@ export function InterviewRoom({
           </div>
 
           {/* 하단 버튼 영역 */}
-          <div className="p-4 bg-gray-800 border-t border-gray-700">
+          <div className="flex-shrink-0 p-4 bg-gray-800 border-t border-gray-700">
             {/* 준비 상태: 면접관에게만 시작하기 버튼 표시 (항상 표시, WebRTC 연결 시 활성화) */}
             {interviewStatus === "READY" && userRole === "INTERVIEWER" && (
               <div className="flex justify-center">
