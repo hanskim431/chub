@@ -22,18 +22,18 @@ export function CompletedInterviews({
         return <LoadingState />;
     }
 
-    const requests = data?.data?.interviewRequests ?? [];
+    const records = data?.data?.records ?? [];
 
-    if (requests.length === 0) {
+    if (records.length === 0) {
         return <EmptyState message="완료된 면접이 없습니다." />;
     }
 
     return (
         <div className="space-y-4">
-            {requests.map((request) => (
+            {records.map((record) => (
                 <CompletedInterviewRequestItem
-                    key={request.id}
-                    request={request}
+                    key={record.id}
+                    record={record}
                     role={role}
                     activeTab={activeTab}
                 />
