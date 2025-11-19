@@ -15,7 +15,7 @@ export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
           autoPlay
           playsInline
           muted={isLocal}
-          className="w-full h-full object-cover"
+          className={`w-full h-full ${isLocal ? "object-cover" : "object-contain"}`}
         />
         {/* 로컬 비디오는 연결 상태와 관계없이 표시, 원격 비디오만 연결 상태 표시 */}
         {!isLocal && !isConnected && (
