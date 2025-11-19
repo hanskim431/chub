@@ -1,6 +1,5 @@
 package com.chub.Interview.controller;
 
-import static com.chub.interviewroom.enums.InterviewRoomChatType.SYSTEM;
 import static com.chub.interviewroom.enums.InterviewRoomChatType.SYSTEM_ANSWER;
 import static com.chub.interviewroom.enums.InterviewRoomChatType.SYSTEM_QUESTION;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
@@ -107,7 +106,7 @@ public class InterviewHttpController {
                         .map(QuestionDto::getQuestionText)
                         .toList();
                 NextQuestionChoicesResponse choicesResponse = new NextQuestionChoicesResponse(tailQuestions);
-                webSocketHelper.sendPersonalMessage(opponentId, "tail-questions", choicesResponse);
+                webSocketHelper.sendPersonalMessage(opponentId, "/interviewRoom", "tail-questions", choicesResponse);
             }
 
             return ResponseEntity.ok(CommonApiResponse.success(transcribedText));

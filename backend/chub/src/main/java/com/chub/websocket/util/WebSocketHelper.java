@@ -15,15 +15,28 @@ public class WebSocketHelper {
     private static final String TOPIC_PREFIX = "/topic";
     private static final String ERROR = "error";
 
-    public void sendPersonalMessage(Long userId, String type, Object data) {
+    public void sendPersonalMessage(Long userId, String destination, String type, Object data) {
 
         Object payload = createPayload(type, data);
 
         messagingTemplate.convertAndSendToUser(
                 userId.toString(),
-                USER_QUEUE_PREFIX,
+                USER_QUEUE_PREFIX + destination,
                 payload
         );
+    }
+
+    public void sendPersonalMessage(Long userId, String type, Object data) {
+
+//        Object payload = createPayload(type, data);
+//
+//        messagingTemplate.convertAndSendToUser(
+//                userId.toString(),
+//                USER_QUEUE_PREFIX,
+//                payload
+//        );
+
+        sendPersonalMessage(userId, "", type, data);
     }
 
     public void broadcastMessage(String destination, String type, Object data) {

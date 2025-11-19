@@ -35,7 +35,7 @@ public class WebRTCSignalingServiceImpl implements WebRTCSignalingService {
 
         Long receiverId = getReceiverId(userId);
 
-        webSocketHelper.sendPersonalMessage(receiverId, type, payload);
+        webSocketHelper.sendPersonalMessage(receiverId, "/interviewRoom", type, payload);
     }
 
     private Long getReceiverId(Long userId) {
