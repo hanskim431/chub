@@ -124,7 +124,7 @@ JWT 토큰 기반 인증으로 보안성을 보장하며, 리프레시 토큰을
 
 ## ✅ 서비스 구조도
 
-<img src="assets/architecture.png" width="700" alt="tumolow 서비스 아키텍처" />
+<img src="docs/archtechure.png" width="700" alt="서비스 아키텍처" />
 
 <br/>
 <br/>
