@@ -59,13 +59,8 @@ public class InterviewRoomManager {
     }
 
     public void updateRoomStatus(Long interviewRequestId, RoomStatus newStatus) {
-//        InterviewRoomState roomState = ofNullable(interviewRoomInfo.get(interviewRequestId))
-//                .orElseThrow(InterviewRequestException::notFound);
-
-        InterviewRoomState roomState = interviewRoomInfo.get(interviewRequestId);
-        if (roomState == null) {
-            return;
-        }
+        InterviewRoomState roomState = ofNullable(interviewRoomInfo.get(interviewRequestId))
+                .orElseThrow(InterviewRequestException::notFound);
 
         roomState.changeStatus(newStatus);
     }

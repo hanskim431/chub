@@ -58,9 +58,9 @@ public class InterviewRoomServiceImpl implements InterviewRoomService {
     @Override
     public void exitRoom(Long userId, Long interviewRequestId) {
 
-        interviewRoomManager.exitRoom(userId, interviewRequestId);
-
         sendLeaveEvent(userId, interviewRequestId);
+
+        interviewRoomManager.exitRoom(userId, interviewRequestId);
     }
 
     @Override
