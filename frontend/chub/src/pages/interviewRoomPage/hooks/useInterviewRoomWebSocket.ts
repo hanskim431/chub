@@ -205,15 +205,16 @@ export function useInterviewRoomWebSocket({
             });
 
             // user-joined 이벤트를 받은 사람(먼저 방에 들어온 사람)이 offer를 보냄
-            if (opponentInfoRef.current && !offerSentRef.current) {
-              console.log(
-                "[WebRTC] user-joined 이벤트 수신, offer 전송 시작",
-                {
-                  opponentId: opponentInfoRef.current.id,
-                  currentUserId: userId,
-                  offerAlreadySent: offerSentRef.current,
-                }
-              );
+            // 이전에 offer를 보냈어도 다시 보내도록 offerSentRef 체크 제거
+            if (opponentInfoRef.current) {
+              console.log("[WebRTC] user-joined 이벤트 수신, offer 전송 시작", {
+                opponentId: opponentInfoRef.current.id,
+                currentUserId: userId,
+                offerAlreadySent: offerSentRef.current,
+              });
+              // offer를 다시 보낼 수 있도록 플래그 리셋
+              offerSentRef.current = false;
+
               if (sendOfferWhenReadyRef.current) {
                 // 약간의 지연을 두어 로컬 스트림이 완전히 준비되도록 함
                 setTimeout(() => {
@@ -279,8 +280,19 @@ export function useInterviewRoomWebSocket({
         console.log("[WebSocket] 개인 큐 메시지 수신:", {
           destination: message.headers.destination,
           body: message.body,
+          messageType: message.body
+            ? JSON.parse(message.body)?.type
+            : "unknown",
         });
-        const wsMessage: WebSocketMessage = JSON.parse(message.body);
+
+        let wsMessage: WebSocketMessage;
+        try {
+          wsMessage = JSON.parse(message.body);
+          console.log("[WebSocket] 파싱된 메시지:", wsMessage);
+        } catch (error) {
+          console.error("[WebSocket] 메시지 파싱 실패:", error, message.body);
+          return;
+        }
 
         switch (wsMessage.type) {
           case "tail-questions": {
@@ -301,46 +313,154 @@ export function useInterviewRoomWebSocket({
           }
           case "webrtc-offer": {
             // Offer 수신 (상대방이 offer를 보냈을 때)
+            console.log(
+              "[WebRTC] ========== webrtc-offer 이벤트 수신 =========="
+            );
+            console.log("[WebRTC] 전체 메시지:", wsMessage);
+            console.log("[WebRTC] 메시지 타입:", wsMessage.type);
+            console.log("[WebRTC] 메시지 데이터:", wsMessage.data);
+
             try {
               const data = wsMessage.data as any;
-              if (pcRef.current && data.offer) {
-                console.log("[WebRTC] Offer 수신, Answer 생성 중...");
-                // 원격 offer 설정
-                await pcRef.current.setRemoteDescription(
-                  new RTCSessionDescription(data.offer)
-                );
+              console.log("[WebRTC] Offer 데이터 분석:", {
+                hasPc: !!pcRef.current,
+                hasOffer: !!data?.offer,
+                offerType: data?.offer?.type,
+                offerSdp: data?.offer?.sdp
+                  ? `${data.offer.sdp.substring(0, 50)}...`
+                  : "없음",
+                data: data,
+                userId: userId,
+                hasPublishRef: !!publishRefForHook.current,
+                pcState: pcRef.current?.connectionState,
+                pcSignalingState: pcRef.current?.signalingState,
+              });
 
-                // Answer 생성 및 전송
-                const answer = await pcRef.current.createAnswer();
-                await pcRef.current.setLocalDescription(answer);
-
-                if (publishRefForHook.current) {
-                  const success = publishRefForHook.current(
-                    `/app/webrtc/answer`,
-                    JSON.stringify({
-                      answer: {
-                        type: answer.type,
-                        sdp: answer.sdp,
-                      },
-                      userId,
-                    })
-                  );
-                  if (success) {
-                    console.log("[WebRTC] Answer 전송 완료:", {
-                      destination: `/app/webrtc/answer`,
-                      userId,
-                    });
-                  } else {
-                    console.error("[WebRTC] Answer 전송 실패");
-                  }
-                } else {
-                  console.error("[WebRTC] publishRefForHook.current가 null입니다.");
-                }
-                callbacksRef.current.onWebRTCOffer?.(data.offer);
+              if (!data?.offer) {
+                console.error("[WebRTC] data.offer가 없습니다:", data);
+                callbacksRef.current.onError?.("Offer 데이터가 없습니다.");
+                break;
               }
+
+              if (!userId) {
+                console.error("[WebRTC] userId가 없습니다.");
+                callbacksRef.current.onError?.("사용자 ID가 없습니다.");
+                break;
+              }
+
+              // pcRef가 준비될 때까지 대기하는 함수
+              const waitForPcReady = (): Promise<RTCPeerConnection> => {
+                return new Promise((resolve, reject) => {
+                  let attempts = 0;
+                  const maxAttempts = 50; // 5초 대기
+
+                  const check = () => {
+                    attempts++;
+                    if (pcRef.current) {
+                      console.log(
+                        "[WebRTC] pcRef 준비 완료, attempts:",
+                        attempts
+                      );
+                      resolve(pcRef.current);
+                    } else if (attempts >= maxAttempts) {
+                      reject(new Error("pcRef가 준비되지 않았습니다."));
+                    } else {
+                      setTimeout(check, 100);
+                    }
+                  };
+                  check();
+                });
+              };
+
+              // pcRef가 준비될 때까지 대기
+              let pc: RTCPeerConnection;
+              if (!pcRef.current) {
+                console.log("[WebRTC] pcRef가 아직 준비되지 않음, 대기 중...");
+                try {
+                  pc = await waitForPcReady();
+                  console.log("[WebRTC] pcRef 준비 완료, Answer 생성 시작");
+                } catch (error) {
+                  console.error("[WebRTC] pcRef 대기 실패:", error);
+                  callbacksRef.current.onError?.(
+                    "WebRTC 연결이 초기화되지 않았습니다."
+                  );
+                  break;
+                }
+              } else {
+                pc = pcRef.current;
+              }
+
+              if (!publishRefForHook.current) {
+                console.error(
+                  "[WebRTC] publishRefForHook.current가 null입니다."
+                );
+                callbacksRef.current.onError?.(
+                  "WebSocket publish 함수가 없습니다."
+                );
+                break;
+              }
+
+              console.log(
+                "[WebRTC] ========== Offer 수신, Answer 생성 시작 =========="
+              );
+              console.log("[WebRTC] PC 상태:", {
+                connectionState: pc.connectionState,
+                signalingState: pc.signalingState,
+                iceConnectionState: pc.iceConnectionState,
+              });
+
+              // 원격 offer 설정
+              await pc.setRemoteDescription(
+                new RTCSessionDescription(data.offer)
+              );
+              console.log("[WebRTC] Remote description 설정 완료");
+
+              // Answer 생성 및 전송
+              const answer = await pc.createAnswer();
+              console.log("[WebRTC] Answer 생성 완료:", answer.type);
+              await pc.setLocalDescription(answer);
+              console.log("[WebRTC] Local description 설정 완료");
+
+              const answerPayload = {
+                answer: {
+                  type: answer.type,
+                  sdp: answer.sdp,
+                },
+                userId,
+              };
+
+              console.log("[WebRTC] ========== Answer 전송 시도 ==========");
+              console.log("[WebRTC] destination: /app/webrtc/answer");
+              console.log("[WebRTC] payload:", answerPayload);
+              console.log(
+                "[WebRTC] publishRefForHook.current:",
+                !!publishRefForHook.current
+              );
+
+              const success = publishRefForHook.current(
+                `/app/webrtc/answer`,
+                JSON.stringify(answerPayload)
+              );
+
+              if (success) {
+                console.log("[WebRTC] ========== Answer 전송 완료 ==========");
+                console.log("[WebRTC] destination: /app/webrtc/answer");
+                console.log("[WebRTC] userId:", userId);
+                console.log("[WebRTC] answerType:", answer.type);
+              } else {
+                console.error(
+                  "[WebRTC] ========== Answer 전송 실패 =========="
+                );
+                console.error("[WebRTC] publish 함수가 false를 반환했습니다.");
+                callbacksRef.current.onError?.("Answer 전송에 실패했습니다.");
+              }
+
+              callbacksRef.current.onWebRTCOffer?.(data.offer);
             } catch (error) {
               console.error("[WebRTC] Offer 처리 실패:", error);
-              callbacksRef.current.onError?.("WebRTC 연결 설정에 실패했습니다.");
+              callbacksRef.current.onError?.(
+                "WebRTC 연결 설정에 실패했습니다."
+              );
             }
             break;
           }
@@ -358,7 +478,9 @@ export function useInterviewRoomWebSocket({
               }
             } catch (error) {
               console.error("[WebRTC] Answer 처리 실패:", error);
-              callbacksRef.current.onError?.("WebRTC 연결 설정에 실패했습니다.");
+              callbacksRef.current.onError?.(
+                "WebRTC 연결 설정에 실패했습니다."
+              );
             }
             break;
           }
@@ -409,4 +531,3 @@ export function useInterviewRoomWebSocket({
     publish,
   };
 }
-

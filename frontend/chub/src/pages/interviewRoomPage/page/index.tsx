@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useEffect, useState, useRef } from "react";
+import { useParams, useNavigate, useBlocker } from "react-router-dom";
 import { InterviewRoom } from "@/pages/interviewRoomPage/ui/InterviewRoom";
 import { useInterviewRoom } from "@/pages/interviewRoomPage/hooks/useInterviewRoom";
 
@@ -33,12 +33,58 @@ export default function InterviewRoomPage() {
   const [showCompletedModal, setShowCompletedModal] = useState(false);
   const [showEndInterviewModal, setShowEndInterviewModal] = useState(false);
   const [showLeaveRoomModal, setShowLeaveRoomModal] = useState(false);
+  const pendingNavigationRef = useRef<(() => void) | null>(null);
+  const shouldBlockRef = useRef(true); // 면접이 완료되지 않았으면 블록
 
   useEffect(() => {
     if (!roomId) {
       navigate("/dashboard");
     }
   }, [roomId, navigate]);
+
+  // 면접 완료 시 블로킹 해제
+  useEffect(() => {
+    if (interviewStatus === "COMPLETED") {
+      shouldBlockRef.current = false;
+    }
+  }, [interviewStatus]);
+
+  // 페이지 이탈 감지 및 블로킹
+  const blocker = useBlocker(
+    ({ currentLocation, nextLocation }) =>
+      shouldBlockRef.current && currentLocation.pathname !== nextLocation.pathname
+  );
+
+  // 블로커가 활성화되면 모달 표시
+  useEffect(() => {
+    if (blocker.state === "blocked") {
+      // 네비게이션을 일시 중지하고 모달 표시
+      pendingNavigationRef.current = () => {
+        blocker.proceed();
+      };
+      setShowLeaveRoomModal(true);
+    }
+  }, [blocker]);
+
+  // 브라우저 뒤로가기/앞으로가기 버튼 감지
+  useEffect(() => {
+    const handlePopState = (event: PopStateEvent) => {
+      if (shouldBlockRef.current) {
+        // 뒤로가기를 막고 모달 표시
+        window.history.pushState(null, "", window.location.href);
+        setShowLeaveRoomModal(true);
+        event.preventDefault();
+      }
+    };
+
+    // 히스토리 상태 추가 (뒤로가기 감지용)
+    window.history.pushState(null, "", window.location.href);
+    window.addEventListener("popstate", handlePopState);
+
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, []);
 
   // 면접 완료 시 모달 표시
   useEffect(() => {
@@ -80,7 +126,24 @@ export default function InterviewRoomPage() {
   const handleConfirmLeaveRoom = () => {
     setShowLeaveRoomModal(false);
     leaveRoom();
-    navigate("/dashboard");
+    
+    // 블로커를 통한 네비게이션이면 proceed 호출
+    if (pendingNavigationRef.current) {
+      pendingNavigationRef.current();
+      pendingNavigationRef.current = null;
+    } else {
+      // 일반 버튼 클릭이면 직접 네비게이션
+      navigate("/dashboard");
+    }
+  };
+
+  const handleCancelLeaveRoom = () => {
+    setShowLeaveRoomModal(false);
+    pendingNavigationRef.current = null;
+    // 블로커가 활성화되어 있으면 reset
+    if (blocker.state === "blocked") {
+      blocker.reset();
+    }
   };
 
   const handleCloseCompletedModal = () => {
@@ -188,7 +251,7 @@ export default function InterviewRoomPage() {
               </p>
               <div className="flex gap-3">
                 <button
-                  onClick={() => setShowLeaveRoomModal(false)}
+                  onClick={handleCancelLeaveRoom}
                   className="flex-1 px-6 py-3 bg-gray-200 text-gray-800 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
                 >
                   취소
