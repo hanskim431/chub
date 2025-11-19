@@ -84,18 +84,24 @@ export const getInterviewRequests = async ({
 export const getReceivedInterviewRequests = async ({
   page = 0,
   size = 10,
+  status,
 }: {
   page?: number;
   size?: number;
+  status?: InterviewRequestStatus;
 }): Promise<InterviewRequestsResponse | null> => {
   try {
+    const params: Record<string, string> = {
+      page: page.toString(),
+      size: size.toString(),
+    };
+    if (status) {
+      params.status = status;
+    }
     const response = await api.get<InterviewRequestsResponse>(
       "/api/interviews/requests/received",
       {
-        params: {
-          page: page.toString(),
-          size: size.toString(),
-        },
+        params,
       }
     );
     return response.data;

@@ -18,14 +18,19 @@ export function ReceivedInterviewRequests({
     }
 
     const requests = data?.data?.interviewRequests ?? [];
+    
+    // PENDING 상태인 요청만 필터링 (이중 체크)
+    const pendingRequests = requests.filter(
+        (request) => request.status === "PENDING"
+    );
 
-    if (requests.length === 0) {
+    if (pendingRequests.length === 0) {
         return <EmptyState message="받은 면접 요청이 없습니다." />;
     }
 
     return (
         <div className="space-y-4">
-            {requests.map((request) => (
+            {pendingRequests.map((request) => (
                 <InterviewRequestItem
                     key={request.id}
                     request={request}

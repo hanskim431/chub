@@ -31,8 +31,8 @@ export function useReceivedInterviewRequests(
     size: number = 10
 ) {
     const { data, isLoading, error } = useQuery({
-        queryKey: ["interviewRequests", "received", page, size],
-        queryFn: () => getReceivedInterviewRequests({ page, size }),
+        queryKey: ["interviewRequests", "received", page, size, "PENDING"],
+        queryFn: () => getReceivedInterviewRequests({ page, size, status: "PENDING" }),
         staleTime: THIRTY_MINUTES_IN_MS,
         retry: false,
     });
