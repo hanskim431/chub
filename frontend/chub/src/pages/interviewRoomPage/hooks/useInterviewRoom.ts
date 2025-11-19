@@ -170,7 +170,7 @@ export function useInterviewRoom(roomId: string) {
         if (event.candidate && stompClientRef.current?.connected) {
           // ICE candidate를 WebSocket을 통해 전송
           stompClientRef.current.publish({
-            destination: `/app/webrtc/${roomId}/ice`,
+            destination: `/app/webrtc/ice`,
             body: JSON.stringify({
               candidate: event.candidate.toJSON(),
               userId,
@@ -361,11 +361,11 @@ export function useInterviewRoom(roomId: string) {
           }
         });
 
-        // 개인 큐 구독 (/user/queue) - 꼬리 질문은 면접관에게만 제공
+        // 개인 큐 구독 (/user/queue) - 꼬리 질문, WebRTC 이벤트 등
         if (userId) {
           const queueDestination = `/user/${userId}/queue`;
           console.log("[WebSocket] 개인 큐 구독:", queueDestination);
-          client.subscribe(queueDestination, (message: StompMessage) => {
+          client.subscribe(queueDestination, async (message: StompMessage) => {
             console.log("[WebSocket] 개인 큐 메시지 수신:", {
               destination: message.headers.destination,
               body: message.body,
@@ -387,35 +387,12 @@ export function useInterviewRoom(roomId: string) {
                 setError(errorMessage);
                 break;
               }
-            }
-          });
-        }
-
-        // WebRTC 시그널링 구독 (/topic/webrtc/{interviewRequestId})
-        const webrtcTopicDestination = `/topic/webrtc/${roomId}`;
-        console.log("[WebRTC] WebRTC 토픽 구독:", webrtcTopicDestination);
-        client.subscribe(
-          webrtcTopicDestination,
-          async (message: StompMessage) => {
-            try {
-              console.log("[WebRTC] WebRTC 메시지 수신:", {
-                destination: message.headers.destination,
-                body: message.body,
-              });
-              const wsMessage: WebSocketMessage = JSON.parse(message.body);
-              const data = wsMessage.data as any;
-
-              // 자신이 보낸 메시지는 무시
-              if (data.userId === userId) {
-                console.log("[WebRTC] 자신이 보낸 메시지 무시:", data.userId);
-                return;
-              }
-
-              switch (wsMessage.type) {
-                case "offer": {
-                  // Offer 수신 (상대방이 offer를 보냈을 때)
+              case "webrtc-offer": {
+                // Offer 수신 (상대방이 offer를 보냈을 때)
+                try {
+                  const data = wsMessage.data as any;
                   if (pcRef.current && data.offer) {
-                    console.log("Offer 수신, Answer 생성 중...");
+                    console.log("[WebRTC] Offer 수신, Answer 생성 중...");
                     // 원격 offer 설정
                     await pcRef.current.setRemoteDescription(
                       new RTCSessionDescription(data.offer)
@@ -426,7 +403,7 @@ export function useInterviewRoom(roomId: string) {
                     await pcRef.current.setLocalDescription(answer);
 
                     client.publish({
-                      destination: `/app/webrtc/${roomId}/answer`,
+                      destination: `/app/webrtc/answer`,
                       body: JSON.stringify({
                         answer: {
                           type: answer.type,
@@ -435,39 +412,50 @@ export function useInterviewRoom(roomId: string) {
                         userId,
                       }),
                     });
-                    console.log("Answer 전송 완료");
+                    console.log("[WebRTC] Answer 전송 완료");
                   }
-                  break;
+                } catch (error) {
+                  console.error("[WebRTC] Offer 처리 실패:", error);
+                  setError("WebRTC 연결 설정에 실패했습니다.");
                 }
-                case "answer": {
-                  // Answer 수신 (상대방이 answer를 보냈을 때)
+                break;
+              }
+              case "webrtc-answer": {
+                // Answer 수신 (상대방이 answer를 보냈을 때)
+                try {
+                  const data = wsMessage.data as any;
                   if (pcRef.current && data.answer) {
-                    console.log("Answer 수신");
+                    console.log("[WebRTC] Answer 수신");
                     // 원격 answer 설정
                     await pcRef.current.setRemoteDescription(
                       new RTCSessionDescription(data.answer)
                     );
                   }
-                  break;
+                } catch (error) {
+                  console.error("[WebRTC] Answer 처리 실패:", error);
+                  setError("WebRTC 연결 설정에 실패했습니다.");
                 }
-                case "ice-candidate": {
-                  // ICE candidate 수신
+                break;
+              }
+              case "webrtc-ice": {
+                // ICE candidate 수신
+                try {
+                  const data = wsMessage.data as any;
                   if (pcRef.current && data.candidate) {
                     // 원격 ICE candidate 추가
                     await pcRef.current.addIceCandidate(
                       new RTCIceCandidate(data.candidate)
                     );
-                    console.log("ICE candidate 추가됨");
+                    console.log("[WebRTC] ICE candidate 추가됨");
                   }
-                  break;
+                } catch (error) {
+                  console.error("[WebRTC] ICE candidate 처리 실패:", error);
                 }
+                break;
               }
-            } catch (error) {
-              console.error("WebRTC 시그널링 처리 실패:", error);
-              setError("WebRTC 연결 설정에 실패했습니다.");
             }
-          }
-        );
+          });
+        }
 
         // 로컬 스트림이 준비된 후에만 offer 전송
         const sendOfferWhenReady = async () => {
@@ -514,7 +502,7 @@ export function useInterviewRoom(roomId: string) {
 
               // Offer 전송
               client.publish({
-                destination: `/app/webrtc/${roomId}/offer`,
+                destination: `/app/webrtc/offer`,
                 body: JSON.stringify({
                   offer: {
                     type: offer.type,
@@ -525,7 +513,7 @@ export function useInterviewRoom(roomId: string) {
               });
               offerSentRef.current = true;
               console.log("[WebRTC] Offer 전송 완료:", {
-                destination: `/app/webrtc/${roomId}/offer`,
+                destination: `/app/webrtc/offer`,
                 userId,
               });
             } else {
