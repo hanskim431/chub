@@ -720,10 +720,49 @@ export function useInterviewRoomWebSocket({
               });
               console.log("[WebRTC] Candidate 데이터:", candidateData);
 
-              // 원격 ICE candidate 추가
-              await pcRef.current.addIceCandidate(
-                new RTCIceCandidate(candidateData)
-              );
+              // signalingState가 "stable"이 아니면 대기 (setRemoteDescription이 설정되어야 함)
+              if (
+                pcRef.current.signalingState === "stable" ||
+                pcRef.current.signalingState === "have-local-offer" ||
+                pcRef.current.signalingState === "have-remote-offer" ||
+                pcRef.current.signalingState === "have-local-pranswer" ||
+                pcRef.current.signalingState === "have-remote-pranswer"
+              ) {
+                // 원격 ICE candidate 추가
+                await pcRef.current.addIceCandidate(
+                  new RTCIceCandidate(candidateData)
+                );
+              } else {
+                console.warn(
+                  "[WebRTC] signalingState가 아직 준비되지 않음, ICE candidate 추가 대기:",
+                  pcRef.current.signalingState
+                );
+                // 잠시 후 재시도
+                setTimeout(async () => {
+                  try {
+                    if (
+                      pcRef.current &&
+                      (pcRef.current.signalingState === "stable" ||
+                        pcRef.current.signalingState === "have-local-offer" ||
+                        pcRef.current.signalingState === "have-remote-offer" ||
+                        pcRef.current.signalingState ===
+                          "have-local-pranswer" ||
+                        pcRef.current.signalingState === "have-remote-pranswer")
+                    ) {
+                      await pcRef.current.addIceCandidate(
+                        new RTCIceCandidate(candidateData)
+                      );
+                      console.log("[WebRTC] ICE candidate 재시도 후 추가 완료");
+                    }
+                  } catch (retryError) {
+                    console.error(
+                      "[WebRTC] ICE candidate 재시도 실패:",
+                      retryError
+                    );
+                  }
+                }, 500);
+                break;
+              }
               console.log(
                 "[WebRTC] ========== ICE candidate 추가 완료 =========="
               );
