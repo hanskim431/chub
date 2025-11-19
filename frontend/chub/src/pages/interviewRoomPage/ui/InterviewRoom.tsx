@@ -26,7 +26,13 @@ interface OpponentInfo {
   interviewStyle?: string;
 }
 
-type InterviewStatus = "WAITING" | "QUESTION" | "ANSWER" | "COMPLETED" | string;
+type InterviewStatus =
+  | "WAITING"
+  | "READY"
+  | "QUESTION"
+  | "ANSWER"
+  | "COMPLETED"
+  | string;
 
 interface InterviewRoomProps {
   localStream: MediaStream | null;
@@ -95,7 +101,8 @@ export function InterviewRoom({
   // 디버깅: 버튼 표시 조건 로깅
   useEffect(() => {
     const shouldShow =
-      interviewStatus === "WAITING" && userRole === "INTERVIEWER";
+      (interviewStatus === "WAITING" || interviewStatus === "READY") &&
+      userRole === "INTERVIEWER";
     console.log("[InterviewRoom] 버튼 표시 조건:", {
       interviewStatus,
       userRole,
@@ -105,9 +112,9 @@ export function InterviewRoom({
       hasRemoteStream: !!remoteStream,
       buttonDisabled: !isConnected || !localStream || !remoteStream,
     });
-    if (interviewStatus === "WAITING") {
+    if (interviewStatus === "WAITING" || interviewStatus === "READY") {
       console.log(
-        "[InterviewRoom] WAITING 상태 - userRole:",
+        "[InterviewRoom] WAITING/READY 상태 - userRole:",
         userRole,
         "타입:",
         typeof userRole
@@ -178,10 +185,10 @@ export function InterviewRoom({
               </div>
             </div>
           )}
-          <div className="flex-1 flex items-center justify-center p-4 gap-4">
+          <div className="flex-1 flex items-center justify-center p-4 gap-4 min-w-0">
             {/* 원격 비디오 (면접관) */}
-            <div className="flex-1 h-full max-w-4xl relative flex items-center justify-center">
-              <div className="w-full h-full max-w-full max-h-full aspect-video">
+            <div className="flex-1 h-full min-w-0 relative flex items-center justify-center">
+              <div className="w-full h-full max-w-full max-h-full">
                 <VideoPlayer
                   ref={remoteVideoRef}
                   label={opponentInfo?.name || "면접관"}
@@ -302,38 +309,39 @@ export function InterviewRoom({
 
           {/* 하단 버튼 영역 */}
           <div className="p-4 bg-gray-800 border-t border-gray-700">
-            {/* 대기 상태: 면접관에게만 시작하기 버튼 표시 (항상 표시, WebRTC 연결 시 활성화) */}
-            {interviewStatus === "WAITING" && userRole === "INTERVIEWER" && (
-              <div className="flex justify-center">
-                <button
-                  onClick={onStartInterview}
-                  disabled={!isConnected || !localStream || !remoteStream}
-                  className="px-8 py-4 bg-green-600 hover:bg-green-700 text-white rounded-full font-semibold text-lg transition-all disabled:bg-gray-600 disabled:cursor-not-allowed flex items-center gap-2"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-6 w-6"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
+            {/* 대기/준비 상태: 면접관에게만 시작하기 버튼 표시 (항상 표시, WebRTC 연결 시 활성화) */}
+            {(interviewStatus === "WAITING" || interviewStatus === "READY") &&
+              userRole === "INTERVIEWER" && (
+                <div className="flex justify-center">
+                  <button
+                    onClick={onStartInterview}
+                    disabled={!isConnected || !localStream || !remoteStream}
+                    className="px-8 py-4 bg-green-600 hover:bg-green-700 text-white rounded-full font-semibold text-lg transition-all disabled:bg-gray-600 disabled:cursor-not-allowed flex items-center gap-2"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
-                    />
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                  <span>면접 시작하기</span>
-                </button>
-              </div>
-            )}
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-6 w-6"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                    <span>면접 시작하기</span>
+                  </button>
+                </div>
+              )}
 
             {/* 질문 단계: 면접관에게만 녹음 버튼 표시 */}
             {interviewStatus === "QUESTION" && userRole === "INTERVIEWER" && (

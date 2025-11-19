@@ -3,7 +3,7 @@ import { X } from "lucide-react";
 interface InterviewHeaderProps {
   timeRemaining: number;
   formattedTime: string;
-  interviewStatus: "WAITING" | "QUESTION" | "ANSWER" | "COMPLETED" | string;
+  interviewStatus: "WAITING" | "READY" | "QUESTION" | "ANSWER" | "COMPLETED" | string;
   onEndInterview: () => void;
   onLeaveRoom: () => void;
   isConnected: boolean;
@@ -20,6 +20,8 @@ export function InterviewHeader({
     switch (interviewStatus) {
       case "WAITING":
         return "대기 중";
+      case "READY":
+        return "준비 완료";
       case "QUESTION":
         return "질문 중";
       case "ANSWER":
@@ -27,7 +29,7 @@ export function InterviewHeader({
       case "COMPLETED":
         return "면접 완료";
       default:
-        return "";
+        return interviewStatus || "";
     }
   };
 
