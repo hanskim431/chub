@@ -35,8 +35,10 @@ export interface ApiResponse<T> {
 export const joinInterviewRoom = async (
   interviewRequestId: string
 ): Promise<ApiResponse<InterviewRoomResponse>> => {
+  // roomId에서 "room_" 접두사 제거 (예: "room_1" -> "1")
+  const roomId = interviewRequestId.replace(/^room_/, "");
   const response = await api.post<ApiResponse<InterviewRoomResponse>>(
-    `/api/interviews/rooms/${interviewRequestId}`
+    `/api/interviews/rooms/${roomId}`
   );
   return response.data;
 };
@@ -45,7 +47,9 @@ export const joinInterviewRoom = async (
 export const leaveInterviewRoom = async (
   interviewRequestId: string
 ): Promise<void> => {
-  await del(`/api/interviews/rooms/${interviewRequestId}`);
+  // roomId에서 "room_" 접두사 제거 (예: "room_1" -> "1")
+  const roomId = interviewRequestId.replace(/^room_/, "");
+  await del(`/api/interviews/rooms/${roomId}`);
 };
 
 // 면접관 질문 생성
@@ -56,7 +60,9 @@ export const createQuestion = async (
   formData.append("audioFile", audioFile, "question.webm");
 
   const response = await axios.post<ApiResponse<unknown>>(
-    `${import.meta.env.VITE_API_URL || "http://localhost:8080"}/api/interviews/question-create`,
+    `${
+      import.meta.env.VITE_API_URL || "http://localhost:8080"
+    }/api/interviews/question-create`,
     formData,
     {
       withCredentials: true,
@@ -76,7 +82,9 @@ export const submitAnswer = async (
   formData.append("audioFile", audioFile, "answer.webm");
 
   const response = await axios.post<ApiResponse<unknown>>(
-    `${import.meta.env.VITE_API_URL || "http://localhost:8080"}/api/interviews/answer-submit`,
+    `${
+      import.meta.env.VITE_API_URL || "http://localhost:8080"
+    }/api/interviews/answer-submit`,
     formData,
     {
       withCredentials: true,
@@ -87,4 +95,3 @@ export const submitAnswer = async (
   );
   return response.data;
 };
-
