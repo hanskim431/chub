@@ -336,8 +336,8 @@ export function useInterviewRoom(roomId: string) {
             localStreamRef.current.getVideoTracks().length > 0 &&
             localStreamRef.current.getVideoTracks()[0].readyState === "live" &&
             wsConnected &&
-            publishRef.current &&
-            interviewRoomIdRef.current // interviewRoomId도 확인
+            publishRef.current
+            // WebRTC offer 전송에는 interviewRoomId가 필요 없음
           ) {
             console.log("[WebRTC] 모든 준비 완료, offer 전송 시작", {
               hasPc: !!pcRef.current,
@@ -378,8 +378,8 @@ export function useInterviewRoom(roomId: string) {
         pcRef.current &&
         !offerSentRef.current &&
         wsConnected &&
-        publishRef.current &&
-        interviewRoomIdRef.current // interviewRoomId도 확인
+        publishRef.current
+        // WebRTC offer 전송에는 interviewRoomId가 필요 없음
       ) {
         console.log("[WebRTC] Offer 생성 및 전송 중...");
         // Offer 생성

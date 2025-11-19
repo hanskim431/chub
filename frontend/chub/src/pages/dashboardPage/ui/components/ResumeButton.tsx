@@ -6,23 +6,29 @@ interface ResumeButtonProps {
     userId: number | undefined;
     userName: string;
     role: "interviewee" | "interviewer";
+    pdfUrl?: string | null; // API 응답에서 받은 pdfUrl (선택적)
 }
 
-export function ResumeButton({ userId, userName, role }: ResumeButtonProps) {
+export function ResumeButton({ userId, userName, role, pdfUrl }: ResumeButtonProps) {
     const [showResumeModal, setShowResumeModal] = useState(false);
-    const { data: resumeData, isLoading } = useUserResume(userId);
+    // pdfUrl이 제공되면 별도 API 호출 없이 사용, 없으면 기존처럼 API 호출
+    const { data: resumeData, isLoading } = useUserResume(pdfUrl ? undefined : userId);
+    
+    // pdfUrl이 제공되면 그것을 사용, 없으면 API 응답의 pdfUrl 사용
+    const finalPdfUrl = pdfUrl || resumeData?.data?.pdfUrl;
 
     if (role !== "interviewer" || !userId) {
         return null;
     }
 
-    if (isLoading) {
+    // pdfUrl이 제공되지 않고 API 호출 중이면 로딩 표시
+    if (!pdfUrl && isLoading) {
         return (
             <div className="px-4 py-2 text-gray-400 text-sm">로딩 중...</div>
         );
     }
 
-    if (!resumeData?.data?.pdfUrl) {
+    if (!finalPdfUrl) {
         return (
             <div className="px-4 py-2 text-gray-400 text-sm">이력서 없음</div>
         );
@@ -54,9 +60,9 @@ export function ResumeButton({ userId, userName, role }: ResumeButtonProps) {
                 이력서
             </button>
 
-            {showResumeModal && resumeData.data.pdfUrl && (
+            {showResumeModal && finalPdfUrl && (
                 <ResumePreviewModal
-                    pdfUrl={resumeData.data.pdfUrl}
+                    pdfUrl={finalPdfUrl}
                     resumeName={`${userName}님의 이력서`}
                     onClose={() => setShowResumeModal(false)}
                 />
