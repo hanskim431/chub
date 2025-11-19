@@ -45,7 +45,6 @@ export function ChatPanel({
     return date.toLocaleTimeString("ko-KR", {
       hour: "2-digit",
       minute: "2-digit",
-      timeZone: "Asia/Seoul", // 한국 시간대로 명시적 변환
     });
   };
 

@@ -81,6 +81,61 @@ export function useInterviewRoomWebSocket({
   // WebSocket 연결은 전역에서 관리, 여기서는 구독/해제만 담당
   const { isConnected, subscribe, unsubscribe, publish } = useWebSocket();
 
+  // subscribe/unsubscribe/publish 함수를 ref로 저장하여 안정적인 참조 유지
+  const subscribeRef = useRef(subscribe);
+  const unsubscribeRef = useRef(unsubscribe);
+  const publishRefForHook = useRef(publish);
+
+  useEffect(() => {
+    subscribeRef.current = subscribe;
+    unsubscribeRef.current = unsubscribe;
+    publishRefForHook.current = publish;
+  }, [subscribe, unsubscribe, publish]);
+
+  // 콜백 함수들을 ref로 저장하여 dependency 변경 방지
+  const callbacksRef = useRef({
+    onChatReceived,
+    onUserJoined,
+    onUserLeft,
+    onAnswer,
+    onQuestion,
+    onStatusUpdate,
+    onTailQuestions,
+    onError,
+    onWebRTCOffer,
+    onWebRTCAnswer,
+    onWebRTCIce,
+  });
+
+  // 콜백 ref 업데이트
+  useEffect(() => {
+    callbacksRef.current = {
+      onChatReceived,
+      onUserJoined,
+      onUserLeft,
+      onAnswer,
+      onQuestion,
+      onStatusUpdate,
+      onTailQuestions,
+      onError,
+      onWebRTCOffer,
+      onWebRTCAnswer,
+      onWebRTCIce,
+    };
+  }, [
+    onChatReceived,
+    onUserJoined,
+    onUserLeft,
+    onAnswer,
+    onQuestion,
+    onStatusUpdate,
+    onTailQuestions,
+    onError,
+    onWebRTCOffer,
+    onWebRTCAnswer,
+    onWebRTCIce,
+  ]);
+
   // publishRef 업데이트
   useEffect(() => {
     publishRef.current = publish;
@@ -103,7 +158,7 @@ export function useInterviewRoomWebSocket({
       userId,
       userName: currentUserName,
     });
-    publish(
+    publishRefForHook.current(
       `/app/interview/${currentRoomId}/joined`,
       JSON.stringify({
         userId: userId,
@@ -114,7 +169,7 @@ export function useInterviewRoomWebSocket({
     // 브로드캐스트 이벤트 구독 (/topic/interview/{interviewRequestId})
     const topicDestination = `/topic/interview/${currentRoomId}`;
     console.log("[WebSocket] 토픽 구독:", topicDestination);
-    const unsubscribeTopic = subscribe(
+    const unsubscribeTopic = subscribeRef.current(
       topicDestination,
       (message: StompMessage) => {
         console.log("[WebSocket] 토픽 메시지 수신:", {
@@ -139,7 +194,7 @@ export function useInterviewRoomWebSocket({
               type: chatData.type,
             };
             console.log("[Chat] 새 메시지 추가:", newMessage);
-            onChatReceived?.(newMessage);
+            callbacksRef.current.onChatReceived?.(newMessage);
             break;
           }
           case "user-joined": {
@@ -184,31 +239,31 @@ export function useInterviewRoomWebSocket({
                 }, 5000);
               }
             }
-            onUserJoined?.();
+            callbacksRef.current.onUserJoined?.();
             break;
           }
           case "user-left": {
             // 사용자 퇴장 알림
             console.log("[Interview] 사용자 퇴장:", wsMessage.data);
-            onUserLeft?.();
+            callbacksRef.current.onUserLeft?.();
             break;
           }
           case "answer": {
             // 면접자의 답변 (STT 변환 완료)
             const answerData = wsMessage.data as { answer: string };
-            onAnswer?.(answerData.answer);
+            callbacksRef.current.onAnswer?.(answerData.answer);
             break;
           }
           case "question": {
             // 면접관의 질문 (STT 변환 완료)
             const questionData = wsMessage.data as { question: string };
-            onQuestion?.(questionData.question);
+            callbacksRef.current.onQuestion?.(questionData.question);
             break;
           }
           case "status-update": {
             // 면접 상태 업데이트
             const status = wsMessage.data as string;
-            onStatusUpdate?.(status);
+            callbacksRef.current.onStatusUpdate?.(status);
             break;
           }
         }
@@ -218,7 +273,7 @@ export function useInterviewRoomWebSocket({
     // 개인 큐 구독 (/user/queue/interviewRoom) - 꼬리 질문, WebRTC 이벤트 등
     const queueDestination = `/user/queue/interviewRoom`;
     console.log("[WebSocket] 개인 큐 구독:", queueDestination);
-    const unsubscribeQueue = subscribe(
+    const unsubscribeQueue = subscribeRef.current(
       queueDestination,
       async (message: StompMessage) => {
         console.log("[WebSocket] 개인 큐 메시지 수신:", {
@@ -234,14 +289,14 @@ export function useInterviewRoomWebSocket({
               tailQuestions: string[];
             };
             console.log("[WebSocket] 꼬리 질문 수신:", tailData);
-            onTailQuestions?.(tailData.tailQuestions);
+            callbacksRef.current.onTailQuestions?.(tailData.tailQuestions);
             break;
           }
           case "error": {
             // 에러 메시지
             const errorMessage = wsMessage.data as string;
             console.error("[WebSocket] 에러 메시지:", errorMessage);
-            onError?.(errorMessage);
+            callbacksRef.current.onError?.(errorMessage);
             break;
           }
           case "webrtc-offer": {
@@ -272,11 +327,11 @@ export function useInterviewRoomWebSocket({
                   );
                   console.log("[WebRTC] Answer 전송 완료");
                 }
-                onWebRTCOffer?.(data.offer);
+                callbacksRef.current.onWebRTCOffer?.(data.offer);
               }
             } catch (error) {
               console.error("[WebRTC] Offer 처리 실패:", error);
-              onError?.("WebRTC 연결 설정에 실패했습니다.");
+              callbacksRef.current.onError?.("WebRTC 연결 설정에 실패했습니다.");
             }
             break;
           }
@@ -290,11 +345,11 @@ export function useInterviewRoomWebSocket({
                 await pcRef.current.setRemoteDescription(
                   new RTCSessionDescription(data.answer)
                 );
-                onWebRTCAnswer?.(data.answer);
+                callbacksRef.current.onWebRTCAnswer?.(data.answer);
               }
             } catch (error) {
               console.error("[WebRTC] Answer 처리 실패:", error);
-              onError?.("WebRTC 연결 설정에 실패했습니다.");
+              callbacksRef.current.onError?.("WebRTC 연결 설정에 실패했습니다.");
             }
             break;
           }
@@ -308,7 +363,7 @@ export function useInterviewRoomWebSocket({
                   new RTCIceCandidate(data.candidate)
                 );
                 console.log("[WebRTC] ICE candidate 추가됨");
-                onWebRTCIce?.(data.candidate);
+                callbacksRef.current.onWebRTCIce?.(data.candidate);
               }
             } catch (error) {
               console.error("[WebRTC] ICE candidate 처리 실패:", error);
@@ -331,20 +386,8 @@ export function useInterviewRoomWebSocket({
     interviewRoomId,
     userName,
     enabled,
-    subscribe,
-    unsubscribe,
-    publish,
-    onChatReceived,
-    onUserJoined,
-    onUserLeft,
-    onAnswer,
-    onQuestion,
-    onStatusUpdate,
-    onTailQuestions,
-    onError,
-    onWebRTCOffer,
-    onWebRTCAnswer,
-    onWebRTCIce,
+    // subscribe/unsubscribe/publish는 ref를 통해 접근하므로 dependency에서 제외
+    // 콜백 함수들은 ref를 통해 접근하므로 dependency에서 제외
     pcRef,
     publishRef,
     offerSentRef,
