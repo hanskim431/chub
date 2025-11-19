@@ -126,6 +126,7 @@ export interface ScheduledInterview {
   roomID?: number;
   roomId?: string;
   resumeUrl?: string | null;
+  pdfUrl?: string | null; // API 응답의 pdfUrl 필드
   role: "interviewer" | "interviewee"; // 내 역할 정보 (면접관인지 면접자인지)
 }
 

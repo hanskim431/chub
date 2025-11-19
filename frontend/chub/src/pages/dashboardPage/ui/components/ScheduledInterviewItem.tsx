@@ -78,6 +78,7 @@ export function ScheduledInterviewItem({
               userId={intervieweeId}
               userName={interview.opponent.name}
               role={role}
+              pdfUrl={interview.pdfUrl || interview.resumeUrl}
             />
           )}
         </div>
