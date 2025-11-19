@@ -50,9 +50,6 @@ export function InterviewHeader({
       </div>
 
       <div className="flex items-center gap-4">
-        <div className="text-2xl font-mono font-bold text-gray-800">
-          {formattedTime}
-        </div>
         <button
           onClick={onLeaveRoom}
           className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
