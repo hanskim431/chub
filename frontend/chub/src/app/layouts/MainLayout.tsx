@@ -28,11 +28,13 @@ function MainLayout() {
     }));
   }, [chatRoomsData]);
 
-  const { wsConnected, sendMessage, markAsRead, setOnMessageReceived } = useChatWebSocket({
-    currentUserId,
-    chatRooms: chatRoomsForSubscription,
-    enabled: isAuthenticated, // 로그인 시 바로 연결 (채팅방이 없어도 연결)
-  });
+  // 일반 채팅 WebSocket 구독
+  const { wsConnected, sendMessage, markAsRead, setOnMessageReceived } =
+    useChatWebSocket({
+      currentUserId,
+      chatRooms: chatRoomsForSubscription,
+      enabled: isAuthenticated, // 로그인 시 바로 연결 (채팅방이 없어도 연결)
+    });
 
   const content = (
     <div className="flex h-full flex-col">
