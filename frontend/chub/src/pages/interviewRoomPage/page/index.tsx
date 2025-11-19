@@ -117,21 +117,9 @@ export default function InterviewRoomPage() {
     }
   }, [interviewStatus]);
 
+  // 에러가 발생해도 정상적으로 면접방을 표시 (에러는 로그만 남김)
   if (error) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-red-600 mb-4">오류 발생</h2>
-          <p className="text-gray-600 mb-4">{error}</p>
-          <button
-            onClick={() => navigate("/dashboard")}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-          >
-            대시보드로 돌아가기
-          </button>
-        </div>
-      </div>
-    );
+    console.error("[InterviewRoom] 에러 발생:", error);
   }
 
   const handleEndInterview = () => {

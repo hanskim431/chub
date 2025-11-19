@@ -257,36 +257,14 @@ export function useInterviewRoom(roomId: string) {
         // user-left는 로그만 남김
       },
       onAnswer: (answer) => {
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: Date.now().toString() + Math.random(),
-            senderId: null,
-            senderName: null,
-            receiverId: null,
-            receiverNickname: null,
-            content: answer,
-            timestamp: new Date().toISOString(),
-            type: "SYSTEM_ANSWER",
-          },
-        ]);
+        // 답변은 chat-received 이벤트로만 채팅에 표시되므로 여기서는 처리하지 않음
+        console.log("[InterviewRoom] 답변 수신:", answer);
       },
       onQuestion: (question) => {
         console.log("[InterviewRoom] 질문 수신:", question);
+        // 질문은 currentQuestion 상태만 업데이트
+        // 채팅 메시지는 chat-received 이벤트로만 추가됨
         setCurrentQuestion(question);
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: Date.now().toString() + Math.random(),
-            senderId: null,
-            senderName: null,
-            receiverId: null,
-            receiverNickname: null,
-            content: question,
-            timestamp: new Date().toISOString(),
-            type: "SYSTEM_QUESTION",
-          },
-        ]);
       },
       onStatusUpdate: (status) => {
         setInterviewStatus(status);
@@ -755,8 +733,8 @@ export function useInterviewRoom(roomId: string) {
               await submitAnswer(audioBlob);
             }
           } catch (err) {
+            // 음성 제출 실패 시 에러 화면 표시하지 않고 로그만 남김
             console.error("음성 제출 실패:", err);
-            setError("음성 제출에 실패했습니다.");
           }
         };
 
