@@ -35,6 +35,7 @@ export function InterviewHeader({
       case "ANSWER":
         return "답변 중";
       case "COMPLETED":
+      case "FINISH":
         return "면접 완료";
       default:
         return interviewStatus || "";

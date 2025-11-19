@@ -179,6 +179,28 @@ export function InterviewRoom({
 
         {/* 오른쪽: 비디오 영역 */}
         <div className="flex-1 flex flex-col bg-gray-900">
+          {/* 꼬리 질문 (면접관에게만 표시, 비디오 위에 표시) */}
+          {userRole === "INTERVIEWER" &&
+            tailQuestions.length > 0 &&
+            (interviewStatus === "ANSWER" ||
+              interviewStatus === "QUESTION") && (
+              <div className="px-6 py-4 bg-gray-800 border-b border-gray-700">
+                <h3 className="text-white font-semibold mb-3 text-lg">
+                  다음 질문 선택지
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {tailQuestions.map((question, index) => (
+                    <div
+                      key={index}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition-colors"
+                    >
+                      {question}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
           <div className="flex-1 flex items-center justify-center p-4 gap-4 min-w-0">
             {/* 원격 비디오 (면접관) */}
             <div className="flex-1 h-full min-w-0 relative flex items-center justify-center">
@@ -375,28 +397,6 @@ export function InterviewRoom({
                 </button>
               </div>
             )}
-
-            {/* 꼬리 질문 (면접관에게만 표시, ANSWER 또는 QUESTION 상태에서 표시) */}
-            {userRole === "INTERVIEWER" &&
-              tailQuestions.length > 0 &&
-              (interviewStatus === "ANSWER" ||
-                interviewStatus === "QUESTION") && (
-                <div className="mt-4">
-                  <h3 className="text-white font-semibold mb-2">
-                    꼬리 질문 선택지
-                  </h3>
-                  <div className="flex flex-wrap gap-2 justify-center">
-                    {tailQuestions.map((question, index) => (
-                      <div
-                        key={index}
-                        className="px-4 py-2 bg-gray-700 text-white rounded-lg text-sm"
-                      >
-                        {question}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
 
             {/* 답변 단계: 면접자에게만 녹음 버튼 표시 */}
             {interviewStatus === "ANSWER" && userRole === "INTERVIEWEE" && (

@@ -28,6 +28,8 @@ export interface InterviewRequest {
   status: InterviewRequestStatus;
   requestMessage: string;
   createdAt: string;
+  pdfUrl?: string | null; // API 응답의 pdfUrl 필드
+  resumeUrl?: string | null; // API 응답의 resumeUrl 필드
 }
 
 export interface PageInfo {

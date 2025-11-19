@@ -104,6 +104,7 @@ export function InterviewRequestItem({
                                         userId={intervieweeId}
                                         userName={opponentName}
                                         role={role}
+                                        pdfUrl={request.pdfUrl || request.resumeUrl}
                                     />
                                     <button
                                         onClick={handleAcceptClick}

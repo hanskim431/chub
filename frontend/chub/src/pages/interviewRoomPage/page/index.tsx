@@ -47,7 +47,7 @@ export default function InterviewRoomPage() {
 
   // 면접 완료 시 블로킹 해제
   useEffect(() => {
-    if (interviewStatus === "COMPLETED") {
+    if (interviewStatus === "COMPLETED" || interviewStatus === "FINISH") {
       shouldBlockRef.current = false;
     }
   }, [interviewStatus]);
@@ -110,9 +110,9 @@ export default function InterviewRoomPage() {
     };
   }, []);
 
-  // 면접 완료 시 모달 표시
+  // 면접 완료 시 모달 표시 (COMPLETED 또는 FINISH 상태)
   useEffect(() => {
-    if (interviewStatus === "COMPLETED") {
+    if (interviewStatus === "COMPLETED" || interviewStatus === "FINISH") {
       setShowCompletedModal(true);
     }
   }, [interviewStatus]);
