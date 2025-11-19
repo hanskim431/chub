@@ -307,11 +307,51 @@ export function useInterviewRoomWebSocket({
         switch (wsMessage.type) {
           case "tail-questions": {
             // 꼬리 질문 선택지 제공 (면접관에게만)
-            const tailData = wsMessage.data as {
-              tailQuestions: string[];
-            };
-            console.log("[WebSocket] 꼬리 질문 수신:", tailData);
-            callbacksRef.current.onTailQuestions?.(tailData.tailQuestions);
+            console.log(
+              "[WebSocket] ========== 꼬리 질문 이벤트 수신 =========="
+            );
+            console.log("[WebSocket] 전체 메시지:", wsMessage);
+            console.log("[WebSocket] 메시지 데이터:", wsMessage.data);
+            console.log(
+              "[WebSocket] 메시지 데이터 타입:",
+              typeof wsMessage.data
+            );
+
+            let tailData: { tailQuestions: string[] };
+
+            // 데이터가 객체인지 문자열인지 확인
+            if (typeof wsMessage.data === "string") {
+              try {
+                tailData = JSON.parse(wsMessage.data);
+                console.log("[WebSocket] 문자열 데이터 파싱 완료:", tailData);
+              } catch (e) {
+                console.error("[WebSocket] 꼬리 질문 데이터 파싱 실패:", e);
+                break;
+              }
+            } else {
+              tailData = wsMessage.data as { tailQuestions: string[] };
+              console.log("[WebSocket] 데이터가 이미 객체입니다:", tailData);
+            }
+
+            if (
+              tailData?.tailQuestions &&
+              Array.isArray(tailData.tailQuestions)
+            ) {
+              console.log(
+                "[WebSocket] 꼬리 질문 목록:",
+                tailData.tailQuestions
+              );
+              console.log(
+                "[WebSocket] 꼬리 질문 개수:",
+                tailData.tailQuestions.length
+              );
+              callbacksRef.current.onTailQuestions?.(tailData.tailQuestions);
+            } else {
+              console.warn(
+                "[WebSocket] 꼬리 질문 데이터 형식이 올바르지 않습니다:",
+                tailData
+              );
+            }
             break;
           }
           case "error": {

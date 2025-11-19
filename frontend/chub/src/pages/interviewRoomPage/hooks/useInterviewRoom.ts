@@ -49,7 +49,10 @@ interface OpponentInfo {
 
 type InterviewStatus = "WAITING" | "QUESTION" | "ANSWER" | "COMPLETED" | string;
 
-export function useInterviewRoom(roomId: string) {
+export function useInterviewRoom(
+  roomId: string,
+  roleFromState?: "interviewer" | "interviewee"
+) {
   const { data: userData } = useMe();
   const userId = userData?.data?.id;
 
@@ -292,6 +295,7 @@ export function useInterviewRoom(roomId: string) {
         setInterviewStatus(status);
       },
       onTailQuestions: (tailQuestions) => {
+        console.log("[InterviewRoom] 꼬리 질문 수신:", tailQuestions);
         setTailQuestions(tailQuestions);
       },
       onError: (errorMessage) => {
@@ -489,21 +493,30 @@ export function useInterviewRoom(roomId: string) {
           setMessages(chatHistory);
 
           // 사용자 역할 확인 (면접관인지 면접자인지)
-          // opponent.id와 userId를 비교하여 역할 판단
-          // 실제로는 API 응답에서 역할 정보를 받아야 함
-          // 임시로 opponent.id !== userId로 판단
-          // TODO: API 응답에 역할 정보 추가 필요
-          // 면접관은 opponent.id와 다르고, 면접자는 opponent.id와 같거나 다를 수 있음
-          // 일단 임시로 opponent.id !== userId면 면접관으로 설정
-          const determinedRole =
-            data.opponent.id !== userId ? "INTERVIEWER" : "INTERVIEWEE";
-          console.log("[InterviewRoom] 역할 판단:", {
-            opponentId: data.opponent.id,
-            userId: userId,
-            determinedRole: determinedRole,
-            opponentIdType: typeof data.opponent.id,
-            userIdType: typeof userId,
-          });
+          // 예정된 면접 목록에서 전달받은 role 정보를 우선 사용
+          // 없으면 opponent.id와 userId를 비교하여 역할 판단 (fallback)
+          let determinedRole: "INTERVIEWER" | "INTERVIEWEE";
+
+          if (roleFromState) {
+            // 예정된 면접 목록에서 전달받은 role 사용
+            determinedRole =
+              roleFromState === "interviewer" ? "INTERVIEWER" : "INTERVIEWEE";
+            console.log("[InterviewRoom] 역할 판단 (예정된 면접 목록에서):", {
+              roleFromState,
+              determinedRole,
+            });
+          } else {
+            // Fallback: opponent.id와 userId 비교
+            determinedRole =
+              data.opponent.id !== userId ? "INTERVIEWER" : "INTERVIEWEE";
+            console.log("[InterviewRoom] 역할 판단 (fallback):", {
+              opponentId: data.opponent.id,
+              userId: userId,
+              determinedRole: determinedRole,
+              opponentIdType: typeof data.opponent.id,
+              userIdType: typeof userId,
+            });
+          }
           setUserRole(determinedRole);
         }
 
