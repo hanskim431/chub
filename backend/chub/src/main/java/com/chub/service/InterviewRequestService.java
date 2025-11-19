@@ -61,4 +61,10 @@ public interface InterviewRequestService {
      * @return 예정된 면접 목록 페이지 응답
      */
     PageResponse<ScheduledInterviewListData> getScheduledInterviews(Long userId, Pageable pageable);
+
+    /**
+     * 면접 완료 처리
+     * @param interviewRequestId 면접 요청 ID
+     */
+    void completeInterview(Long interviewRequestId);
 }

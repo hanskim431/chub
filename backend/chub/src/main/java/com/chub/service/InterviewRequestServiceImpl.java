@@ -203,4 +203,13 @@ public class InterviewRequestServiceImpl implements InterviewRequestService {
 
         return PageResponse.success("예정된 면접 목록 조회 성공", data, pageInfo);
     }
+
+    @Override
+    @Transactional
+    public void completeInterview(Long interviewRequestId) {
+        InterviewRequest request = interviewRequestRepository.findById(interviewRequestId)
+                .orElseThrow(InterviewRequestException::notFound);
+
+        request.complete();
+    }
 }

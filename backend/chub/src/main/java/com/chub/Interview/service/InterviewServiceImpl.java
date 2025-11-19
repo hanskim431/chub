@@ -56,6 +56,7 @@ public class InterviewServiceImpl implements InterviewService {
     private final SttClient sttClient;
     private final TailQuestionService tailQuestionService;
     private final com.chub.repository.QuestionRepository questionRepository;
+    private final com.chub.service.InterviewRequestService interviewRequestService;
 
     private static final String INTERVIEW_PREFIX = "/interview/";
 
@@ -101,32 +102,55 @@ public class InterviewServiceImpl implements InterviewService {
         Long roomId = interviewRoomManager.joinedRoomId(userId)
                 .orElseThrow(InterviewRequestException::invalidStatus);
 
+        log.info("[면접 종료] 시작 - userId: {}, roomId: {}", userId, roomId);
+
         Optional<Interview> optionalInterview = interviewManager.findInterview(roomId);
         if (optionalInterview.isEmpty()) {
+            log.error("[면접 종료] 면접 정보를 찾을 수 없음 - roomId: {}", roomId);
             Long opponentId = interviewRoomManager.getOpponentId(userId);
             sendWebSocketErrorToBoth(userId, opponentId, "면접 정보를 찾을 수 없습니다.");
             return;
         }
 
         Interview interview = optionalInterview.get();
+        log.info("[면접 종료] Interview 조회 성공 - status: {}, title: {}",
+                interview.getStatus(), interview.getTitle());
 
         try {
             updateRoomStatus(roomId, FINISH);
+            log.info("[면접 종료] 방 상태 FINISH로 변경 완료");
         } catch (IllegalStateException e) {
+            log.error("[면접 종료] 방 상태 변경 실패 - 에러: {}", e.getMessage());
             webSocketHelper.sendErrorMessage(userId, e.getMessage());
             return;
         }
 
+        // Interview complete 호출 전 상태
+        log.info("[면접 종료] Interview.complete() 호출 전 - status: {}, endedAt: {}",
+                interview.getStatus(), interview.getEndedAt());
+
         interview.complete();
+
+        log.info("[면접 종료] Interview.complete() 호출 후 - status: {}, endedAt: {}",
+                interview.getStatus(), interview.getEndedAt());
 
         // 면접 데이터 저장
         Interview savedInterview = interviewRepository.save(interview);
+        log.info("[면접 종료] Interview 저장 완료 - savedInterviewId: {}, status: {}, endedAt: {}",
+                savedInterview.getId(), savedInterview.getStatus(), savedInterview.getEndedAt());
 
         // 질문-답변 데이터 저장
         saveQuestionAnswers(savedInterview, roomId);
 
+        // InterviewRequest 상태를 COMPLETED로 변경
+        interviewRequestService.completeInterview(roomId);
+        log.info("[면접 종료] InterviewRequest 완료 처리 - interviewRequestId: {}", roomId);
+
         // 메모리에서 면접 데이터 정리
         interviewManager.clearInterview(roomId);
+        log.info("[면접 종료] 메모리 정리 완료 - roomId: {}", roomId);
+
+        log.info("[면접 종료] 완료 - interviewId: {}", savedInterview.getId());
     }
 
     private void sendWebSocketErrorToBoth(Long userId1, Long userId2, String message) {
@@ -271,14 +295,26 @@ public class InterviewServiceImpl implements InterviewService {
      * 질문-답변 데이터를 DB에 저장
      */
     private void saveQuestionAnswers(Interview interview, Long roomId) {
+        log.info("[질문-답변 저장] 시작 - interviewId: {}, roomId: {}", interview.getId(), roomId);
+
         List<QuestionAnswerDto> questionAnswers = interviewManager.getQuestionAnswers(roomId);
 
         if (questionAnswers == null || questionAnswers.isEmpty()) {
+            log.warn("[질문-답변 저장] 저장할 질문-답변이 없음 - roomId: {}", roomId);
             return;
         }
 
+        log.info("[질문-답변 저장] 총 {} 개의 질문-답변 저장 시작", questionAnswers.size());
+
         int orderNumber = 1;
         for (QuestionAnswerDto qa : questionAnswers) {
+            log.info("[질문-답변 저장] #{} - 질문: {}, 답변: {}",
+                    orderNumber,
+                    qa.getQuestion() != null ? qa.getQuestion().substring(0, Math.min(50, qa.getQuestion().length()))
+                            + "..." : "null",
+                    qa.getAnswer() != null ? qa.getAnswer().substring(0, Math.min(50, qa.getAnswer().length())) + "..."
+                            : "null");
+
             Question question = Question.builder()
                     .interview(interview)
                     .content(qa.getQuestion())
@@ -290,8 +326,12 @@ public class InterviewServiceImpl implements InterviewService {
                 question.updateAnswer(qa.getAnswer());
             }
 
-            questionRepository.save(question);
+            Question savedQuestion = questionRepository.save(question);
+            log.info("[질문-답변 저장] Question 저장 완료 - questionId: {}, orderNumber: {}, hasAnswer: {}",
+                    savedQuestion.getId(), savedQuestion.getOrderNumber(), savedQuestion.getAnswer() != null);
         }
+
+        log.info("[질문-답변 저장] 완료 - 총 {} 개 저장됨", questionAnswers.size());
     }
 
     @Override
