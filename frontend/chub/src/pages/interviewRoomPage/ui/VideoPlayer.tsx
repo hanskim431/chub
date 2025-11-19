@@ -9,13 +9,13 @@ interface VideoPlayerProps {
 export const VideoPlayer = forwardRef<HTMLVideoElement, VideoPlayerProps>(
   ({ label, isLocal, isConnected }, ref) => {
     return (
-      <div className="relative w-full h-full bg-black rounded-lg overflow-hidden">
+      <div className="relative w-full h-full bg-black rounded-lg overflow-hidden flex items-center justify-center">
         <video
           ref={ref}
           autoPlay
           playsInline
           muted={isLocal}
-          className={`w-full h-full ${isLocal ? "object-cover" : "object-contain"}`}
+          className={`max-w-full max-h-full ${isLocal ? "object-cover w-full h-full" : "object-contain"}`}
         />
         {/* 로컬 비디오는 연결 상태와 관계없이 표시, 원격 비디오만 연결 상태 표시 */}
         {!isLocal && !isConnected && (
