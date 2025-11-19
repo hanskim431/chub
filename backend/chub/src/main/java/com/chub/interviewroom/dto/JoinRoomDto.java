@@ -25,13 +25,22 @@ public class JoinRoomDto {
 
     private String currentQuestion; // nullable
 
+    private String role;
+
     public static JoinRoomDto of(Long userId, InterviewRoomState roomState, OpponentDto opponent,
                                  String currentQuestion) {
+
+        // userId와 participants를 비교하여 역할 결정
+        String role = userId.equals(roomState.getParticipants().interviewerId())
+                ? "interviewer"
+                : "interviewee";
+
         return JoinRoomDto.builder()
                 .chatHistory(roomState.getChatHistory())
                 .status(roomState.getStatus())
                 .opponent(opponent)
                 .currentQuestion(currentQuestion)
+                .role(role)
                 .build();
     }
 }
