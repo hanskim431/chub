@@ -239,13 +239,14 @@ export function useInterviewRoom(roomId: string) {
   }, [roomId, userId]);
 
   // 면접방 WebSocket 구독
+  // interviewRoomId state를 사용하여 초기화 완료 후에만 활성화
   const { isConnected: wsConnected, publish: publishFromHook } =
     useInterviewRoomWebSocket({
       roomId,
-      interviewRoomId: interviewRoomIdRef.current,
+      interviewRoomId: interviewRoomId, // ref 대신 state 사용
       userId,
       userName: userData?.data?.name,
-      enabled: !!userId && !!roomId,
+      enabled: !!userId && !!roomId && !!interviewRoomId, // interviewRoomId가 있을 때만 활성화
       onChatReceived: (message) => {
         setMessages((prev) => [...prev, message]);
       },
@@ -271,6 +272,7 @@ export function useInterviewRoom(roomId: string) {
         ]);
       },
       onQuestion: (question) => {
+        console.log("[InterviewRoom] 질문 수신:", question);
         setCurrentQuestion(question);
         setMessages((prev) => [
           ...prev,
@@ -322,15 +324,43 @@ export function useInterviewRoom(roomId: string) {
 
     // 로컬 스트림과 peer connection이 준비될 때까지 대기
     const checkReady = () => {
-      return new Promise<void>((resolve) => {
+      return new Promise<void>((resolve, reject) => {
+        let attempts = 0;
+        const maxAttempts = 100; // 10초 대기 (100 * 100ms)
         const check = () => {
+          attempts++;
           if (
             pcRef.current &&
             localStreamRef.current &&
             localStreamRef.current.getVideoTracks().length > 0 &&
-            localStreamRef.current.getVideoTracks()[0].readyState === "live"
+            localStreamRef.current.getVideoTracks()[0].readyState === "live" &&
+            wsConnected &&
+            publishRef.current &&
+            interviewRoomIdRef.current // interviewRoomId도 확인
           ) {
+            console.log("[WebRTC] 모든 준비 완료, offer 전송 시작", {
+              hasPc: !!pcRef.current,
+              hasLocalStream: !!localStreamRef.current,
+              videoTracksReady:
+                localStreamRef.current.getVideoTracks().length > 0,
+              wsConnected,
+              hasPublish: !!publishRef.current,
+              interviewRoomId: interviewRoomIdRef.current,
+              attempts,
+            });
             resolve();
+          } else if (attempts >= maxAttempts) {
+            console.error("[WebRTC] 준비 대기 시간 초과:", {
+              hasPc: !!pcRef.current,
+              hasLocalStream: !!localStreamRef.current,
+              videoTracksReady: localStreamRef.current
+                ? localStreamRef.current.getVideoTracks().length > 0
+                : false,
+              wsConnected,
+              hasPublish: !!publishRef.current,
+              interviewRoomId: interviewRoomIdRef.current,
+            });
+            reject(new Error("WebRTC 준비 시간 초과"));
           } else {
             setTimeout(check, 100);
           }
@@ -347,7 +377,8 @@ export function useInterviewRoom(roomId: string) {
         pcRef.current &&
         !offerSentRef.current &&
         wsConnected &&
-        publishRef.current
+        publishRef.current &&
+        interviewRoomIdRef.current // interviewRoomId도 확인
       ) {
         console.log("[WebRTC] Offer 생성 및 전송 중...");
         // Offer 생성
@@ -378,9 +409,11 @@ export function useInterviewRoom(roomId: string) {
       } else {
         console.warn("[WebRTC] Offer 전송 실패:", {
           hasPc: !!pcRef.current,
+          hasLocalStream: !!localStreamRef.current,
           alreadySent: offerSentRef.current,
           connected: wsConnected,
           hasPublish: !!publishRef.current,
+          interviewRoomId: interviewRoomIdRef.current,
         });
       }
     } catch (err) {
