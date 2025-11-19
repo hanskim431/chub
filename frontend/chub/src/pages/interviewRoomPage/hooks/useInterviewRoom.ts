@@ -433,11 +433,16 @@ export function useInterviewRoom(roomId: string) {
           // TODO: API 응답에 역할 정보 추가 필요
           // 면접관은 opponent.id와 다르고, 면접자는 opponent.id와 같거나 다를 수 있음
           // 일단 임시로 opponent.id !== userId면 면접관으로 설정
-          if (data.opponent.id !== userId) {
-            setUserRole("INTERVIEWER");
-          } else {
-            setUserRole("INTERVIEWEE");
-          }
+          const determinedRole =
+            data.opponent.id !== userId ? "INTERVIEWER" : "INTERVIEWEE";
+          console.log("[InterviewRoom] 역할 판단:", {
+            opponentId: data.opponent.id,
+            userId: userId,
+            determinedRole: determinedRole,
+            opponentIdType: typeof data.opponent.id,
+            userIdType: typeof userId,
+          });
+          setUserRole(determinedRole);
         }
 
         // 로컬 스트림 먼저 설정 (연결 상태와 관계없이 비디오 표시)
