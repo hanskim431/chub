@@ -16,12 +16,14 @@ interface ChatPanelProps {
   messages: Message[];
   onSendMessage: (message: string) => void;
   isConnected: boolean;
+  currentUserId?: number | null;
 }
 
 export function ChatPanel({
   messages,
   onSendMessage,
   isConnected,
+  currentUserId,
 }: ChatPanelProps) {
   const [input, setInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -60,38 +62,56 @@ export function ChatPanel({
             </div>
           </div>
         ) : (
-          messages.map((message) => (
-            <div
-              key={message.id}
-              className={`flex flex-col ${
-                message.type === "SYSTEM" ||
+          messages.map((message) => {
+            const isMyMessage =
+              message.type === "USER" &&
+              currentUserId &&
+              message.senderId === currentUserId;
+
+            return (
+              <div
+                key={message.id}
+                className={`flex flex-col ${
+                  message.type === "SYSTEM" ||
+                  message.type === "SYSTEM_QUESTION" ||
+                  message.type === "SYSTEM_ANSWER"
+                    ? "items-center"
+                    : isMyMessage
+                    ? "items-end"
+                    : "items-start"
+                }`}
+              >
+                {message.type === "SYSTEM" ||
                 message.type === "SYSTEM_QUESTION" ||
-                message.type === "SYSTEM_ANSWER"
-                  ? "items-center"
-                  : "items-start"
-              }`}
-            >
-              {message.type === "SYSTEM" ||
-              message.type === "SYSTEM_QUESTION" ||
-              message.type === "SYSTEM_ANSWER" ? (
-                <div className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                  {message.content}
-                </div>
-              ) : (
-                <div className="max-w-[80%]">
-                  <div className="text-xs text-gray-500 mb-1">
-                    {message.senderName || "사용자"}
-                  </div>
-                  <div className="bg-blue-50 rounded-lg px-3 py-2 text-sm text-gray-900">
+                message.type === "SYSTEM_ANSWER" ? (
+                  <div className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
                     {message.content}
                   </div>
-                  <div className="text-xs text-gray-400 mt-1">
-                    {formatTime(message.timestamp)}
+                ) : isMyMessage ? (
+                  <div className="max-w-[80%]">
+                    <div className="bg-blue-600 text-white rounded-lg px-3 py-2 text-sm">
+                      {message.content}
+                    </div>
+                    <div className="text-xs text-gray-400 mt-1 text-right">
+                      {formatTime(message.timestamp)}
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
-          ))
+                ) : (
+                  <div className="max-w-[80%]">
+                    <div className="text-xs text-gray-500 mb-1">
+                      {message.senderName || "사용자"}
+                    </div>
+                    <div className="bg-gray-100 rounded-lg px-3 py-2 text-sm text-gray-900">
+                      {message.content}
+                    </div>
+                    <div className="text-xs text-gray-400 mt-1">
+                      {formatTime(message.timestamp)}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })
         )}
         <div ref={messagesEndRef} />
       </div>

@@ -3,6 +3,7 @@ import { VideoPlayer } from "./VideoPlayer";
 import { ChatPanel } from "./ChatPanel";
 import { InterviewHeader } from "./InterviewHeader";
 import { InterviewerInfo } from "./InterviewerInfo";
+import { useMe } from "@/features/auth/api/me";
 
 interface Message {
   id: string;
@@ -74,6 +75,8 @@ export function InterviewRoom({
 }: InterviewRoomProps) {
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
+  const { data: meData } = useMe();
+  const currentUserId = meData?.data?.id;
 
   useEffect(() => {
     if (localVideoRef.current && localStream) {
@@ -134,6 +137,7 @@ export function InterviewRoom({
               messages={messages}
               onSendMessage={onSendMessage}
               isConnected={isConnected}
+              currentUserId={currentUserId}
             />
           </div>
         </div>
@@ -273,8 +277,8 @@ export function InterviewRoom({
 
           {/* 하단 버튼 영역 */}
           <div className="p-4 bg-gray-800 border-t border-gray-700">
-            {/* 대기 상태: 시작하기 버튼 */}
-            {interviewStatus === "WAITING" && (
+            {/* 대기 상태: 면접관에게만 시작하기 버튼 표시 */}
+            {interviewStatus === "WAITING" && userRole === "INTERVIEWER" && (
               <div className="flex justify-center">
                 <button
                   onClick={onStartInterview}
@@ -301,7 +305,7 @@ export function InterviewRoom({
                       d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                     />
                   </svg>
-                  <span>시작하기</span>
+                  <span>면접 시작하기</span>
                 </button>
               </div>
             )}
