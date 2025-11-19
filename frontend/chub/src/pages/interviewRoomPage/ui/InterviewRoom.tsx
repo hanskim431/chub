@@ -94,14 +94,25 @@ export function InterviewRoom({
 
   // 디버깅: 버튼 표시 조건 로깅
   useEffect(() => {
+    const shouldShow =
+      interviewStatus === "WAITING" && userRole === "INTERVIEWER";
     console.log("[InterviewRoom] 버튼 표시 조건:", {
       interviewStatus,
       userRole,
-      shouldShow: interviewStatus === "WAITING" && userRole === "INTERVIEWER",
+      shouldShow,
       isConnected,
       hasLocalStream: !!localStream,
       hasRemoteStream: !!remoteStream,
+      buttonDisabled: !isConnected || !localStream || !remoteStream,
     });
+    if (interviewStatus === "WAITING") {
+      console.log(
+        "[InterviewRoom] WAITING 상태 - userRole:",
+        userRole,
+        "타입:",
+        typeof userRole
+      );
+    }
   }, [interviewStatus, userRole, isConnected, localStream, remoteStream]);
 
   const formatTime = (seconds: number) => {
@@ -169,13 +180,15 @@ export function InterviewRoom({
           )}
           <div className="flex-1 flex items-center justify-center p-4 gap-4">
             {/* 원격 비디오 (면접관) */}
-            <div className="flex-1 h-full max-w-4xl relative">
-              <VideoPlayer
-                ref={remoteVideoRef}
-                label={opponentInfo?.name || "면접관"}
-                isLocal={false}
-                isConnected={isConnected}
-              />
+            <div className="flex-1 h-full max-w-4xl relative flex items-center justify-center">
+              <div className="w-full h-full max-w-full max-h-full aspect-video">
+                <VideoPlayer
+                  ref={remoteVideoRef}
+                  label={opponentInfo?.name || "면접관"}
+                  isLocal={false}
+                  isConnected={isConnected}
+                />
+              </div>
               {/* 상대방 음성 on/off 버튼 */}
               <button
                 onClick={onToggleRemoteAudio}
