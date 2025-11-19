@@ -21,50 +21,84 @@ export default function DashboardPage() {
         <div className="container mx-auto px-4 py-8 max-w-7xl">
             <h1 className="text-3xl font-bold mb-8">대시보드</h1>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <Card className="p-6">
-                    <div className="flex flex-col gap-2">
-                        <h3 className="text-sm font-medium text-gray-600">
-                            받은 요청
-                        </h3>
-                        <p className="text-3xl font-bold text-text-black">
-                            {stats?.receivedRequests ?? 0}
-                        </p>
-                    </div>
-                </Card>
+            <div className="space-y-8 mb-8">
+                {/* 면접자 영역 */}
+                <div>
+                    <h2 className="text-xl font-semibold mb-4">면접자</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <Card className="p-6">
+                            <div className="flex flex-col gap-2">
+                                <h3 className="text-sm font-medium text-gray-600">
+                                    보낸 요청
+                                </h3>
+                                <p className="text-3xl font-bold text-text-black">
+                                    {stats?.sentRequests ?? 0}
+                                </p>
+                            </div>
+                        </Card>
 
-                <Card className="p-6">
-                    <div className="flex flex-col gap-2">
-                        <h3 className="text-sm font-medium text-gray-600">
-                            보낸 요청
-                        </h3>
-                        <p className="text-3xl font-bold text-text-black">
-                            {stats?.sentRequests ?? 0}
-                        </p>
-                    </div>
-                </Card>
+                        <Card className="p-6">
+                            <div className="flex flex-col gap-2">
+                                <h3 className="text-sm font-medium text-gray-600">
+                                    예정된 면접
+                                </h3>
+                                <p className="text-3xl font-bold text-text-black">
+                                    {stats?.scheduledInterviewsAsInterviewee ?? 0}
+                                </p>
+                            </div>
+                        </Card>
 
-                <Card className="p-6">
-                    <div className="flex flex-col gap-2">
-                        <h3 className="text-sm font-medium text-gray-600">
-                            예정된 면접
-                        </h3>
-                        <p className="text-3xl font-bold text-text-black">
-                            {stats?.scheduledInterviews ?? 0}
-                        </p>
+                        <Card className="p-6">
+                            <div className="flex flex-col gap-2">
+                                <h3 className="text-sm font-medium text-gray-600">
+                                    완료된 면접
+                                </h3>
+                                <p className="text-3xl font-bold text-text-black">
+                                    {stats?.completedInterviewsAsInterviewee ?? 0}
+                                </p>
+                            </div>
+                        </Card>
                     </div>
-                </Card>
+                </div>
 
-                <Card className="p-6">
-                    <div className="flex flex-col gap-2">
-                        <h3 className="text-sm font-medium text-gray-600">
-                            완료된 면접
-                        </h3>
-                        <p className="text-3xl font-bold text-text-black">
-                            {stats?.completedInterviews ?? 0}
-                        </p>
+                {/* 면접관 영역 */}
+                <div>
+                    <h2 className="text-xl font-semibold mb-4">면접관</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <Card className="p-6">
+                            <div className="flex flex-col gap-2">
+                                <h3 className="text-sm font-medium text-gray-600">
+                                    받은 요청
+                                </h3>
+                                <p className="text-3xl font-bold text-text-black">
+                                    {stats?.receivedRequests ?? 0}
+                                </p>
+                            </div>
+                        </Card>
+
+                        <Card className="p-6">
+                            <div className="flex flex-col gap-2">
+                                <h3 className="text-sm font-medium text-gray-600">
+                                    예정된 면접
+                                </h3>
+                                <p className="text-3xl font-bold text-text-black">
+                                    {stats?.scheduledInterviewsAsInterviewer ?? 0}
+                                </p>
+                            </div>
+                        </Card>
+
+                        <Card className="p-6">
+                            <div className="flex flex-col gap-2">
+                                <h3 className="text-sm font-medium text-gray-600">
+                                    완료된 면접
+                                </h3>
+                                <p className="text-3xl font-bold text-text-black">
+                                    {stats?.completedInterviewsAsInterviewer ?? 0}
+                                </p>
+                            </div>
+                        </Card>
                     </div>
-                </Card>
+                </div>
             </div>
 
             <InterviewRequestList />

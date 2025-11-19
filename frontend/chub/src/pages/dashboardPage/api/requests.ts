@@ -3,8 +3,10 @@ import { api } from "@/shared/api/api";
 export interface DashboardStats {
     receivedRequests: number;
     sentRequests: number;
-    scheduledInterviews: number;
-    completedInterviews: number;
+    scheduledInterviewsAsInterviewer: number;
+    scheduledInterviewsAsInterviewee: number;
+    completedInterviewsAsInterviewer: number;
+    completedInterviewsAsInterviewee: number;
 }
 
 export interface DashboardStatsResponse {
