@@ -3,6 +3,7 @@ import axios from "axios";
 
 // 면접방 입장 응답 타입
 export interface InterviewRoomResponse {
+  id: number; // 면접방 ID
   status: string;
   opponent: {
     id: number;
@@ -47,9 +48,7 @@ export const joinInterviewRoom = async (
 export const leaveInterviewRoom = async (
   interviewRequestId: string
 ): Promise<void> => {
-  // roomId에서 "room_" 접두사 제거 (예: "room_1" -> "1")
-  const roomId = interviewRequestId.replace(/^room_/, "");
-  await del(`/api/interviews/rooms/${roomId}`);
+  await del(`/api/interviews/rooms/${interviewRequestId}`);
 };
 
 // 면접관 질문 생성

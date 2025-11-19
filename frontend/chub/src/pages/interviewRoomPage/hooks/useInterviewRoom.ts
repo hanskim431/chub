@@ -73,6 +73,7 @@ export function useInterviewRoom(roomId: string) {
   const [userRole, setUserRole] = useState<
     "INTERVIEWER" | "INTERVIEWEE" | null
   >(null);
+  const [interviewRoomId, setInterviewRoomId] = useState<number | null>(null); // API 응답에서 받은 id
 
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const stompClientRef = useRef<Client | null>(null);
@@ -82,6 +83,7 @@ export function useInterviewRoom(roomId: string) {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordedChunksRef = useRef<Blob[]>([]);
   const sendOfferWhenReadyRef = useRef<(() => Promise<void>) | null>(null);
+  const interviewRoomIdRef = useRef<number | null>(null); // ref로도 저장하여 WebSocket 연결 시 사용
 
   // WebRTC 설정 - Promise로 반환하여 로컬 스트림 로드 완료 보장
   const setupWebRTC = useCallback(async (): Promise<void> => {
@@ -219,15 +221,18 @@ export function useInterviewRoom(roomId: string) {
         // WebSocket 연결 시 isConnected를 true로 설정 (채팅 사용 가능)
         setIsConnected(true);
 
+        // API 응답에서 받은 id를 사용, 없으면 roomId 사용 (fallback)
+        const currentRoomId = interviewRoomIdRef.current || roomId;
+
         // 면접방 입장 (joined 이벤트) - userId와 userName 포함
         const currentUserName = userData?.data?.name || "사용자";
         console.log("[WebSocket] 면접방 입장 이벤트 전송:", {
-          destination: `/app/interview/${roomId}/joined`,
+          destination: `/app/interview/${currentRoomId}/joined`,
           userId,
           userName: currentUserName,
         });
         client.publish({
-          destination: `/app/interview/${roomId}/joined`,
+          destination: `/app/interview/${currentRoomId}/joined`,
           body: JSON.stringify({
             userId: userId,
             userName: currentUserName,
@@ -235,7 +240,7 @@ export function useInterviewRoom(roomId: string) {
         });
 
         // 브로드캐스트 이벤트 구독 (/topic/interview/{interviewRequestId})
-        const topicDestination = `/topic/interview/${roomId}`;
+        const topicDestination = `/topic/interview/${currentRoomId}`;
         console.log("[WebSocket] 토픽 구독:", topicDestination);
         client.subscribe(topicDestination, (message: StompMessage) => {
           console.log("[WebSocket] 토픽 메시지 수신:", {
@@ -578,6 +583,10 @@ export function useInterviewRoom(roomId: string) {
         if (roomData.success && roomData.data) {
           const data = roomData.data;
 
+          // API 응답에서 받은 id 저장
+          setInterviewRoomId(data.id);
+          interviewRoomIdRef.current = data.id;
+
           // 상대방 정보 설정
           const opponent = {
             id: data.opponent.id,
@@ -640,9 +649,10 @@ export function useInterviewRoom(roomId: string) {
     startTimer(60 * 60);
 
     return () => {
-      // 면접방 퇴장 API 호출
-      if (roomId) {
-        leaveInterviewRoom(roomId).catch((err) => {
+      // 면접방 퇴장 API 호출 (API 응답에서 받은 id 사용)
+      const currentRoomId = interviewRoomIdRef.current || roomId;
+      if (currentRoomId) {
+        leaveInterviewRoom(String(currentRoomId)).catch((err) => {
           console.error("면접방 퇴장 실패:", err);
         });
       }
@@ -682,7 +692,9 @@ export function useInterviewRoom(roomId: string) {
         return;
       }
 
-      const destination = `/app/interview/${roomId}/chat-send`;
+      // API 응답에서 받은 id를 사용, 없으면 roomId 사용 (fallback)
+      const currentRoomId = interviewRoomIdRef.current || roomId;
+      const destination = `/app/interview/${currentRoomId}/chat-send`;
       const messageBody = {
         type: "USER",
         message: content,
@@ -728,10 +740,11 @@ export function useInterviewRoom(roomId: string) {
       console.log("[Interview] 면접 종료 이벤트 전송");
     }
 
-    // 면접방 퇴장 API 호출
-    if (roomId) {
+    // 면접방 퇴장 API 호출 (API 응답에서 받은 id 사용)
+    const currentRoomId = interviewRoomIdRef.current || roomId;
+    if (currentRoomId) {
       try {
-        await leaveInterviewRoom(roomId);
+        await leaveInterviewRoom(String(currentRoomId));
       } catch (err) {
         console.error("면접방 퇴장 실패:", err);
       }
@@ -762,9 +775,10 @@ export function useInterviewRoom(roomId: string) {
 
   // 방 나가기 (면접은 계속 진행, 단순히 페이지 이동)
   const leaveRoom = useCallback(() => {
-    // 면접방 퇴장 API 호출 (면접은 종료하지 않음)
-    if (roomId) {
-      leaveInterviewRoom(roomId).catch((err) => {
+    // 면접방 퇴장 API 호출 (면접은 종료하지 않음, API 응답에서 받은 id 사용)
+    const currentRoomId = interviewRoomIdRef.current || roomId;
+    if (currentRoomId) {
+      leaveInterviewRoom(String(currentRoomId)).catch((err) => {
         console.error("면접방 퇴장 실패:", err);
       });
     }
