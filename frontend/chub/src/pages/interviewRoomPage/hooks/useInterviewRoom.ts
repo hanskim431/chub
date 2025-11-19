@@ -66,6 +66,7 @@ export function useInterviewRoom(roomId: string) {
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [tailQuestions, setTailQuestions] = useState<string[]>([]);
+  const [currentQuestion, setCurrentQuestion] = useState<string | null>(null);
   const [isLocalAudioEnabled, setIsLocalAudioEnabled] = useState(true);
   const [isRemoteAudioEnabled, setIsRemoteAudioEnabled] = useState(true);
   const [isRecording, setIsRecording] = useState(false);
@@ -181,33 +182,18 @@ export function useInterviewRoom(roomId: string) {
         }
       };
 
-      // ICE connection state 변경 처리
+      // ICE connection state 변경 처리 (WebRTC는 별도로 관리, 채팅은 WebSocket 연결 상태 사용)
       pc.oniceconnectionstatechange = () => {
-        console.log("ICE connection state:", pc.iceConnectionState);
-        if (
-          pc.iceConnectionState === "connected" ||
-          pc.iceConnectionState === "completed"
-        ) {
-          setIsConnected(true);
-        } else if (
-          pc.iceConnectionState === "disconnected" ||
-          pc.iceConnectionState === "failed" ||
-          pc.iceConnectionState === "closed"
-        ) {
-          setIsConnected(false);
-        }
+        console.log("[WebRTC] ICE connection state:", pc.iceConnectionState);
+        // WebSocket 연결 상태는 별도로 관리하므로 여기서는 isConnected를 변경하지 않음
       };
 
-      // 연결 상태 변경
+      // 연결 상태 변경 (WebRTC는 별도로 관리, 채팅은 WebSocket 연결 상태 사용)
+      // WebRTC 연결 상태는 비디오/오디오 스트림에만 영향을 주고,
+      // 채팅은 WebSocket 연결 상태를 사용하므로 여기서는 로그만 남김
       pc.onconnectionstatechange = () => {
-        if (pc.connectionState === "connected") {
-          setIsConnected(true);
-        } else if (
-          pc.connectionState === "disconnected" ||
-          pc.connectionState === "failed"
-        ) {
-          setIsConnected(false);
-        }
+        console.log("[WebRTC] 연결 상태 변경:", pc.connectionState);
+        // WebSocket 연결 상태는 별도로 관리하므로 여기서는 isConnected를 변경하지 않음
       };
 
       pcRef.current = pc;
@@ -230,6 +216,8 @@ export function useInterviewRoom(roomId: string) {
       heartbeatOutgoing: 4000,
       onConnect: () => {
         console.log("[WebSocket] 연결됨");
+        // WebSocket 연결 시 isConnected를 true로 설정 (채팅 사용 가능)
+        setIsConnected(true);
 
         // 면접방 입장 (joined 이벤트) - userId와 userName 포함
         const currentUserName = userData?.data?.name || "사용자";
@@ -258,37 +246,16 @@ export function useInterviewRoom(roomId: string) {
 
           switch (wsMessage.type) {
             case "chat-received": {
-              // 채팅 메시지 수신
+              // 채팅 메시지 수신 (백엔드에서 받은 그대로 사용)
               console.log("[Chat] 메시지 수신:", wsMessage);
               const chatData = wsMessage.data as InterviewRoomChatMessage;
-
-              // senderName이 없으면 기본값 설정 (ID 노출 방지)
-              let senderName = chatData.senderNickname;
-              if (!senderName) {
-                if (chatData.senderId === userId) {
-                  senderName = "나";
-                } else if (
-                  opponentInfoRef.current &&
-                  chatData.senderId === opponentInfoRef.current.id
-                ) {
-                  senderName = opponentInfoRef.current.name;
-                } else {
-                  senderName = "사용자";
-                }
-              }
-
-              // 메시지 내용에서 "User {id}" 같은 패턴 제거 (ID 노출 방지)
-              let messageContent = chatData.message;
-              messageContent = messageContent.replace(/User\s+\d+/gi, "사용자");
-              messageContent = messageContent.replace(/user\s+\d+/gi, "사용자");
-
               const newMessage = {
                 id: Date.now().toString() + Math.random(),
                 senderId: chatData.senderId,
-                senderName: senderName,
+                senderName: chatData.senderNickname,
                 receiverId: chatData.receiverId,
                 receiverNickname: chatData.receiverNickname,
-                content: messageContent,
+                content: chatData.message,
                 timestamp: chatData.createdAt,
                 type: chatData.type,
               };
@@ -436,6 +403,7 @@ export function useInterviewRoom(roomId: string) {
             case "question": {
               // 면접관의 질문 (STT 변환 완료)
               const questionData = wsMessage.data as { question: string };
+              setCurrentQuestion(questionData.question);
               setMessages((prev) => [
                 ...prev,
                 {
@@ -645,6 +613,15 @@ export function useInterviewRoom(roomId: string) {
       onStompError: (frame) => {
         console.error("STOMP 에러:", frame);
         setError("WebSocket 연결에 실패했습니다.");
+        setIsConnected(false);
+      },
+      onDisconnect: () => {
+        console.log("[WebSocket] 연결 해제됨");
+        setIsConnected(false);
+      },
+      onWebSocketClose: () => {
+        console.log("[WebSocket] WebSocket 닫힘");
+        setIsConnected(false);
       },
     });
 
@@ -692,7 +669,10 @@ export function useInterviewRoom(roomId: string) {
           // 면접 상태 설정
           setInterviewStatus(data.status);
 
-          // 채팅 히스토리 설정
+          // 현재 질문 설정
+          setCurrentQuestion(data.currentQuestion);
+
+          // 채팅 히스토리 설정 (백엔드에서 받은 그대로 사용)
           const chatHistory: ChatMessage[] = data.chatHistory.map((msg) => ({
             id: Date.now().toString() + Math.random(),
             senderId: msg.senderId,
@@ -816,8 +796,17 @@ export function useInterviewRoom(roomId: string) {
     }
   }, []);
 
-  // 면접 종료 (end 이벤트)
+  // 면접 완전 종료 (end 이벤트 전송)
   const endInterview = useCallback(async () => {
+    // 웹소켓으로 면접 종료 이벤트 전송
+    if (stompClientRef.current?.connected) {
+      stompClientRef.current.publish({
+        destination: `/app/interview/end`,
+        body: JSON.stringify({}),
+      });
+      console.log("[Interview] 면접 종료 이벤트 전송");
+    }
+
     // 면접방 퇴장 API 호출
     if (roomId) {
       try {
@@ -825,13 +814,6 @@ export function useInterviewRoom(roomId: string) {
       } catch (err) {
         console.error("면접방 퇴장 실패:", err);
       }
-    }
-
-    if (stompClientRef.current?.connected) {
-      stompClientRef.current.publish({
-        destination: `/app/interview/end`,
-        body: JSON.stringify({}),
-      });
     }
 
     // 정리
@@ -855,7 +837,37 @@ export function useInterviewRoom(roomId: string) {
     }
 
     setInterviewStatus("COMPLETED");
-  }, [roomId, userId]);
+  }, [roomId]);
+
+  // 방 나가기 (면접은 계속 진행, 단순히 페이지 이동)
+  const leaveRoom = useCallback(() => {
+    // 면접방 퇴장 API 호출 (면접은 종료하지 않음)
+    if (roomId) {
+      leaveInterviewRoom(roomId).catch((err) => {
+        console.error("면접방 퇴장 실패:", err);
+      });
+    }
+
+    // 정리 (스트림 등은 정리하되, 면접 종료 이벤트는 보내지 않음)
+    if (
+      mediaRecorderRef.current &&
+      mediaRecorderRef.current.state !== "inactive"
+    ) {
+      mediaRecorderRef.current.stop();
+    }
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach((track) => track.stop());
+    }
+    if (pcRef.current) {
+      pcRef.current.close();
+    }
+    if (stompClientRef.current) {
+      stompClientRef.current.deactivate();
+    }
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+    }
+  }, [roomId]);
 
   // 로컬 오디오 (마이크) on/off
   const toggleLocalAudio = useCallback(() => {
@@ -957,7 +969,9 @@ export function useInterviewRoom(roomId: string) {
     sendMessage,
     startInterview,
     endInterview,
+    leaveRoom,
     tailQuestions,
+    currentQuestion,
     error,
     isLocalAudioEnabled,
     isRemoteAudioEnabled,

@@ -5,6 +5,7 @@ interface InterviewHeaderProps {
   formattedTime: string;
   interviewStatus: "WAITING" | "QUESTION" | "ANSWER" | "COMPLETED" | string;
   onEndInterview: () => void;
+  onLeaveRoom: () => void;
   isConnected: boolean;
 }
 
@@ -12,6 +13,7 @@ export function InterviewHeader({
   formattedTime,
   interviewStatus,
   onEndInterview,
+  onLeaveRoom,
   isConnected,
 }: InterviewHeaderProps) {
   const getStatusText = () => {
@@ -47,16 +49,23 @@ export function InterviewHeader({
         </div>
       </div>
 
-      <div className="flex items-center gap-6">
+      <div className="flex items-center gap-4">
         <div className="text-2xl font-mono font-bold text-gray-800">
           {formattedTime}
         </div>
+        <button
+          onClick={onLeaveRoom}
+          className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
+        >
+          <X className="w-4 h-4" />
+          <span>방 나가기</span>
+        </button>
         <button
           onClick={onEndInterview}
           className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
         >
           <X className="w-4 h-4" />
-          <span>면접 종료</span>
+          <span>면접 종료하기</span>
         </button>
       </div>
     </div>
