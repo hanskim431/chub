@@ -27,7 +27,7 @@ services:
       - DB_NAME=chub
       - DB_USERNAME=${DB_USERNAME}
       - DB_PASSWORD=${DB_PASSWORD}
-      - DDL_AUTO=${DDL_AUTO:-create}
+      - DDL_AUTO=${DDL_AUTO:-update}
       - FRONTEND_URL=${FRONTEND_URL:-https://chub.ai.kr}
       - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-https://chub.ai.kr,http://localhost:3000}
       - JWT_SECRET_KEY=${JWT_SECRET_KEY}
