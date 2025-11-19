@@ -179,7 +179,6 @@ public class InterviewRequestServiceImpl implements InterviewRequestService {
         Page<InterviewRequest> scheduledRequestsPage = interviewRequestRepository
                 .findScheduledInterviewsByUserId(userId, "APPROVED", pageable);
 
-        // DTO 변환
         List<ScheduledInterviewResponse> interviews = scheduledRequestsPage.getContent().stream()
                 .map(request -> {
                     // 현재 사용자가 면접관인지 판별
