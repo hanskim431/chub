@@ -314,8 +314,8 @@ export function useInterviewRoomWebSocket({
                 const answer = await pcRef.current.createAnswer();
                 await pcRef.current.setLocalDescription(answer);
 
-                if (publishRef.current) {
-                  publishRef.current(
+                if (publishRefForHook.current) {
+                  const success = publishRefForHook.current(
                     `/app/webrtc/answer`,
                     JSON.stringify({
                       answer: {
@@ -325,7 +325,16 @@ export function useInterviewRoomWebSocket({
                       userId,
                     })
                   );
-                  console.log("[WebRTC] Answer 전송 완료");
+                  if (success) {
+                    console.log("[WebRTC] Answer 전송 완료:", {
+                      destination: `/app/webrtc/answer`,
+                      userId,
+                    });
+                  } else {
+                    console.error("[WebRTC] Answer 전송 실패");
+                  }
+                } else {
+                  console.error("[WebRTC] publishRefForHook.current가 null입니다.");
                 }
                 callbacksRef.current.onWebRTCOffer?.(data.offer);
               }
