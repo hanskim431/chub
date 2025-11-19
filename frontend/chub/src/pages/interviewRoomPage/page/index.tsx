@@ -1,11 +1,12 @@
 import { useEffect, useState, useRef } from "react";
-import { useParams, useNavigate, useBlocker } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { InterviewRoom } from "@/pages/interviewRoomPage/ui/InterviewRoom";
 import { useInterviewRoom } from "@/pages/interviewRoomPage/hooks/useInterviewRoom";
 
 export default function InterviewRoomPage() {
   const { roomId } = useParams<{ roomId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const {
     localStream,
     remoteStream,
@@ -33,8 +34,9 @@ export default function InterviewRoomPage() {
   const [showCompletedModal, setShowCompletedModal] = useState(false);
   const [showEndInterviewModal, setShowEndInterviewModal] = useState(false);
   const [showLeaveRoomModal, setShowLeaveRoomModal] = useState(false);
-  const pendingNavigationRef = useRef<(() => void) | null>(null);
+  const pendingNavigationRef = useRef<string | null>(null);
   const shouldBlockRef = useRef(true); // 면접이 완료되지 않았으면 블록
+  const previousPathRef = useRef(location.pathname);
 
   useEffect(() => {
     if (!roomId) {
@@ -49,22 +51,26 @@ export default function InterviewRoomPage() {
     }
   }, [interviewStatus]);
 
-  // 페이지 이탈 감지 및 블로킹
-  const blocker = useBlocker(
-    ({ currentLocation, nextLocation }) =>
-      shouldBlockRef.current && currentLocation.pathname !== nextLocation.pathname
-  );
-
-  // 블로커가 활성화되면 모달 표시
+  // 경로 변경 감지 (내부 네비게이션)
   useEffect(() => {
-    if (blocker.state === "blocked") {
-      // 네비게이션을 일시 중지하고 모달 표시
-      pendingNavigationRef.current = () => {
-        blocker.proceed();
-      };
+    const currentPath = location.pathname;
+    const previousPath = previousPathRef.current;
+
+    // 경로가 변경되었고, 면접방 페이지가 아니고, 블로킹이 활성화되어 있으면
+    if (
+      currentPath !== previousPath &&
+      !currentPath.includes("/interview/room/") &&
+      shouldBlockRef.current &&
+      previousPath.includes("/interview/room/")
+    ) {
+      // 이전 경로로 되돌리고 모달 표시
+      navigate(previousPath, { replace: true });
+      pendingNavigationRef.current = currentPath;
       setShowLeaveRoomModal(true);
     }
-  }, [blocker]);
+
+    previousPathRef.current = currentPath;
+  }, [location.pathname, navigate]);
 
   // 브라우저 뒤로가기/앞으로가기 버튼 감지
   useEffect(() => {
@@ -83,6 +89,23 @@ export default function InterviewRoomPage() {
 
     return () => {
       window.removeEventListener("popstate", handlePopState);
+    };
+  }, []);
+
+  // 브라우저 닫기/새로고침 감지
+  useEffect(() => {
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (shouldBlockRef.current) {
+        event.preventDefault();
+        event.returnValue = ""; // Chrome에서 필요
+        return ""; // 일부 브라우저에서 필요
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
     };
   }, []);
 
@@ -127,9 +150,9 @@ export default function InterviewRoomPage() {
     setShowLeaveRoomModal(false);
     leaveRoom();
     
-    // 블로커를 통한 네비게이션이면 proceed 호출
+    // 대기 중인 네비게이션이 있으면 해당 경로로 이동
     if (pendingNavigationRef.current) {
-      pendingNavigationRef.current();
+      navigate(pendingNavigationRef.current);
       pendingNavigationRef.current = null;
     } else {
       // 일반 버튼 클릭이면 직접 네비게이션
@@ -140,10 +163,6 @@ export default function InterviewRoomPage() {
   const handleCancelLeaveRoom = () => {
     setShowLeaveRoomModal(false);
     pendingNavigationRef.current = null;
-    // 블로커가 활성화되어 있으면 reset
-    if (blocker.state === "blocked") {
-      blocker.reset();
-    }
   };
 
   const handleCloseCompletedModal = () => {
