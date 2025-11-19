@@ -11,58 +11,83 @@ import type {
 // 전역 WebSocket 클라이언트 인스턴스 (싱글톤)
 let globalClient: Client | null = null;
 let globalClientRefCount = 0;
+let globalConnectionState = false;
 const subscriptions = new Map<string, Subscription>();
+const connectionStateListeners = new Set<() => void>();
+
+// 전역 연결 상태 업데이트 함수
+function updateConnectionState(connected: boolean) {
+  globalConnectionState = connected;
+  connectionStateListeners.forEach((listener) => listener());
+}
+
+// WebSocket 연결 초기화 (한 번만 실행)
+function initializeWebSocket(config?: WebSocketConfig) {
+  if (globalClient) {
+    return; // 이미 연결되어 있음
+  }
+
+  const apiUrl =
+    config?.apiUrl || import.meta.env.VITE_API_URL || "http://localhost:8080";
+
+  const socket = new SockJS(`${apiUrl}/ws`);
+  globalClient = new Client({
+    webSocketFactory: () => socket,
+    reconnectDelay: config?.reconnectDelay || 5000,
+    heartbeatIncoming: config?.heartbeatIncoming || 4000,
+    heartbeatOutgoing: config?.heartbeatOutgoing || 4000,
+    onConnect: () => {
+      console.log("[WebSocket] 연결됨");
+      updateConnectionState(true);
+      config?.onConnect?.();
+    },
+    onStompError: (frame) => {
+      console.error("[WebSocket] STOMP 에러:", frame);
+      updateConnectionState(false);
+      config?.onError?.(frame);
+    },
+    onDisconnect: () => {
+      console.log("[WebSocket] 연결 해제됨");
+      updateConnectionState(false);
+      config?.onDisconnect?.();
+    },
+    onWebSocketClose: () => {
+      console.log("[WebSocket] WebSocket 닫힘");
+      updateConnectionState(false);
+    },
+  });
+
+  globalClient.activate();
+}
 
 export function useWebSocket(config?: WebSocketConfig) {
-  const [isConnected, setIsConnected] = useState(false);
+  const [isConnected, setIsConnected] = useState(globalConnectionState);
   const clientRef = useRef<Client | null>(null);
-  const configRef = useRef(config);
 
-  // config 업데이트
+  // 연결 상태 리스너 등록
   useEffect(() => {
-    configRef.current = config;
-  }, [config]);
+    const listener = () => {
+      setIsConnected(globalConnectionState);
+    };
+    connectionStateListeners.add(listener);
+    setIsConnected(globalConnectionState);
 
-  // WebSocket 연결
+    return () => {
+      connectionStateListeners.delete(listener);
+    };
+  }, []);
+
+  // WebSocket 연결 초기화 (한 번만)
   useEffect(() => {
     // enabled가 false이면 연결하지 않음
-    if (config?.enabled === false) {
+    const shouldConnect = config?.enabled !== false;
+    if (!shouldConnect) {
       return;
     }
 
-    const apiUrl =
-      config?.apiUrl || import.meta.env.VITE_API_URL || "http://localhost:8080";
-
-    // 전역 클라이언트가 없으면 생성
+    // 전역 클라이언트가 없으면 생성 (이미 연결되어 있으면 재연결하지 않음)
     if (!globalClient) {
-      const socket = new SockJS(`${apiUrl}/ws`);
-      globalClient = new Client({
-        webSocketFactory: () => socket,
-        reconnectDelay: config?.reconnectDelay || 5000,
-        heartbeatIncoming: config?.heartbeatIncoming || 4000,
-        heartbeatOutgoing: config?.heartbeatOutgoing || 4000,
-        onConnect: () => {
-          console.log("[WebSocket] 연결됨");
-          setIsConnected(true);
-          configRef.current?.onConnect?.();
-        },
-        onStompError: (frame) => {
-          console.error("[WebSocket] STOMP 에러:", frame);
-          setIsConnected(false);
-          configRef.current?.onError?.(frame);
-        },
-        onDisconnect: () => {
-          console.log("[WebSocket] 연결 해제됨");
-          setIsConnected(false);
-          configRef.current?.onDisconnect?.();
-        },
-        onWebSocketClose: () => {
-          console.log("[WebSocket] WebSocket 닫힘");
-          setIsConnected(false);
-        },
-      });
-
-      globalClient.activate();
+      initializeWebSocket(config);
     }
 
     globalClientRefCount++;
@@ -84,15 +109,12 @@ export function useWebSocket(config?: WebSocketConfig) {
 
         globalClient.deactivate();
         globalClient = null;
-        setIsConnected(false);
+        updateConnectionState(false);
       }
     };
-  }, [
-    config?.apiUrl,
-    config?.reconnectDelay,
-    config?.heartbeatIncoming,
-    config?.heartbeatOutgoing,
-  ]);
+    // config?.enabled가 변경되어도 연결은 한 번만 수행 (globalClient 체크로 보호)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [config?.enabled]);
 
   // 구독
   const subscribe = useCallback(

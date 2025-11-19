@@ -17,9 +17,8 @@ export function useChatWebSocket({
   onMessageReceived,
 }: UseChatWebSocketProps) {
   const queryClient = useQueryClient();
-  const { isConnected, subscribe, unsubscribe, publish } = useWebSocket({
-    enabled: enabled && !!currentUserId,
-  });
+  // WebSocket 연결은 전역에서 관리, 여기서는 구독/해제만 담당
+  const { isConnected, subscribe, unsubscribe, publish } = useWebSocket();
   const onMessageReceivedRef = useRef<((roomId: string) => void) | null>(null);
   // 이미 구독한 채팅방 목록 추적 (중복 구독 방지)
   const subscribedRoomsRef = useRef<Set<string>>(new Set());
@@ -32,7 +31,10 @@ export function useChatWebSocket({
 
   // 채팅방 구독 (연결 후 한 번만, 새로운 채팅방만 추가 구독)
   useEffect(() => {
-    if (!isConnected || !currentUserId || !enabled) return;
+    if (!isConnected || !currentUserId || !enabled) {
+      // enabled가 false이거나 연결되지 않았으면 구독하지 않음
+      return;
+    }
 
     // 개인 큐 구독 (한 번만)
     if (!userQueueSubscribedRef.current) {

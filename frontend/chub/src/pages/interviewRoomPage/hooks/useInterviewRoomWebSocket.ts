@@ -78,9 +78,8 @@ export function useInterviewRoomWebSocket({
   sendOfferWhenReadyRef,
   opponentInfoRef,
 }: UseInterviewRoomWebSocketProps) {
-  const { isConnected, subscribe, unsubscribe, publish } = useWebSocket({
-    enabled: enabled && !!userId && !!roomId,
-  });
+  // WebSocket 연결은 전역에서 관리, 여기서는 구독/해제만 담당
+  const { isConnected, subscribe, unsubscribe, publish } = useWebSocket();
 
   // publishRef 업데이트
   useEffect(() => {
@@ -89,7 +88,10 @@ export function useInterviewRoomWebSocket({
 
   // 면접방 WebSocket 구독 및 이벤트 처리
   useEffect(() => {
-    if (!isConnected || !userId) return;
+    if (!isConnected || !userId || !enabled) {
+      // enabled가 false이거나 연결되지 않았으면 구독하지 않음
+      return;
+    }
 
     // API 응답에서 받은 id를 사용, 없으면 roomId 사용 (fallback)
     const currentRoomId = interviewRoomId || roomId;

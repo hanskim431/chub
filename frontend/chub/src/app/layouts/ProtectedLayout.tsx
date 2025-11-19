@@ -39,7 +39,7 @@ function ProtectedLayout() {
     useChatWebSocket({
       currentUserId,
       chatRooms: chatRoomsForSubscription,
-      enabled: isAuthenticated, // 로그인 시 바로 연결 (채팅방이 없어도 연결)
+      enabled: isAuthenticated, // 구독 활성화 여부
     });
 
   useEffect(() => {
