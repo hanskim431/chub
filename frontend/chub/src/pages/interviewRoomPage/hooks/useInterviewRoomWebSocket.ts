@@ -647,18 +647,98 @@ export function useInterviewRoomWebSocket({
           }
           case "webrtc-ice": {
             // ICE candidate 수신
+            console.log(
+              "[WebRTC] ========== webrtc-ice 이벤트 수신 =========="
+            );
+            console.log("[WebRTC] 메시지 데이터:", wsMessage.data);
+            console.log("[WebRTC] 메시지 데이터 타입:", typeof wsMessage.data);
+
             try {
               const data = wsMessage.data as any;
-              if (pcRef.current && data.candidate) {
-                // 원격 ICE candidate 추가
-                await pcRef.current.addIceCandidate(
-                  new RTCIceCandidate(data.candidate)
+
+              // base64 인코딩된 문자열인지 확인 및 파싱
+              let parsedData = data;
+              if (typeof data === "string") {
+                try {
+                  // base64 인코딩된 문자열인지 확인
+                  let jsonString = data;
+                  if (/^[A-Za-z0-9+/=]+$/.test(data) && data.length > 20) {
+                    try {
+                      jsonString = atob(data);
+                      console.log("[WebRTC] ICE base64 디코딩 완료");
+                    } catch (base64Error) {
+                      console.log(
+                        "[WebRTC] ICE base64 디코딩 실패, 원본 문자열 사용"
+                      );
+                    }
+                  }
+                  parsedData = JSON.parse(jsonString);
+                  console.log(
+                    "[WebRTC] ICE 문자열 데이터 파싱 완료:",
+                    parsedData
+                  );
+                } catch (e) {
+                  console.error(
+                    "[WebRTC] ICE 데이터 파싱 실패:",
+                    e,
+                    "원본 데이터:",
+                    data?.substring(0, 100)
+                  );
+                  break;
+                }
+              } else {
+                console.log(
+                  "[WebRTC] ICE 데이터가 이미 객체입니다:",
+                  parsedData
                 );
-                console.log("[WebRTC] ICE candidate 추가됨");
-                callbacksRef.current.onWebRTCIce?.(data.candidate);
               }
+
+              // candidate가 직접 data에 있는지, 또는 data.candidate에 있는지 확인
+              let candidateData = parsedData?.candidate;
+
+              if (!pcRef.current) {
+                console.error("[WebRTC] pcRef.current가 null입니다.");
+                break;
+              }
+
+              if (!candidateData) {
+                console.error(
+                  "[WebRTC] ICE candidate 데이터를 찾을 수 없습니다:",
+                  {
+                    parsedData,
+                    hasCandidate: !!parsedData?.candidate,
+                  }
+                );
+                break;
+              }
+
+              console.log("[WebRTC] ========== ICE candidate 추가 ==========");
+              console.log("[WebRTC] PC 상태:", {
+                connectionState: pcRef.current.connectionState,
+                signalingState: pcRef.current.signalingState,
+                iceConnectionState: pcRef.current.iceConnectionState,
+              });
+              console.log("[WebRTC] Candidate 데이터:", candidateData);
+
+              // 원격 ICE candidate 추가
+              await pcRef.current.addIceCandidate(
+                new RTCIceCandidate(candidateData)
+              );
+              console.log(
+                "[WebRTC] ========== ICE candidate 추가 완료 =========="
+              );
+              console.log("[WebRTC] 추가 후 PC 상태:", {
+                connectionState: pcRef.current.connectionState,
+                signalingState: pcRef.current.signalingState,
+                iceConnectionState: pcRef.current.iceConnectionState,
+              });
+
+              callbacksRef.current.onWebRTCIce?.(candidateData);
             } catch (error) {
-              console.error("[WebRTC] ICE candidate 처리 실패:", error);
+              console.error(
+                "[WebRTC] ========== ICE candidate 처리 실패 =========="
+              );
+              console.error("[WebRTC] 에러:", error);
             }
             break;
           }
