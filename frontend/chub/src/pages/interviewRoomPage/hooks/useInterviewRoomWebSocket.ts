@@ -334,14 +334,29 @@ export function useInterviewRoomWebSocket({
               // data가 문자열이면 파싱
               if (typeof data === "string") {
                 try {
-                  parsedData = JSON.parse(data);
+                  // base64 인코딩된 문자열인지 확인 (일반적으로 base64는 알파벳, 숫자, +, /, =로 구성)
+                  let jsonString = data;
+                  if (/^[A-Za-z0-9+/=]+$/.test(data) && data.length > 20) {
+                    // base64로 보이는 경우 디코딩 시도
+                    try {
+                      jsonString = atob(data);
+                      console.log("[WebRTC] base64 디코딩 완료");
+                    } catch (base64Error) {
+                      // base64 디코딩 실패하면 그냥 원본 문자열 사용
+                      console.log(
+                        "[WebRTC] base64 디코딩 실패, 원본 문자열 사용"
+                      );
+                    }
+                  }
+
+                  parsedData = JSON.parse(jsonString);
                   console.log("[WebRTC] 문자열 데이터 파싱 완료:", parsedData);
                 } catch (e) {
                   console.error(
                     "[WebRTC] 문자열 데이터 파싱 실패:",
                     e,
                     "원본 데이터:",
-                    data
+                    data?.substring(0, 100)
                   );
                   callbacksRef.current.onError?.(
                     "Offer 데이터 파싱에 실패했습니다."
