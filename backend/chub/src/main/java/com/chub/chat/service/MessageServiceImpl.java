@@ -30,6 +30,7 @@ import java.util.stream.Collectors;
 @Service
 public class MessageServiceImpl implements MessageService {
 
+    private static final String QUEUE_DESTINATION = "/chat";
     private static final String ROOM_DESTINATION = "/chat/rooms/";
     private static final String MESSAGE_RECEIVED = "message.received";
     private static final String READ_RECEIPT = "read.receipt";
@@ -128,7 +129,7 @@ public class MessageServiceImpl implements MessageService {
         List<Long> recipientIds = chatRoomService.getParticipantsByRoomIdsExcludeSender(roomId, senderId);
 
         recipientIds.forEach(receiverId ->
-                webSocketHelper.sendPersonalMessage(receiverId, MESSAGE_RECEIVED, response)
+                webSocketHelper.sendPersonalMessage(receiverId, QUEUE_DESTINATION, MESSAGE_RECEIVED, response)
         );
 
         webSocketHelper.broadcastMessage(ROOM_DESTINATION + roomId, MESSAGE_RECEIVED, response);
