@@ -65,6 +65,10 @@ public class InterviewRoomManager {
         roomState.changeStatus(newStatus);
     }
 
+    public RoomStatus getRoomStatus(Long interviewRequestId) {
+        return interviewRoomInfo.get(interviewRequestId).getStatus();
+    }
+
     public String getNickname(Long userId) {
         Long interviewRequestId = ofNullable(joinedRoom.get(userId))
                 .orElseThrow(InterviewRequestException::notFound);
