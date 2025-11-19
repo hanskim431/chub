@@ -293,23 +293,18 @@ export function useInterviewRoomWebSocket({
           }
           case "answer": {
             // 면접자의 답변 (STT 변환 완료)
-            const answerData = wsMessage.data as { answer: string };
-            callbacksRef.current.onAnswer?.(answerData.answer);
+            // chat-received 이벤트로만 채팅에 표시되므로 여기서는 처리하지 않음
+            console.log("[WebSocket] answer 이벤트 수신 (채팅에는 chat-received로만 표시):", wsMessage);
             break;
           }
           case "question": {
             // 면접관의 질문 (STT 변환 완료)
-            console.log("[WebSocket] 질문 이벤트 수신:", wsMessage);
+            // chat-received 이벤트로만 채팅에 표시되므로 여기서는 currentQuestion만 업데이트
+            console.log("[WebSocket] question 이벤트 수신 (채팅에는 chat-received로만 표시):", wsMessage);
             const questionData = wsMessage.data as { question: string };
-            console.log("[WebSocket] 질문 데이터:", questionData);
             if (questionData?.question) {
-              console.log("[WebSocket] 질문 콜백 호출:", questionData.question);
+              // currentQuestion 상태만 업데이트 (채팅 메시지는 chat-received로만 추가)
               callbacksRef.current.onQuestion?.(questionData.question);
-            } else {
-              console.warn(
-                "[WebSocket] 질문 데이터가 올바르지 않습니다:",
-                questionData
-              );
             }
             break;
           }

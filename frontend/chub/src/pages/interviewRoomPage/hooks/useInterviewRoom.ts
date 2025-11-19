@@ -733,8 +733,8 @@ export function useInterviewRoom(roomId: string) {
               await submitAnswer(audioBlob);
             }
           } catch (err) {
+            // 음성 제출 실패 시 에러 화면 표시하지 않고 로그만 남김
             console.error("음성 제출 실패:", err);
-            setError("음성 제출에 실패했습니다.");
           }
         };
 
