@@ -194,7 +194,7 @@ public class InterviewHttpController {
     @GetMapping("/records")
     public ResponseEntity<PageResponse<InterviewRecordListResponse>> getInterviewRecords(
             @LoginUser Long userId,
-            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int limit) {
 
         try {

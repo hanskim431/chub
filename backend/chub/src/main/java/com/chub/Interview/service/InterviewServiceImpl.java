@@ -294,7 +294,7 @@ public class InterviewServiceImpl implements InterviewService {
     @Override
     public Page<InterviewRecordListItemDto> getInterviewRecords(Long userId, int page, int size) {
 
-        Pageable pageable = PageRequest.of(page - 1, size);
+        Pageable pageable = PageRequest.of(page, size);
 
         Page<Interview> interviewPage = interviewRepository.findByUserIdWithPaging(userId, pageable);
 
