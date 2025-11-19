@@ -206,14 +206,11 @@ export function useInterviewRoomWebSocket({
 
             // user-joined 이벤트를 받은 사람(먼저 방에 들어온 사람)이 offer를 보냄
             if (opponentInfoRef.current && !offerSentRef.current) {
-              console.log(
-                "[WebRTC] user-joined 이벤트 수신, offer 전송 시작",
-                {
-                  opponentId: opponentInfoRef.current.id,
-                  currentUserId: userId,
-                  offerAlreadySent: offerSentRef.current,
-                }
-              );
+              console.log("[WebRTC] user-joined 이벤트 수신, offer 전송 시작", {
+                opponentId: opponentInfoRef.current.id,
+                currentUserId: userId,
+                offerAlreadySent: offerSentRef.current,
+              });
               if (sendOfferWhenReadyRef.current) {
                 // 약간의 지연을 두어 로컬 스트림이 완전히 준비되도록 함
                 setTimeout(() => {
@@ -301,46 +298,99 @@ export function useInterviewRoomWebSocket({
           }
           case "webrtc-offer": {
             // Offer 수신 (상대방이 offer를 보냈을 때)
+            console.log("[WebRTC] webrtc-offer 이벤트 수신:", wsMessage);
             try {
               const data = wsMessage.data as any;
-              if (pcRef.current && data.offer) {
-                console.log("[WebRTC] Offer 수신, Answer 생성 중...");
-                // 원격 offer 설정
-                await pcRef.current.setRemoteDescription(
-                  new RTCSessionDescription(data.offer)
+              console.log("[WebRTC] Offer 데이터:", {
+                hasPc: !!pcRef.current,
+                hasOffer: !!data?.offer,
+                data: data,
+                userId: userId,
+                hasPublishRef: !!publishRefForHook.current,
+              });
+
+              if (!pcRef.current) {
+                console.error(
+                  "[WebRTC] pcRef.current가 null입니다. WebRTC가 초기화되지 않았습니다."
                 );
-
-                // Answer 생성 및 전송
-                const answer = await pcRef.current.createAnswer();
-                await pcRef.current.setLocalDescription(answer);
-
-                if (publishRefForHook.current) {
-                  const success = publishRefForHook.current(
-                    `/app/webrtc/answer`,
-                    JSON.stringify({
-                      answer: {
-                        type: answer.type,
-                        sdp: answer.sdp,
-                      },
-                      userId,
-                    })
-                  );
-                  if (success) {
-                    console.log("[WebRTC] Answer 전송 완료:", {
-                      destination: `/app/webrtc/answer`,
-                      userId,
-                    });
-                  } else {
-                    console.error("[WebRTC] Answer 전송 실패");
-                  }
-                } else {
-                  console.error("[WebRTC] publishRefForHook.current가 null입니다.");
-                }
-                callbacksRef.current.onWebRTCOffer?.(data.offer);
+                callbacksRef.current.onError?.(
+                  "WebRTC 연결이 초기화되지 않았습니다."
+                );
+                break;
               }
+
+              if (!data?.offer) {
+                console.error("[WebRTC] data.offer가 없습니다:", data);
+                callbacksRef.current.onError?.("Offer 데이터가 없습니다.");
+                break;
+              }
+
+              if (!userId) {
+                console.error("[WebRTC] userId가 없습니다.");
+                callbacksRef.current.onError?.("사용자 ID가 없습니다.");
+                break;
+              }
+
+              console.log("[WebRTC] Offer 수신, Answer 생성 중...");
+              // 원격 offer 설정
+              await pcRef.current.setRemoteDescription(
+                new RTCSessionDescription(data.offer)
+              );
+              console.log("[WebRTC] Remote description 설정 완료");
+
+              // Answer 생성 및 전송
+              const answer = await pcRef.current.createAnswer();
+              console.log("[WebRTC] Answer 생성 완료:", answer.type);
+              await pcRef.current.setLocalDescription(answer);
+              console.log("[WebRTC] Local description 설정 완료");
+
+              if (!publishRefForHook.current) {
+                console.error(
+                  "[WebRTC] publishRefForHook.current가 null입니다."
+                );
+                callbacksRef.current.onError?.(
+                  "WebSocket publish 함수가 없습니다."
+                );
+                break;
+              }
+
+              const answerPayload = {
+                answer: {
+                  type: answer.type,
+                  sdp: answer.sdp,
+                },
+                userId,
+              };
+
+              console.log("[WebRTC] Answer 전송 시도:", {
+                destination: `/app/webrtc/answer`,
+                payload: answerPayload,
+              });
+
+              const success = publishRefForHook.current(
+                `/app/webrtc/answer`,
+                JSON.stringify(answerPayload)
+              );
+
+              if (success) {
+                console.log("[WebRTC] Answer 전송 완료:", {
+                  destination: `/app/webrtc/answer`,
+                  userId,
+                  answerType: answer.type,
+                });
+              } else {
+                console.error(
+                  "[WebRTC] Answer 전송 실패 - publish 함수가 false를 반환했습니다."
+                );
+                callbacksRef.current.onError?.("Answer 전송에 실패했습니다.");
+              }
+
+              callbacksRef.current.onWebRTCOffer?.(data.offer);
             } catch (error) {
               console.error("[WebRTC] Offer 처리 실패:", error);
-              callbacksRef.current.onError?.("WebRTC 연결 설정에 실패했습니다.");
+              callbacksRef.current.onError?.(
+                "WebRTC 연결 설정에 실패했습니다."
+              );
             }
             break;
           }
@@ -358,7 +408,9 @@ export function useInterviewRoomWebSocket({
               }
             } catch (error) {
               console.error("[WebRTC] Answer 처리 실패:", error);
-              callbacksRef.current.onError?.("WebRTC 연결 설정에 실패했습니다.");
+              callbacksRef.current.onError?.(
+                "WebRTC 연결 설정에 실패했습니다."
+              );
             }
             break;
           }
@@ -409,4 +461,3 @@ export function useInterviewRoomWebSocket({
     publish,
   };
 }
-
