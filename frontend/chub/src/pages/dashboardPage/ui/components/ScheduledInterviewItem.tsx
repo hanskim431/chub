@@ -20,7 +20,7 @@ export function ScheduledInterviewItem({
   const handleStartInterview = () => {
     // 면접방 ID는 roomId를 사용 (WebSocket 명세상 interviewRequestId)
     // roomId가 있으면 사용하고, 없으면 id 사용
-    const roomId = interview.roomId || interview.roomID || interview.id;
+    const roomId = interview.id;
     if (!roomId) {
       console.error("면접방 ID를 찾을 수 없습니다:", interview);
       alert("면접방 정보를 불러올 수 없습니다.");
