@@ -11,6 +11,8 @@ public class DashboardStatsDto {
 
     private long receivedRequests;
     private long sentRequests;
-    private long scheduledInterviews;
-    private long completedInterviews;
+    private long scheduledInterviewsAsInterviewer;
+    private long scheduledInterviewsAsInterviewee;
+    private long completedInterviewsAsInterviewer;
+    private long completedInterviewsAsInterviewee;
 }

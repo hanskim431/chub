@@ -98,4 +98,29 @@ public interface InterviewRequestRepository extends JpaRepository<InterviewReque
             @Param("status") String status,
             Pageable pageable
     );
+
+    /**
+     * 특정 상태의 면접 개수 조회: 내가 신청자이거나 면접관인 경우
+     * (interviewerProfile.user.id로 비교)
+     */
+    @Query("SELECT COUNT(ir) FROM InterviewRequest ir " +
+           "LEFT JOIN ir.interviewerProfile ip " +
+           "WHERE ir.status = :status " +
+           "AND (ir.user.id = :userId OR ip.user.id = :userId)")
+    long countByUserIdOrInterviewerUserIdAndStatus(
+            @Param("userId") Long userId,
+            @Param("status") String status
+    );
+
+    /**
+     * 면접관 프로필의 소유자 ID로 받은 요청 개수 조회
+     * (interviewerProfile.user.id로 비교)
+     */
+    @Query("SELECT COUNT(ir) FROM InterviewRequest ir " +
+           "LEFT JOIN ir.interviewerProfile ip " +
+           "WHERE ip.user.id = :userId AND ir.status = :status")
+    long countByInterviewerUserIdAndStatus(
+            @Param("userId") Long userId,
+            @Param("status") String status
+    );
 }

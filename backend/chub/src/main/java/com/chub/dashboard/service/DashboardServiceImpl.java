@@ -18,20 +18,24 @@ public class DashboardServiceImpl implements DashboardService {
     @Override
     public DashboardStatsDto getDashboardStats(Long userId) {
 
-        long receivedRequests = interviewRequestRepository.countByInterviewerProfileIdAndStatus(userId, PENDING);
+        long receivedRequests = interviewRequestRepository.countByInterviewerUserIdAndStatus(userId, PENDING);
         long sentRequests = interviewRequestRepository.countByUserIdAndStatus(userId, PENDING);
-        long scheduledInterviews = interviewRequestRepository.countByUserIdAndStatusOrInterviewerProfileIdAndStatus(
-                userId, APPROVED, userId, APPROVED
-        );
-        long completedInterviews = interviewRequestRepository.countByUserIdAndStatusOrInterviewerProfileIdAndStatus(
-                userId, COMPLETED, userId, COMPLETED
-        );
+
+        // 예정된 면접: 면접관으로서 / 면접자로서 구분
+        long scheduledInterviewsAsInterviewer = interviewRequestRepository.countByInterviewerUserIdAndStatus(userId, APPROVED);
+        long scheduledInterviewsAsInterviewee = interviewRequestRepository.countByUserIdAndStatus(userId, APPROVED);
+
+        // 완료된 면접: 면접관으로서 / 면접자로서 구분
+        long completedInterviewsAsInterviewer = interviewRequestRepository.countByInterviewerUserIdAndStatus(userId, COMPLETED);
+        long completedInterviewsAsInterviewee = interviewRequestRepository.countByUserIdAndStatus(userId, COMPLETED);
 
         return DashboardStatsDto.builder()
                 .receivedRequests(receivedRequests)
                 .sentRequests(sentRequests)
-                .scheduledInterviews(scheduledInterviews)
-                .completedInterviews(completedInterviews)
+                .scheduledInterviewsAsInterviewer(scheduledInterviewsAsInterviewer)
+                .scheduledInterviewsAsInterviewee(scheduledInterviewsAsInterviewee)
+                .completedInterviewsAsInterviewer(completedInterviewsAsInterviewer)
+                .completedInterviewsAsInterviewee(completedInterviewsAsInterviewee)
                 .build();
     }
 }
