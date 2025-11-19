@@ -66,4 +66,13 @@ public class Interview extends BaseEntity {
         this.status = "CANCELLED";
     }
 
+    // 더미 데이터 생성용 메서드 (개발/테스트 전용)
+    public void forceSetStartedAt(LocalDateTime startedAt) {
+        this.startedAt = startedAt;
+    }
+
+    public void forceSetEndedAt(LocalDateTime endedAt) {
+        this.endedAt = endedAt;
+    }
+
 }

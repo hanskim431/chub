@@ -27,4 +27,7 @@ public interface InterviewerProfileRepository extends JpaRepository<InterviewerP
 
     // field 필터링 + isActive=true + 자기 자신 제외
     Page<InterviewerProfile> findByFieldContainingAndIsActiveTrueAndUserIdNot(String field, Long userId, Pageable pageable);
+
+    // 더미 데이터용: sub가 특정 문자열로 시작하는 활성화된 면접관 조회
+    java.util.List<InterviewerProfile> findByUser_SubStartingWithAndIsActiveTrue(String subPrefix);
 }

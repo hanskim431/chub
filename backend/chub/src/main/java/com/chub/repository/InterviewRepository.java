@@ -35,4 +35,9 @@ public interface InterviewRepository extends JpaRepository<Interview, Long> {
            "WHERE ip.user.id = :userId OR r.user.id = :userId " +
            "ORDER BY i.endedAt DESC")
     Page<Interview> findByUserIdWithPaging(@Param("userId") Long userId, Pageable pageable);
+
+    /**
+     * 더미 데이터용: 면접관의 User.sub가 특정 문자열로 시작하는 면접 조회
+     */
+    List<Interview> findByInterviewerProfile_User_SubStartingWith(String subPrefix);
 }
