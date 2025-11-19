@@ -180,12 +180,25 @@ export const updateInterviewRequestStatus = async (
   }
 };
 
-// 완료된 면접 기록 응답 타입 (InterviewRequest와 동일한 구조로 가정)
+// 완료된 면접 기록 타입
+export interface InterviewRecord {
+  id: number;
+  opponent: {
+    id: number;
+    name: string;
+    avatar: string | null;
+  };
+  role: "interviewer" | "interviewee";
+  date: string;
+  duration: number; // 초 단위
+}
+
+// 완료된 면접 기록 응답 타입
 export interface InterviewRecordsResponse {
   success: boolean;
   status: string;
   data: {
-    interviewRequests: InterviewRequest[];
+    records: InterviewRecord[];
   };
   pageInfo?: PageInfo;
   timestamp: string;

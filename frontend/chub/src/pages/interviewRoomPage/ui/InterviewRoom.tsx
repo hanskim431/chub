@@ -184,10 +184,7 @@ export function InterviewRoom({
             tailQuestions.length > 0 &&
             (interviewStatus === "ANSWER" ||
               interviewStatus === "QUESTION") && (
-              <div className="px-6 py-4 bg-gray-800 border-b border-gray-700">
-                <h3 className="text-white font-semibold mb-3 text-lg">
-                  다음 질문 선택지
-                </h3>
+              <div className="px-6 py-3 bg-gray-800 border-b border-gray-700 flex-shrink-0">
                 <div className="flex flex-wrap gap-2">
                   {tailQuestions.map((question, index) => (
                     <div
@@ -201,7 +198,141 @@ export function InterviewRoom({
               </div>
             )}
 
-          <div className="flex-1 flex items-center justify-center p-4 gap-4 min-w-0">
+          <div className="flex-1 flex items-center justify-center p-4 gap-4 min-w-0 min-h-0 overflow-hidden relative">
+            {/* 면접 관련 버튼 (비디오 위에 absolute로 배치) */}
+            <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-10">
+              {/* 준비 상태: 면접관에게만 시작하기 버튼 표시 */}
+              {interviewStatus === "READY" && userRole === "INTERVIEWER" && (
+                <button
+                  onClick={onStartInterview}
+                  disabled={!isConnected || !localStream || !remoteStream}
+                  className="px-8 py-4 bg-green-600 hover:bg-green-700 text-white rounded-full font-semibold text-lg transition-all disabled:bg-gray-600 disabled:cursor-not-allowed flex items-center gap-2 shadow-lg"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-6 w-6"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  <span>면접 시작하기</span>
+                </button>
+              )}
+
+              {/* 질문 단계: 면접관에게만 녹음 버튼 표시 */}
+              {interviewStatus === "QUESTION" && userRole === "INTERVIEWER" && (
+                <button
+                  onClick={onToggleRecording}
+                  disabled={!isConnected}
+                  className={`px-6 py-3 rounded-full font-semibold transition-all shadow-lg ${
+                    isRecording
+                      ? "bg-red-600 hover:bg-red-700 text-white animate-pulse"
+                      : "bg-blue-600 hover:bg-blue-700 text-white disabled:bg-gray-600 disabled:cursor-not-allowed"
+                  }`}
+                >
+                  {isRecording ? (
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 bg-white rounded-full"></div>
+                      <span>녹음 종료하기</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-5 w-5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
+                        />
+                      </svg>
+                      <span>질문 녹음하기</span>
+                    </div>
+                  )}
+                </button>
+              )}
+
+              {/* 답변 단계: 면접자에게만 녹음 버튼 표시 */}
+              {interviewStatus === "ANSWER" && userRole === "INTERVIEWEE" && (
+                <button
+                  onClick={onToggleRecording}
+                  disabled={!isConnected}
+                  className={`px-6 py-3 rounded-full font-semibold transition-all shadow-lg ${
+                    isRecording
+                      ? "bg-red-600 hover:bg-red-700 text-white animate-pulse"
+                      : "bg-blue-600 hover:bg-blue-700 text-white disabled:bg-gray-600 disabled:cursor-not-allowed"
+                  }`}
+                >
+                  {isRecording ? (
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 bg-white rounded-full"></div>
+                      <span>녹음 종료하기</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-5 w-5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
+                        />
+                      </svg>
+                      <span>답변 녹음하기</span>
+                    </div>
+                  )}
+                </button>
+              )}
+
+              {/* 종료 단계: 면접 종료하기 버튼 */}
+              {interviewStatus === "COMPLETED" && (
+                <button
+                  onClick={onEndInterview}
+                  className="px-8 py-4 bg-red-600 hover:bg-red-700 text-white rounded-full font-semibold text-lg transition-all flex items-center gap-2 shadow-lg"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-6 w-6"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                  <span>면접 종료하기</span>
+                </button>
+              )}
+            </div>
+
             {/* 원격 비디오 (면접관) */}
             <div className="flex-1 h-full min-w-0 relative flex items-center justify-center">
               <div className="w-full h-full max-w-full max-h-full">
@@ -215,7 +346,7 @@ export function InterviewRoom({
               {/* 상대방 음성 on/off 버튼 */}
               <button
                 onClick={onToggleRemoteAudio}
-                className={`absolute top-4 right-4 p-3 rounded-full shadow-lg transition-all ${
+                className={`absolute top-4 right-4 p-3 rounded-full shadow-lg transition-all z-10 ${
                   isRemoteAudioEnabled
                     ? "bg-blue-600 hover:bg-blue-700 text-white"
                     : "bg-red-600 hover:bg-red-700 text-white"
@@ -321,148 +452,6 @@ export function InterviewRoom({
                 )}
               </button>
             </div>
-          </div>
-
-          {/* 하단 버튼 영역 */}
-          <div className="p-4 bg-gray-800 border-t border-gray-700">
-            {/* 준비 상태: 면접관에게만 시작하기 버튼 표시 (항상 표시, WebRTC 연결 시 활성화) */}
-            {interviewStatus === "READY" && userRole === "INTERVIEWER" && (
-              <div className="flex justify-center">
-                <button
-                  onClick={onStartInterview}
-                  disabled={!isConnected || !localStream || !remoteStream}
-                  className="px-8 py-4 bg-green-600 hover:bg-green-700 text-white rounded-full font-semibold text-lg transition-all disabled:bg-gray-600 disabled:cursor-not-allowed flex items-center gap-2"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-6 w-6"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
-                    />
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                  <span>면접 시작하기</span>
-                </button>
-              </div>
-            )}
-
-            {/* 질문 단계: 면접관에게만 녹음 버튼 표시 */}
-            {interviewStatus === "QUESTION" && userRole === "INTERVIEWER" && (
-              <div className="flex justify-center mb-4">
-                <button
-                  onClick={onToggleRecording}
-                  disabled={!isConnected}
-                  className={`px-6 py-3 rounded-full font-semibold transition-all ${
-                    isRecording
-                      ? "bg-red-600 hover:bg-red-700 text-white animate-pulse"
-                      : "bg-blue-600 hover:bg-blue-700 text-white disabled:bg-gray-600 disabled:cursor-not-allowed"
-                  }`}
-                >
-                  {isRecording ? (
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 bg-white rounded-full"></div>
-                      <span>녹음 종료하기</span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-5 w-5"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
-                        />
-                      </svg>
-                      <span>질문 녹음하기</span>
-                    </div>
-                  )}
-                </button>
-              </div>
-            )}
-
-            {/* 답변 단계: 면접자에게만 녹음 버튼 표시 */}
-            {interviewStatus === "ANSWER" && userRole === "INTERVIEWEE" && (
-              <div className="flex justify-center">
-                <button
-                  onClick={onToggleRecording}
-                  disabled={!isConnected}
-                  className={`px-6 py-3 rounded-full font-semibold transition-all ${
-                    isRecording
-                      ? "bg-red-600 hover:bg-red-700 text-white animate-pulse"
-                      : "bg-blue-600 hover:bg-blue-700 text-white disabled:bg-gray-600 disabled:cursor-not-allowed"
-                  }`}
-                >
-                  {isRecording ? (
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 bg-white rounded-full"></div>
-                      <span>녹음 종료하기</span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-5 w-5"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
-                        />
-                      </svg>
-                      <span>답변 녹음하기</span>
-                    </div>
-                  )}
-                </button>
-              </div>
-            )}
-
-            {/* 종료 단계: 면접 종료하기 버튼 */}
-            {interviewStatus === "COMPLETED" && (
-              <div className="flex justify-center">
-                <button
-                  onClick={onEndInterview}
-                  className="px-8 py-4 bg-red-600 hover:bg-red-700 text-white rounded-full font-semibold text-lg transition-all flex items-center gap-2"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-6 w-6"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                  <span>면접 종료하기</span>
-                </button>
-              </div>
-            )}
           </div>
         </div>
       </div>

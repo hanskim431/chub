@@ -1,27 +1,46 @@
 import { useNavigate } from "react-router-dom";
 import Card from "@/shared/ui/Card";
-import type { InterviewRequest } from "@/pages/dashboardPage/api/interviewRequests";
+import type { InterviewRecord } from "@/pages/dashboardPage/api/interviewRequests";
 import type { Role, TabId } from "@/pages/dashboardPage/ui/types";
 
 interface CompletedInterviewRequestItemProps {
-    request: InterviewRequest;
+    record: InterviewRecord;
     role: Role;
     activeTab: TabId;
 }
 
 export function CompletedInterviewRequestItem({
-    request,
+    record,
     role,
     activeTab,
 }: CompletedInterviewRequestItemProps) {
     const navigate = useNavigate();
 
-    const opponentName = request.interviewer.name;
-    const opponentField = request.interviewer.field;
-    const opponentAvatar = request.interviewer.avatar;
+    const opponentName = record.opponent.name;
+    const opponentAvatar = record.opponent.avatar || "/default-avatar.png";
+    
+    // duration을 분:초 형식으로 변환
+    const formatDuration = (seconds: number) => {
+        const minutes = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${minutes}분 ${secs}초`;
+    };
+    
+    // date를 한국 시간으로 변환
+    const formatDate = (dateString: string) => {
+        const date = new Date(dateString);
+        return date.toLocaleString("ko-KR", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+            timeZone: "Asia/Seoul",
+        });
+    };
 
     const handleClick = () => {
-        navigate(`/interviews/records/${request.id}`, {
+        navigate(`/interviews/records/${record.id}`, {
             state: { role, activeTab },
         });
     };
@@ -49,10 +68,10 @@ export function CompletedInterviewRequestItem({
                                 {opponentName}
                             </h3>
                             <p className="text-sm text-text-gray mb-2">
-                                {opponentField}
+                                {formatDate(record.date)}
                             </p>
-                            <p className="text-sm text-text-black line-clamp-2">
-                                {request.requestMessage}
+                            <p className="text-sm text-text-black">
+                                면접 시간: {formatDuration(record.duration)}
                             </p>
                         </div>
                     </div>
