@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
@@ -13,6 +14,7 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class SttClient {
@@ -32,6 +34,7 @@ public class SttClient {
             Request request = buildRequest(requestBody);
             return executeTranscriptionRequest(request);
         } catch (Exception e) {
+            log.error(e.getMessage());
             //throw AudioProcessingException.audioTranscriptionFailed();
             return "";
         }
