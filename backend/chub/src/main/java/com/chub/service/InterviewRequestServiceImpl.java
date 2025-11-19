@@ -196,7 +196,6 @@ public class InterviewRequestServiceImpl implements InterviewRequestService {
                 })
                 .collect(Collectors.toList());
 
-        // Wrapper로 감싸기
         ScheduledInterviewListData data = ScheduledInterviewListData.of(interviews);
 
         // PageInfo 생성
