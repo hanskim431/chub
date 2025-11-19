@@ -344,42 +344,8 @@ export function useInterviewRoom(roomId: string) {
               break;
             }
             case "user-left": {
-              // 사용자 퇴장 알림
-              const leaveData = wsMessage.data as {
-                userId?: number;
-                userName?: string;
-              };
-              const leftUserId = leaveData?.userId;
-              const leftUserName = leaveData?.userName;
-
-              // 퇴장한 사용자 이름 표시 (ID 노출 방지)
-              let userName = "사용자";
-              if (leftUserName) {
-                userName = leftUserName;
-              } else if (leftUserId === userId) {
-                // 자신이 퇴장한 경우
-                userName = "나";
-              } else if (
-                opponentInfoRef.current &&
-                leftUserId === opponentInfoRef.current.id
-              ) {
-                // 상대방이 퇴장한 경우
-                userName = opponentInfoRef.current.name;
-              }
-
-              setMessages((prev) => [
-                ...prev,
-                {
-                  id: Date.now().toString() + Math.random(),
-                  senderId: null,
-                  senderName: null,
-                  receiverId: null,
-                  receiverNickname: null,
-                  content: `${userName}님이 퇴장했습니다.`,
-                  timestamp: wsMessage.timestamp,
-                  type: "SYSTEM",
-                },
-              ]);
+              // 사용자 퇴장 알림 (채팅 메시지로 표시하지 않음)
+              console.log("[Interview] 사용자 퇴장:", wsMessage.data);
               break;
             }
             case "answer": {
