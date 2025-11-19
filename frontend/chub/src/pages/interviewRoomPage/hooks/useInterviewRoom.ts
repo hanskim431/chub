@@ -167,12 +167,28 @@ export function useInterviewRoom(roomId: string) {
 
       // 원격 스트림 처리
       pc.ontrack = (event) => {
-        setRemoteStream(event.streams[0]);
+        console.log("[WebRTC] ========== ontrack 이벤트 발생 ==========");
+        console.log("[WebRTC] 원격 스트림 수신:", {
+          streams: event.streams,
+          track: event.track,
+          trackKind: event.track.kind,
+          trackId: event.track.id,
+          trackReadyState: event.track.readyState,
+        });
+        if (event.streams && event.streams.length > 0) {
+          setRemoteStream(event.streams[0]);
+          console.log("[WebRTC] 원격 스트림 설정 완료:", event.streams[0]);
+        }
       };
 
       // ICE candidate 처리
       pc.onicecandidate = (event) => {
         if (event.candidate && publishRef.current) {
+          console.log("[WebRTC] ICE candidate 생성:", {
+            candidate: event.candidate.candidate,
+            sdpMLineIndex: event.candidate.sdpMLineIndex,
+            sdpMid: event.candidate.sdpMid,
+          });
           // ICE candidate를 WebSocket을 통해 전송
           publishRef.current(
             `/app/webrtc/ice`,
@@ -181,15 +197,22 @@ export function useInterviewRoom(roomId: string) {
               userId,
             })
           );
+          console.log("[WebRTC] ICE candidate 전송 완료");
         } else if (!event.candidate) {
           // 모든 ICE candidate 수집 완료
-          console.log("ICE candidate 수집 완료");
+          console.log("[WebRTC] ========== ICE candidate 수집 완료 ==========");
         }
       };
 
       // ICE connection state 변경 처리 (WebRTC는 별도로 관리, 채팅은 WebSocket 연결 상태 사용)
       pc.oniceconnectionstatechange = () => {
+        console.log("[WebRTC] ========== ICE connection state 변경 ==========");
         console.log("[WebRTC] ICE connection state:", pc.iceConnectionState);
+        console.log("[WebRTC] PC 상태:", {
+          connectionState: pc.connectionState,
+          signalingState: pc.signalingState,
+          iceConnectionState: pc.iceConnectionState,
+        });
         // WebSocket 연결 상태는 별도로 관리하므로 여기서는 isConnected를 변경하지 않음
       };
 
@@ -197,7 +220,13 @@ export function useInterviewRoom(roomId: string) {
       // WebRTC 연결 상태는 비디오/오디오 스트림에만 영향을 주고,
       // 채팅은 WebSocket 연결 상태를 사용하므로 여기서는 로그만 남김
       pc.onconnectionstatechange = () => {
-        console.log("[WebRTC] 연결 상태 변경:", pc.connectionState);
+        console.log("[WebRTC] ========== 연결 상태 변경 ==========");
+        console.log("[WebRTC] connection state:", pc.connectionState);
+        console.log("[WebRTC] PC 상태:", {
+          connectionState: pc.connectionState,
+          signalingState: pc.signalingState,
+          iceConnectionState: pc.iceConnectionState,
+        });
         // WebSocket 연결 상태는 별도로 관리하므로 여기서는 isConnected를 변경하지 않음
       };
 
