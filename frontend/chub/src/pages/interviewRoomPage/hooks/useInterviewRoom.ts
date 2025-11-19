@@ -264,42 +264,13 @@ export function useInterviewRoom(roomId: string) {
               break;
             }
             case "user-joined": {
-              // 사용자 입장 알림
+              // 사용자 입장 알림 (채팅 메시지로 표시하지 않음)
               const joinData = wsMessage.data as {
                 userId?: number;
                 userName?: string;
               };
               const joinedUserId = joinData?.userId;
-              const joinedUserName = joinData?.userName;
-
-              // 입장한 사용자 이름 표시 (ID 노출 방지)
-              let userName = "사용자";
-              if (joinedUserName) {
-                userName = joinedUserName;
-              } else if (joinedUserId === userId) {
-                // 자신이 입장한 경우
-                userName = "나";
-              } else if (
-                opponentInfoRef.current &&
-                joinedUserId === opponentInfoRef.current.id
-              ) {
-                // 상대방이 입장한 경우
-                userName = opponentInfoRef.current.name;
-              }
-
-              setMessages((prev) => [
-                ...prev,
-                {
-                  id: Date.now().toString() + Math.random(),
-                  senderId: null,
-                  senderName: null,
-                  receiverId: null,
-                  receiverNickname: null,
-                  content: `${userName}님이 입장했습니다.`,
-                  timestamp: wsMessage.timestamp,
-                  type: "SYSTEM",
-                },
-              ]);
+              console.log("[Interview] 사용자 입장:", joinData);
 
               // user-joined 이벤트를 받은 사람이 offer를 보냄
               // (자신이 보낸 이벤트가 아닌 경우에만, 즉 이미 방에 있던 사람이 새로 입장한 사람에게 offer를 보냄)
