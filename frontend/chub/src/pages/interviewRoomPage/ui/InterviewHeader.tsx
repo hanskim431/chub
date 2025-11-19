@@ -84,15 +84,9 @@ export function InterviewHeader({
           <div className="text-sm font-semibold text-blue-700 whitespace-nowrap">
             현재 질문:
           </div>
-          <div className="flex-1 text-gray-800 min-h-[1.25rem]">
+          <div className="flex-1 text-gray-800 min-h-5">
             {currentQuestion || (
-              <span className="text-gray-400 italic">
-                {interviewStatus === "QUESTION"
-                  ? "면접관이 질문을 녹음 중입니다..."
-                  : interviewStatus === "ANSWER"
-                  ? "면접자가 답변 중입니다..."
-                  : "질문 대기 중..."}
-              </span>
+              <span className="text-gray-400 italic">질문 준비중</span>
             )}
           </div>
         </div>
