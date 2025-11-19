@@ -111,6 +111,10 @@ public class MessageServiceImpl implements MessageService {
 
         ChatRoom.ParticipantInfo opponentInfo = participants.get(opponentId);
 
+        if (opponentInfo.getLastReadAt() == null) {
+            opponentInfo.setLastReadAt(LocalDateTime.of(2000, 1, 1, 0, 0));
+        }
+
         return OpponentLastReadResponse.of(roomId, opponentInfo.getLastReadAt());
     }
 
