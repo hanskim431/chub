@@ -37,8 +37,8 @@ export default function InterviewRecordPage() {
 
     for (const item of transcript) {
       if (item.speaker === "interviewer") {
-        // 이전 질문-답변 쌍이 있으면 저장
-        if (currentQuestion && currentAnswer) {
+        // 이전 질문-답변 쌍 저장 (질문이나 답변이 하나라도 있으면)
+        if (currentQuestion || currentAnswer) {
           qaList.push({
             question: currentQuestion.trim(),
             answer: currentAnswer.trim(),
@@ -48,15 +48,15 @@ export default function InterviewRecordPage() {
         currentQuestion = item.text || "";
         currentAnswer = "";
       } else if (item.speaker === "interviewee") {
-        // 답변 추가
-        if (item.text) {
-          currentAnswer += (currentAnswer ? " " : "") + item.text;
+        // 답변 추가 (빈 문자열도 포함)
+        if (item.text !== undefined) {
+          currentAnswer += (currentAnswer ? " " : "") + (item.text || "");
         }
       }
     }
 
-    // 마지막 질문-답변 쌍 저장
-    if (currentQuestion && currentAnswer) {
+    // 마지막 질문-답변 쌍 저장 (질문이나 답변이 하나라도 있으면)
+    if (currentQuestion || currentAnswer) {
       qaList.push({
         question: currentQuestion.trim(),
         answer: currentAnswer.trim(),
@@ -216,9 +216,7 @@ export default function InterviewRecordPage() {
                     질문 {index + 1}
                   </span>
                 </div>
-                <p className="text-lg text-text-black">
-                  {qa.question || "(질문 없음)"}
-                </p>
+                <p className="text-lg text-text-black">{qa.question}</p>
               </div>
               <div>
                 <div className="flex items-center gap-2 mb-2">
@@ -227,7 +225,7 @@ export default function InterviewRecordPage() {
                   </span>
                 </div>
                 <p className="text-base text-text-black whitespace-pre-wrap">
-                  {qa.answer || "(답변 없음)"}
+                  {qa.answer}
                 </p>
               </div>
             </Card>
