@@ -319,25 +319,71 @@ export function useInterviewRoomWebSocket({
             console.log("[WebRTC] 전체 메시지:", wsMessage);
             console.log("[WebRTC] 메시지 타입:", wsMessage.type);
             console.log("[WebRTC] 메시지 데이터:", wsMessage.data);
+            console.log("[WebRTC] 메시지 데이터 타입:", typeof wsMessage.data);
+            console.log(
+              "[WebRTC] 메시지 데이터 키:",
+              wsMessage.data ? Object.keys(wsMessage.data) : "없음"
+            );
 
             try {
               const data = wsMessage.data as any;
+
+              // 백엔드가 받은 문자열을 그대로 전달하므로, 항상 파싱 필요
+              let parsedData = data;
+
+              // data가 문자열이면 파싱
+              if (typeof data === "string") {
+                try {
+                  parsedData = JSON.parse(data);
+                  console.log("[WebRTC] 문자열 데이터 파싱 완료:", parsedData);
+                } catch (e) {
+                  console.error(
+                    "[WebRTC] 문자열 데이터 파싱 실패:",
+                    e,
+                    "원본 데이터:",
+                    data
+                  );
+                  callbacksRef.current.onError?.(
+                    "Offer 데이터 파싱에 실패했습니다."
+                  );
+                  break;
+                }
+              } else {
+                // 이미 객체인 경우도 있을 수 있음 (Spring이 자동 직렬화한 경우)
+                console.log("[WebRTC] 데이터가 이미 객체입니다:", parsedData);
+              }
+
               console.log("[WebRTC] Offer 데이터 분석:", {
                 hasPc: !!pcRef.current,
-                hasOffer: !!data?.offer,
-                offerType: data?.offer?.type,
-                offerSdp: data?.offer?.sdp
-                  ? `${data.offer.sdp.substring(0, 50)}...`
+                hasOffer: !!parsedData?.offer,
+                offerType: parsedData?.offer?.type,
+                offerSdp: parsedData?.offer?.sdp
+                  ? `${parsedData.offer.sdp.substring(0, 50)}...`
                   : "없음",
-                data: data,
+                data: parsedData,
+                dataKeys: parsedData ? Object.keys(parsedData) : [],
                 userId: userId,
                 hasPublishRef: !!publishRefForHook.current,
                 pcState: pcRef.current?.connectionState,
                 pcSignalingState: pcRef.current?.signalingState,
               });
 
-              if (!data?.offer) {
-                console.error("[WebRTC] data.offer가 없습니다:", data);
+              // offer가 직접 data에 있는지, 또는 data.offer에 있는지 확인
+              let offerData = parsedData?.offer;
+
+              // 만약 data.offer가 없고 data 자체가 offer 형식이면
+              if (!offerData && parsedData?.type && parsedData?.sdp) {
+                console.log("[WebRTC] data 자체가 offer 형식입니다.");
+                offerData = parsedData;
+              }
+
+              if (!offerData) {
+                console.error("[WebRTC] offer 데이터를 찾을 수 없습니다:", {
+                  parsedData,
+                  hasOffer: !!parsedData?.offer,
+                  hasType: !!parsedData?.type,
+                  hasSdp: !!parsedData?.sdp,
+                });
                 callbacksRef.current.onError?.("Offer 데이터가 없습니다.");
                 break;
               }
@@ -411,7 +457,7 @@ export function useInterviewRoomWebSocket({
 
               // 원격 offer 설정
               await pc.setRemoteDescription(
-                new RTCSessionDescription(data.offer)
+                new RTCSessionDescription(offerData)
               );
               console.log("[WebRTC] Remote description 설정 완료");
 
@@ -455,7 +501,7 @@ export function useInterviewRoomWebSocket({
                 callbacksRef.current.onError?.("Answer 전송에 실패했습니다.");
               }
 
-              callbacksRef.current.onWebRTCOffer?.(data.offer);
+              callbacksRef.current.onWebRTCOffer?.(offerData);
             } catch (error) {
               console.error("[WebRTC] Offer 처리 실패:", error);
               callbacksRef.current.onError?.(
