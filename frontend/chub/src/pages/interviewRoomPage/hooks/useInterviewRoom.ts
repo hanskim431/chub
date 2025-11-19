@@ -363,7 +363,7 @@ export function useInterviewRoom(roomId: string) {
 
         // 개인 큐 구독 (/user/queue) - 꼬리 질문, WebRTC 이벤트 등
         if (userId) {
-          const queueDestination = `/user/${userId}/queue`;
+          const queueDestination = `/user/queue`;
           console.log("[WebSocket] 개인 큐 구독:", queueDestination);
           client.subscribe(queueDestination, async (message: StompMessage) => {
             console.log("[WebSocket] 개인 큐 메시지 수신:", {
