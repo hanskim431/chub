@@ -92,6 +92,18 @@ export function InterviewRoom({
     }
   }, [remoteStream, isRemoteAudioEnabled]);
 
+  // 디버깅: 버튼 표시 조건 로깅
+  useEffect(() => {
+    console.log("[InterviewRoom] 버튼 표시 조건:", {
+      interviewStatus,
+      userRole,
+      shouldShow: interviewStatus === "WAITING" && userRole === "INTERVIEWER",
+      isConnected,
+      hasLocalStream: !!localStream,
+      hasRemoteStream: !!remoteStream,
+    });
+  }, [interviewStatus, userRole, isConnected, localStream, remoteStream]);
+
   const formatTime = (seconds: number) => {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
