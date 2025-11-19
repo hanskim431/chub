@@ -338,68 +338,65 @@ export function InterviewRoom({
 
             {/* 질문 단계: 면접관에게만 녹음 버튼 표시 */}
             {interviewStatus === "QUESTION" && userRole === "INTERVIEWER" && (
-              <>
-                <div className="flex justify-center mb-4">
-                  <button
-                    onClick={onToggleRecording}
-                    disabled={!isConnected}
-                    className={`px-6 py-3 rounded-full font-semibold transition-all ${
-                      isRecording
-                        ? "bg-red-600 hover:bg-red-700 text-white animate-pulse"
-                        : "bg-blue-600 hover:bg-blue-700 text-white disabled:bg-gray-600 disabled:cursor-not-allowed"
-                    }`}
-                  >
-                    {isRecording ? (
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 bg-white rounded-full"></div>
-                        <span>녹음 종료하기</span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-5 w-5"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
-                          />
-                        </svg>
-                        <span>질문 녹음하기</span>
-                      </div>
-                    )}
-                  </button>
-                </div>
-
-                {/* 꼬리 질문 (면접관에게만 표시) */}
-                {tailQuestions.length > 0 && (
-                  <div className="mt-4">
-                    <h3 className="text-white font-semibold mb-2">
-                      꼬리 질문 선택지
-                    </h3>
-                    <div className="flex flex-wrap gap-2">
-                      {tailQuestions.map((question, index) => (
-                        <button
-                          key={index}
-                          onClick={() => {
-                            // 꼬리 질문을 채팅으로 전송
-                            onSendMessage(question);
-                          }}
-                          className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg text-sm transition-colors"
-                        >
-                          {question}
-                        </button>
-                      ))}
+              <div className="flex justify-center mb-4">
+                <button
+                  onClick={onToggleRecording}
+                  disabled={!isConnected}
+                  className={`px-6 py-3 rounded-full font-semibold transition-all ${
+                    isRecording
+                      ? "bg-red-600 hover:bg-red-700 text-white animate-pulse"
+                      : "bg-blue-600 hover:bg-blue-700 text-white disabled:bg-gray-600 disabled:cursor-not-allowed"
+                  }`}
+                >
+                  {isRecording ? (
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 bg-white rounded-full"></div>
+                      <span>녹음 종료하기</span>
                     </div>
-                  </div>
-                )}
-              </>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-5 w-5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
+                        />
+                      </svg>
+                      <span>질문 녹음하기</span>
+                    </div>
+                  )}
+                </button>
+              </div>
             )}
+
+            {/* 꼬리 질문 (면접관에게만 표시, ANSWER 또는 QUESTION 상태에서 표시) */}
+            {userRole === "INTERVIEWER" &&
+              tailQuestions.length > 0 &&
+              (interviewStatus === "ANSWER" ||
+                interviewStatus === "QUESTION") && (
+                <div className="mt-4">
+                  <h3 className="text-white font-semibold mb-2">
+                    꼬리 질문 선택지
+                  </h3>
+                  <div className="flex flex-wrap gap-2 justify-center">
+                    {tailQuestions.map((question, index) => (
+                      <div
+                        key={index}
+                        className="px-4 py-2 bg-gray-700 text-white rounded-lg text-sm"
+                      >
+                        {question}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
             {/* 답변 단계: 면접자에게만 녹음 버튼 표시 */}
             {interviewStatus === "ANSWER" && userRole === "INTERVIEWEE" && (

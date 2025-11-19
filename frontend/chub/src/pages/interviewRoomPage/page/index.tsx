@@ -7,6 +7,13 @@ export default function InterviewRoomPage() {
   const { roomId } = useParams<{ roomId: string }>();
   const navigate = useNavigate();
   const location = useLocation();
+  
+  // 예정된 면접 목록에서 전달받은 role 정보
+  const roleFromState = location.state?.role as
+    | "interviewer"
+    | "interviewee"
+    | undefined;
+  
   const {
     localStream,
     remoteStream,
@@ -29,7 +36,7 @@ export default function InterviewRoomPage() {
     tailQuestions,
     currentQuestion,
     userRole,
-  } = useInterviewRoom(roomId || "");
+  } = useInterviewRoom(roomId || "", roleFromState);
   
   const [showCompletedModal, setShowCompletedModal] = useState(false);
   const [showEndInterviewModal, setShowEndInterviewModal] = useState(false);
