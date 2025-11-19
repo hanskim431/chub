@@ -34,7 +34,7 @@ public class SttClient {
             Request request = buildRequest(requestBody);
             return executeTranscriptionRequest(request);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error("STT 변환 실패 - 에러 메시지: {}", e.getMessage(), e);
             //throw AudioProcessingException.audioTranscriptionFailed();
             return "";
         }
