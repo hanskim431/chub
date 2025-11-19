@@ -5,6 +5,7 @@ import axios from "axios";
 export interface InterviewRoomResponse {
   id: number; // 면접방 ID
   status: string;
+  role: "interviewer" | "interviewee"; // 내 역할 정보
   opponent: {
     id: number;
     name: string;

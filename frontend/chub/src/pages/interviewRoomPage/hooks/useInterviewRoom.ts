@@ -49,10 +49,7 @@ interface OpponentInfo {
 
 type InterviewStatus = "WAITING" | "QUESTION" | "ANSWER" | "COMPLETED" | string;
 
-export function useInterviewRoom(
-  roomId: string,
-  roleFromState?: "interviewer" | "interviewee"
-) {
+export function useInterviewRoom(roomId: string) {
   const { data: userData } = useMe();
   const userId = userData?.data?.id;
 
@@ -242,14 +239,14 @@ export function useInterviewRoom(
   }, [roomId, userId]);
 
   // 면접방 WebSocket 구독
-  // interviewRoomId state를 사용하여 초기화 완료 후에만 활성화
+  // interviewRoomId는 API 응답 후 업데이트되지만, roomId로도 구독 가능
   const { isConnected: wsConnected, publish: publishFromHook } =
     useInterviewRoomWebSocket({
       roomId,
       interviewRoomId: interviewRoomId, // ref 대신 state 사용
       userId,
       userName: userData?.data?.name,
-      enabled: !!userId && !!roomId && !!interviewRoomId, // interviewRoomId가 있을 때만 활성화
+      enabled: !!userId && !!roomId, // roomId만 있으면 구독 가능 (interviewRoomId는 나중에 업데이트됨)
       onChatReceived: (message) => {
         setMessages((prev) => [...prev, message]);
       },
@@ -493,31 +490,30 @@ export function useInterviewRoom(
           setMessages(chatHistory);
 
           // 사용자 역할 확인 (면접관인지 면접자인지)
-          // 예정된 면접 목록에서 전달받은 role 정보를 우선 사용
-          // 없으면 opponent.id와 userId를 비교하여 역할 판단 (fallback)
-          let determinedRole: "INTERVIEWER" | "INTERVIEWEE";
-
-          if (roleFromState) {
-            // 예정된 면접 목록에서 전달받은 role 사용
-            determinedRole =
-              roleFromState === "interviewer" ? "INTERVIEWER" : "INTERVIEWEE";
-            console.log("[InterviewRoom] 역할 판단 (예정된 면접 목록에서):", {
-              roleFromState,
+          // API 응답의 role 필드 사용
+          if (data.role) {
+            const determinedRole =
+              data.role === "interviewer" ? "INTERVIEWER" : "INTERVIEWEE";
+            console.log("[InterviewRoom] 역할 판단 (API 응답에서):", {
+              roleFromApi: data.role,
               determinedRole,
             });
+            setUserRole(determinedRole);
           } else {
+            console.warn(
+              "[InterviewRoom] API 응답에 role 필드가 없습니다:",
+              data
+            );
             // Fallback: opponent.id와 userId 비교
-            determinedRole =
+            const determinedRole =
               data.opponent.id !== userId ? "INTERVIEWER" : "INTERVIEWEE";
             console.log("[InterviewRoom] 역할 판단 (fallback):", {
               opponentId: data.opponent.id,
               userId: userId,
               determinedRole: determinedRole,
-              opponentIdType: typeof data.opponent.id,
-              userIdType: typeof userId,
             });
+            setUserRole(determinedRole);
           }
-          setUserRole(determinedRole);
         }
 
         // 로컬 스트림 먼저 설정 (연결 상태와 관계없이 비디오 표시)

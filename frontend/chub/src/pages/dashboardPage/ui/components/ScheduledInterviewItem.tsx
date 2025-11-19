@@ -26,10 +26,7 @@ export function ScheduledInterviewItem({
       alert("면접방 정보를 불러올 수 없습니다.");
       return;
     }
-    // 예정된 면접의 role 정보를 state로 전달
-    navigate(`/interviews/room/${roomId}`, {
-      state: { role: interview.role },
-    });
+    navigate(`/interviews/room/${roomId}`);
   };
 
   return (

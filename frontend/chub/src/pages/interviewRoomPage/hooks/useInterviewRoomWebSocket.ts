@@ -143,8 +143,23 @@ export function useInterviewRoomWebSocket({
 
   // 면접방 WebSocket 구독 및 이벤트 처리
   useEffect(() => {
+    console.log("[WebSocket] 구독 조건 확인:", {
+      isConnected,
+      userId,
+      enabled,
+      roomId,
+      interviewRoomId,
+      hasSubscribeRef: !!subscribeRef.current,
+      hasPublishRef: !!publishRefForHook.current,
+    });
+
     if (!isConnected || !userId || !enabled) {
       // enabled가 false이거나 연결되지 않았으면 구독하지 않음
+      console.warn("[WebSocket] 구독 조건 미충족:", {
+        isConnected,
+        userId,
+        enabled,
+      });
       return;
     }
 
@@ -153,18 +168,45 @@ export function useInterviewRoomWebSocket({
 
     // 면접방 입장 (joined 이벤트) - userId와 userName 포함
     const currentUserName = userName || "사용자";
-    console.log("[WebSocket] 면접방 입장 이벤트 전송:", {
-      destination: `/app/interview/${currentRoomId}/joined`,
-      userId,
-      userName: currentUserName,
-    });
-    publishRefForHook.current(
-      `/app/interview/${currentRoomId}/joined`,
-      JSON.stringify({
-        userId: userId,
+
+    // publish 함수가 준비되면 joined 이벤트 전송
+    if (publishRefForHook.current) {
+      console.log("[WebSocket] 면접방 입장 이벤트 전송:", {
+        destination: `/app/interview/${currentRoomId}/joined`,
+        userId,
         userName: currentUserName,
-      })
-    );
+      });
+      publishRefForHook.current(
+        `/app/interview/${currentRoomId}/joined`,
+        JSON.stringify({
+          userId: userId,
+          userName: currentUserName,
+        })
+      );
+    } else {
+      console.warn(
+        "[WebSocket] publish 함수가 아직 준비되지 않았습니다. 잠시 후 재시도..."
+      );
+      // 잠시 후 재시도 (구독은 계속 진행)
+      setTimeout(() => {
+        if (publishRefForHook.current && isConnected) {
+          console.log("[WebSocket] 면접방 입장 이벤트 전송 (재시도):", {
+            destination: `/app/interview/${currentRoomId}/joined`,
+            userId,
+            userName: currentUserName,
+          });
+          publishRefForHook.current(
+            `/app/interview/${currentRoomId}/joined`,
+            JSON.stringify({
+              userId: userId,
+              userName: currentUserName,
+            })
+          );
+        }
+      }, 500);
+    }
+
+    // subscribe 함수는 항상 존재하므로 바로 구독 진행
 
     // 브로드캐스트 이벤트 구독 (/topic/interview/{interviewRequestId})
     const topicDestination = `/topic/interview/${currentRoomId}`;
