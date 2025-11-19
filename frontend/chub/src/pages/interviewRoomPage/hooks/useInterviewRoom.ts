@@ -265,24 +265,20 @@ export function useInterviewRoom(roomId: string) {
             }
             case "user-joined": {
               // 사용자 입장 알림 (채팅 메시지로 표시하지 않음)
-              const joinData = wsMessage.data as {
-                userId?: number;
-                userName?: string;
-              };
-              const joinedUserId = joinData?.userId;
-              console.log("[Interview] 사용자 입장:", joinData);
+              // user-joined 이벤트는 먼저 방에 들어온 사람에게만 전달됨
+              // 상대방 정보는 API 응답에서 받은 opponentInfoRef.current에 있음
+              console.log("[Interview] 상대방 입장:", {
+                opponentId: opponentInfoRef.current?.id,
+                currentUserId: userId,
+              });
 
-              // user-joined 이벤트를 받은 사람이 offer를 보냄
-              // (자신이 보낸 이벤트가 아닌 경우에만, 즉 이미 방에 있던 사람이 새로 입장한 사람에게 offer를 보냄)
-              if (
-                joinedUserId &&
-                joinedUserId !== userId &&
-                !offerSentRef.current
-              ) {
+              // user-joined 이벤트를 받은 사람(먼저 방에 들어온 사람)이 offer를 보냄
+              // 상대방이 입장했으므로 offer를 전송
+              if (opponentInfoRef.current && !offerSentRef.current) {
                 console.log(
                   "[WebRTC] user-joined 이벤트 수신, offer 전송 시작",
                   {
-                    joinedUserId,
+                    opponentId: opponentInfoRef.current.id,
                     currentUserId: userId,
                     offerAlreadySent: offerSentRef.current,
                   }
