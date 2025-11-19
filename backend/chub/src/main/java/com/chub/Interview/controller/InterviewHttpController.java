@@ -195,11 +195,11 @@ public class InterviewHttpController {
     public ResponseEntity<PageResponse<InterviewRecordListResponse>> getInterviewRecords(
             @LoginUser Long userId,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int limit) {
+            @RequestParam(defaultValue = "10") int size) {
 
         try {
             // 1. 면접 기록 목록 조회
-            Page<InterviewRecordListItemDto> recordPage = interviewService.getInterviewRecords(userId, page, limit);
+            Page<InterviewRecordListItemDto> recordPage = interviewService.getInterviewRecords(userId, page, size);
 
             // 2. PageInfo 생성
             PageInfo pageInfo = PageInfo.from(recordPage);
