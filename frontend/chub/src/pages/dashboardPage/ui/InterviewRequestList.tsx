@@ -9,20 +9,17 @@ import { StatusFilter } from "@/pages/dashboardPage/ui/components/StatusFilter";
 import { SentInterviewRequests } from "@/pages/dashboardPage/ui/lists/SentInterviewRequests";
 import { ReceivedInterviewRequests } from "@/pages/dashboardPage/ui/lists/ReceivedInterviewRequests";
 import { ScheduledInterviews } from "@/pages/dashboardPage/ui/lists/ScheduledInterviews";
-import { CancelledInterviewRequests } from "@/pages/dashboardPage/ui/lists/CancelledInterviewRequests";
 import { CompletedInterviews } from "@/pages/dashboardPage/ui/lists/CompletedInterviews";
 import type { Role, TabId, Tab } from "@/pages/dashboardPage/ui/types";
 
 const INTERVIEWEE_TABS: Tab[] = [
     { id: "sent", label: "보낸 요청" },
-    { id: "cancelled", label: "취소된 요청" },
     { id: "scheduled", label: "예정된 면접" },
     { id: "completed", label: "완료된 면접" },
 ];
 
 const INTERVIEWER_TABS: Tab[] = [
     { id: "received", label: "받은 요청" },
-    { id: "cancelled", label: "취소된 요청" },
     { id: "scheduled", label: "예정된 면접" },
     { id: "completed", label: "완료된 면접" },
 ];
@@ -87,7 +84,7 @@ export function InterviewRequestList() {
 
     const handleTabChange = (tab: TabId) => {
         setActiveTab(tab);
-        if (tab !== "sent" && tab !== "cancelled") {
+        if (tab !== "sent") {
             setSentStatusFilter(undefined);
         }
     };
@@ -127,9 +124,6 @@ export function InterviewRequestList() {
                 )}
                 {activeTab === "received" && (
                     <ReceivedInterviewRequests role={role} />
-                )}
-                {activeTab === "cancelled" && (
-                    <CancelledInterviewRequests role={role} />
                 )}
                 {activeTab === "scheduled" && (
                     <ScheduledInterviews role={role} />
