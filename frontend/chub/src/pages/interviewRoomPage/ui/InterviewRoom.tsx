@@ -277,12 +277,12 @@ export function InterviewRoom({
 
           {/* 하단 버튼 영역 */}
           <div className="p-4 bg-gray-800 border-t border-gray-700">
-            {/* 대기 상태: 면접관에게만 시작하기 버튼 표시 */}
+            {/* 대기 상태: 면접관에게만 시작하기 버튼 표시 (항상 표시, WebRTC 연결 시 활성화) */}
             {interviewStatus === "WAITING" && userRole === "INTERVIEWER" && (
               <div className="flex justify-center">
                 <button
                   onClick={onStartInterview}
-                  disabled={!isConnected}
+                  disabled={!isConnected || !localStream || !remoteStream}
                   className="px-8 py-4 bg-green-600 hover:bg-green-700 text-white rounded-full font-semibold text-lg transition-all disabled:bg-gray-600 disabled:cursor-not-allowed flex items-center gap-2"
                 >
                   <svg
