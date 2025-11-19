@@ -42,6 +42,11 @@ public class SttClient {
 
     private MultipartBody buildRequestBody(String filePath) {
         File audioFile = new File(filePath);
+
+        // 파일 존재 여부 및 크기 확인
+        log.info("STT 파일 체크 - 경로: {}, 존재: {}, 크기: {} bytes",
+                filePath, audioFile.exists(), audioFile.length());
+
         RequestBody fileBody = RequestBody.create(audioFile, AUDIO_WEBM);
 
         return new MultipartBody.Builder()
@@ -64,17 +69,33 @@ public class SttClient {
 
     private String executeTranscriptionRequest(Request request) throws Exception {
         try (Response response = client.newCall(request).execute()) {
+            String responseBody = response.body().string();
+
+            log.info("STT API 응답 - 상태코드: {}, 응답 본문: {}", response.code(), responseBody);
+
             if (!response.isSuccessful()) {
-                //throw AudioProcessingException.audioApiCallFailed();
+                log.error("STT API 호출 실패 - 상태코드: {}, 응답: {}", response.code(), responseBody);
+                throw new Exception("STT API 호출 실패: " + response.code());
             }
 
-            return parseTranscriptionResponse(response.body().string());
+            return parseTranscriptionResponse(responseBody);
         }
     }
 
     private String parseTranscriptionResponse(String responseBody) throws Exception {
         JsonNode jsonNode = objectMapper.readTree(responseBody);
-        return jsonNode.get("text").asText();
+
+        // "text" 필드 존재 여부 확인
+        JsonNode textNode = jsonNode.get("text");
+        if (textNode == null) {
+            log.error("STT 응답에 'text' 필드가 없습니다. 전체 응답: {}", responseBody);
+            throw new Exception("STT 응답 파싱 실패: 'text' 필드 없음");
+        }
+
+        String transcribedText = textNode.asText();
+        log.info("STT 변환 결과: {}", transcribedText);
+
+        return transcribedText;
     }
 
 }
