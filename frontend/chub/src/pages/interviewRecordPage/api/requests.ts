@@ -1,26 +1,24 @@
 import { api } from "@/shared/api/api";
 
-export interface QuestionAnswer {
-  question: string;
-  answer: string;
+export interface TranscriptItem {
+  id: number;
+  speaker: "interviewer" | "interviewee";
+  text: string;
+  timestamp: string;
 }
 
 export interface InterviewRecord {
   id: number;
-  requestId: number;
-  interviewer: {
-    id: number;
-    name: string;
-    avatar: string;
-    field: string;
-  };
-  interviewee: {
+  sessionId: string;
+  opponent: {
     id: number;
     name: string;
     avatar: string;
   };
-  completedAt: string;
-  questionsAndAnswers: QuestionAnswer[];
+  role: "interviewer" | "interviewee";
+  date: string;
+  duration: number; // 초 단위
+  transcript: TranscriptItem[];
 }
 
 export interface InterviewRecordResponse {
@@ -43,4 +41,3 @@ export const getInterviewRecord = async (
     return null;
   }
 };
-
