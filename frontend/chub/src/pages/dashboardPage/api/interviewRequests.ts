@@ -84,18 +84,24 @@ export const getInterviewRequests = async ({
 export const getReceivedInterviewRequests = async ({
   page = 0,
   size = 10,
+  status,
 }: {
   page?: number;
   size?: number;
+  status?: InterviewRequestStatus;
 }): Promise<InterviewRequestsResponse | null> => {
   try {
+    const params: Record<string, string> = {
+      page: page.toString(),
+      size: size.toString(),
+    };
+    if (status) {
+      params.status = status;
+    }
     const response = await api.get<InterviewRequestsResponse>(
       "/api/interviews/requests/received",
       {
-        params: {
-          page: page.toString(),
-          size: size.toString(),
-        },
+        params,
       }
     );
     return response.data;
@@ -107,7 +113,7 @@ export const getReceivedInterviewRequests = async ({
 
 export interface ScheduledInterview {
   id: number;
-  requestId: number;
+  requestId?: number;
   requestMessage: string;
   opponent: {
     id: number;
@@ -115,10 +121,12 @@ export interface ScheduledInterview {
     avatar: string;
     field?: string;
   };
-  scheduledAt: string;
+  scheduledAt: string | null;
   status: string;
-  roomID: number;
-  myRole?: "interviewer" | "interviewee"; // 내 역할 정보 (면접관인지 면접자인지)
+  roomID?: number;
+  roomId?: string;
+  resumeUrl?: string | null;
+  role: "interviewer" | "interviewee"; // 내 역할 정보 (면접관인지 면접자인지)
 }
 
 export interface ScheduledInterviewsResponse {

@@ -241,4 +241,75 @@ export const interviewHandlers = [
             });
         }
     ),
+
+    // 면접방 입장
+    http.post(
+        `${import.meta.env.VITE_API_URL}/api/interviews/rooms/:interviewRequestId`,
+        async ({ params }) => {
+            const interviewRequestId = params.interviewRequestId as string;
+            const iv = interviewer[parseInt(interviewRequestId) % interviewer.length];
+
+            return HttpResponse.json({
+                success: true,
+                status: 0,
+                data: {
+                    status: "WAITING",
+                    opponent: {
+                        id: parseInt(iv.id),
+                        name: iv.name,
+                        avatar: iv.avatar,
+                    },
+                    chatHistory: [
+                        {
+                            type: "SYSTEM" as const,
+                            senderId: 0,
+                            senderNickname: "시스템",
+                            receiverId: 0,
+                            receiverNickname: "",
+                            message: "면접방에 입장했습니다.",
+                            createdAt: new Date().toISOString(),
+                        },
+                    ],
+                    currentQuestion: null,
+                },
+                timestamp: new Date().toISOString(),
+            });
+        }
+    ),
+
+    // 면접방 퇴장
+    http.delete(
+        `${import.meta.env.VITE_API_URL}/api/interviews/rooms/:interviewRequestId`,
+        async () => {
+            return HttpResponse.json({
+                success: true,
+                status: 0,
+                timestamp: new Date().toISOString(),
+            });
+        }
+    ),
+
+    // 면접관 질문 생성
+    http.post(
+        `${import.meta.env.VITE_API_URL}/api/interviews/question-create`,
+        async () => {
+            return HttpResponse.json({
+                success: true,
+                status: 0,
+                timestamp: new Date().toISOString(),
+            });
+        }
+    ),
+
+    // 면접자 답변 제출
+    http.post(
+        `${import.meta.env.VITE_API_URL}/api/interviews/answer-submit`,
+        async () => {
+            return HttpResponse.json({
+                success: true,
+                status: 0,
+                timestamp: new Date().toISOString(),
+            });
+        }
+    ),
 ];

@@ -115,7 +115,7 @@ class MessageServiceImplTest {
         @DisplayName("통과: cursor보다 이전 메시지를 페이지네이션해 MessageListResponse에 담아 반환한다.")
         void shouldReturnMessageListResponse_WhenFindByCursorWithPagination() {
             // When: cursor(BASE_TIME + 2분)보다 이전 메시지 3개 조회
-            MessageListResponse response = messageService.findByRoomIdBeforeDate(ROOM_ID_1_2, BASE_TIME.plusMinutes(1), PAGE_SIZE);
+            MessageListResponse response = messageService.findByRoomIdBeforeDate(ROOM_ID_1_2, BASE_TIME.plusMinutes(1), PAGE_SIZE, 1L);
 
             // Then: 응답 검증
             assertAll("MessageListResponse 검증",
@@ -154,7 +154,7 @@ class MessageServiceImplTest {
 
             // When & Then: ChatException이 throw되는지 확인
             assertThrows(ChatException.class,
-                    () -> messageService.findByRoomIdBeforeDate(nonExistentRoomId, BASE_TIME, PAGE_SIZE),
+                    () -> messageService.findByRoomIdBeforeDate(nonExistentRoomId, BASE_TIME, PAGE_SIZE, 1L),
                     "ChatRoom이 없으면 ChatException을 throw해야 함");
         }
 
@@ -167,7 +167,7 @@ class MessageServiceImplTest {
                     .thenReturn(List.of());  // 빈 리스트 반환
 
             // When: 메시지 목록 조회
-            MessageListResponse response = messageService.findByRoomIdBeforeDate(ROOM_ID_1_2, BASE_TIME, PAGE_SIZE);
+            MessageListResponse response = messageService.findByRoomIdBeforeDate(ROOM_ID_1_2, BASE_TIME, PAGE_SIZE, 1L);
 
             // Then: 응답 검증
             assertAll("빈 메시지 목록 검증",
