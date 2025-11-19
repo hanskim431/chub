@@ -11,7 +11,7 @@ function MainLayout() {
   const { data } = useMe();
   const isAuthenticated = !!(data?.success && data?.data);
   const currentUserId = data?.data?.id;
-  
+
   // 인증된 경우에만 채팅 관련 훅 호출
   const { data: chatRoomsData } = useChatRooms({
     enabled: isAuthenticated,
@@ -33,7 +33,7 @@ function MainLayout() {
     useChatWebSocket({
       currentUserId,
       chatRooms: chatRoomsForSubscription,
-      enabled: isAuthenticated, // 로그인 시 바로 연결 (채팅방이 없어도 연결)
+      enabled: isAuthenticated, // 구독 활성화 여부
     });
 
   const content = (
