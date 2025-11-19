@@ -257,8 +257,18 @@ export function useInterviewRoomWebSocket({
           }
           case "question": {
             // 면접관의 질문 (STT 변환 완료)
+            console.log("[WebSocket] 질문 이벤트 수신:", wsMessage);
             const questionData = wsMessage.data as { question: string };
-            callbacksRef.current.onQuestion?.(questionData.question);
+            console.log("[WebSocket] 질문 데이터:", questionData);
+            if (questionData?.question) {
+              console.log("[WebSocket] 질문 콜백 호출:", questionData.question);
+              callbacksRef.current.onQuestion?.(questionData.question);
+            } else {
+              console.warn(
+                "[WebSocket] 질문 데이터가 올바르지 않습니다:",
+                questionData
+              );
+            }
             break;
           }
           case "status-update": {

@@ -3,10 +3,17 @@ import { X } from "lucide-react";
 interface InterviewHeaderProps {
   timeRemaining: number;
   formattedTime: string;
-  interviewStatus: "WAITING" | "READY" | "QUESTION" | "ANSWER" | "COMPLETED" | string;
+  interviewStatus:
+    | "WAITING"
+    | "READY"
+    | "QUESTION"
+    | "ANSWER"
+    | "COMPLETED"
+    | string;
   onEndInterview: () => void;
   onLeaveRoom: () => void;
   isConnected: boolean;
+  currentQuestion?: string | null;
 }
 
 export function InterviewHeader({
@@ -15,6 +22,7 @@ export function InterviewHeader({
   onEndInterview,
   onLeaveRoom,
   isConnected,
+  currentQuestion,
 }: InterviewHeaderProps) {
   const getStatusText = () => {
     switch (interviewStatus) {
@@ -34,40 +42,61 @@ export function InterviewHeader({
   };
 
   return (
-    <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-      <div className="flex items-center gap-6">
-        <div className="flex items-center gap-2">
-          <div
-            className={`w-3 h-3 rounded-full ${
-              isConnected ? "bg-green-500" : "bg-gray-400"
-            }`}
-          />
-          <span className="text-sm text-gray-600">
-            {isConnected ? "연결됨" : "연결 중..."}
-          </span>
+    <div className="bg-white border-b border-gray-200">
+      <div className="px-6 py-4 flex items-center justify-between">
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-2">
+            <div
+              className={`w-3 h-3 rounded-full ${
+                isConnected ? "bg-green-500" : "bg-gray-400"
+              }`}
+            />
+            <span className="text-sm text-gray-600">
+              {isConnected ? "연결됨" : "연결 중..."}
+            </span>
+          </div>
+          <div className="text-sm text-gray-600">
+            상태: <span className="font-medium">{getStatusText()}</span>
+          </div>
         </div>
-        <div className="text-sm text-gray-600">
-          상태: <span className="font-medium">{getStatusText()}</span>
+
+        <div className="flex items-center gap-4">
+          <button
+            onClick={onLeaveRoom}
+            className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
+          >
+            <X className="w-4 h-4" />
+            <span>방 나가기</span>
+          </button>
+          <button
+            onClick={onEndInterview}
+            className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+          >
+            <X className="w-4 h-4" />
+            <span>면접 종료하기</span>
+          </button>
         </div>
       </div>
 
-      <div className="flex items-center gap-4">
-        <button
-          onClick={onLeaveRoom}
-          className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
-        >
-          <X className="w-4 h-4" />
-          <span>방 나가기</span>
-        </button>
-        <button
-          onClick={onEndInterview}
-          className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
-        >
-          <X className="w-4 h-4" />
-          <span>면접 종료하기</span>
-        </button>
+      {/* 현재 질문 표시 영역 */}
+      <div className="px-6 py-3 bg-blue-50 border-t border-blue-200">
+        <div className="flex items-center gap-4">
+          <div className="text-sm font-semibold text-blue-700 whitespace-nowrap">
+            현재 질문:
+          </div>
+          <div className="flex-1 text-gray-800 min-h-[1.25rem]">
+            {currentQuestion || (
+              <span className="text-gray-400 italic">
+                {interviewStatus === "QUESTION"
+                  ? "면접관이 질문을 녹음 중입니다..."
+                  : interviewStatus === "ANSWER"
+                  ? "면접자가 답변 중입니다..."
+                  : "질문 대기 중..."}
+              </span>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
 }
-
