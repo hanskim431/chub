@@ -76,7 +76,7 @@ export function useChatWebSocket({
     // 개인 큐 구독 (한 번만)
     if (!userQueueSubscribedRef.current) {
       stompClientRef.current.subscribe(
-        `/user/${currentUserId}/queue/messages`,
+        `/user/queue`,
         (message: StompMessage) => {
           const data = JSON.parse(message.body);
           if (data.type === "message.received") {
