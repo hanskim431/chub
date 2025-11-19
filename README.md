@@ -94,7 +94,7 @@ JWT 기반 사용자 인증과 userId 매핑을 통해 재연결 시 이전 세�
 **읽음/안읽음 추적** 기능으로 메시지 상태를 파악할 수 있어요.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/llcodingll/kkori_img/main/실시간채팅시스템.gif" width="70%" alt="실시간 채팅 시스템" />
+  <img src="https://raw.githubusercontent.com/SwnBae/kkori_img/main/채팅.gif" width="70%" alt="실시간 채팅 시스템" />
 </p>
 
 <br/>
@@ -102,22 +102,22 @@ JWT 기반 사용자 인증과 userId 매핑을 통해 재연결 시 이전 세�
 ### 💼 면접관 프로필 & 이력서 관리
 > **"체계적인 프로필 관리로 최적의 매칭을!"**
 
-**면접관의 상세 프로필 정보** (회사, 직급, 경력, 부서, 전문분야, 가능한 시간대)를 관리하고,  
-**분야별 검색 & 필터링**으로 최적의 면접관을 찾을 수 있습니다.  
+**면접관의 상세 프로필 정보** (회사, 직급, 경력, 부서, 전문분야, 가능한 시간대)를 관리하고,
+**분야별 검색 & 필터링**으로 최적의 면접관을 찾을 수 있습니다.
 **취준생의 이력서** (PDF 업로드, 자동 파일 저장 및 검증)를 효율적으로 관리해요.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/llcodingll/kkori_img/main/카카오로그인.gif" width="70%" alt="카카오 소셜 로그인" />
+  <img src="https://raw.githubusercontent.com/SwnBae/kkori_img/main/면접관%20상세조회.gif" width="70%" alt="면접관 프로필 & 이력서 관리" />
 </p>
 
 ### 🔐 카카오 소셜 로그인
 > **"간편하고 안전한 로그인!"**
 
-**카카오 OAuth2 연동**으로 복잡한 회원가입 절차 없이 원클릭으로 빠른 로그인이 가능합니다.  
+**카카오 OAuth2 연동**으로 복잡한 회원가입 절차 없이 원클릭으로 빠른 로그인이 가능합니다.
 JWT 토큰 기반 인증으로 보안성을 보장하며, 리프레시 토큰을 통해 안정적인 세션 관리를 제공해요.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/llcodingll/kkori_img/main/카카오로그인.gif" width="70%" alt="카카오 소셜 로그인" />
+  <img src="https://raw.githubusercontent.com/SwnBae/kkori_img/main/카카오로그인.gif" width="70%" alt="카카오 소셜 로그인" />
 </p>
 
 
