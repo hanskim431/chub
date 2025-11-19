@@ -113,7 +113,7 @@ export const getReceivedInterviewRequests = async ({
 
 export interface ScheduledInterview {
   id: number;
-  requestId: number;
+  requestId?: number;
   requestMessage: string;
   opponent: {
     id: number;
@@ -121,10 +121,12 @@ export interface ScheduledInterview {
     avatar: string;
     field?: string;
   };
-  scheduledAt: string;
+  scheduledAt: string | null;
   status: string;
-  roomID: number;
-  myRole?: "interviewer" | "interviewee"; // 내 역할 정보 (면접관인지 면접자인지)
+  roomID?: number;
+  roomId?: string;
+  resumeUrl?: string | null;
+  role: "interviewer" | "interviewee"; // 내 역할 정보 (면접관인지 면접자인지)
 }
 
 export interface ScheduledInterviewsResponse {

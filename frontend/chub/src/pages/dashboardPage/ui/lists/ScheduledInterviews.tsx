@@ -17,13 +17,8 @@ export function ScheduledInterviews({ role }: ScheduledInterviewsProps) {
   // 현재 역할에 맞는 예정된 면접만 필터링 (조건부 렌더링 전에 훅 호출)
   const interviews = useMemo(() => {
     return allInterviews.filter((interview) => {
-      // API 응답에 myRole이 있으면 그것을 사용하여 필터링
-      if (interview.myRole) {
-        // role이 "interviewer"이면 "interviewer"만, "interviewee"이면 "interviewee"만 표시
-        return interview.myRole === role;
-      }
-      // myRole이 없으면 필터링하지 않음 (API에서 이미 필터링된 것으로 가정)
-      return false;
+      // API 응답의 role 필드를 사용하여 필터링
+      return interview.role === role;
     });
   }, [allInterviews, role]);
 
