@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import type { Message as StompMessage } from "@stomp/stompjs";
 import { useQueryClient } from "@tanstack/react-query";
 import { useWebSocket } from "@/shared/websocket/useWebSocket";
@@ -24,6 +24,11 @@ export function useChatWebSocket({
   // 이미 구독한 채팅방 목록 추적 (중복 구독 방지)
   const subscribedRoomsRef = useRef<Set<string>>(new Set());
   const userQueueSubscribedRef = useRef<boolean>(false);
+
+  // 콜백 ref 업데이트
+  useEffect(() => {
+    onMessageReceivedRef.current = onMessageReceived || null;
+  }, [onMessageReceived]);
 
   // 채팅방 구독 (연결 후 한 번만, 새로운 채팅방만 추가 구독)
   useEffect(() => {
@@ -61,11 +66,7 @@ export function useChatWebSocket({
               // 채팅방 목록 쿼리 stale 상태 초기화 및 즉시 refetch
               queryClient.invalidateQueries({ queryKey: ["chatRooms"] });
               queryClient.refetchQueries({ queryKey: ["chatRooms"] });
-              // 메시지 수신 콜백 호출 (현재 열려있는 채팅방이면 자동 읽음 처리용)
-              if (onMessageReceived) {
-                onMessageReceived(room.roomId);
-              }
-              // Context를 통해 등록된 콜백 호출
+              // 메시지 수신 콜백 호출
               if (onMessageReceivedRef.current) {
                 onMessageReceivedRef.current(room.roomId);
               }
@@ -84,9 +85,8 @@ export function useChatWebSocket({
       });
     }
 
-    // cleanup: 구독 해제는 useWebSocket에서 자동으로 처리됨
+    // cleanup: 구독 해제
     return () => {
-      // 채팅방 구독 해제
       chatRooms.forEach((room) => {
         unsubscribe(`/topic/chat/rooms/${room.roomId}`);
         subscribedRoomsRef.current.delete(room.roomId);
@@ -97,47 +97,53 @@ export function useChatWebSocket({
     currentUserId,
     chatRooms,
     queryClient,
-    onMessageReceived,
     enabled,
     subscribe,
     unsubscribe,
   ]);
 
   // 메시지 전송
-  const sendMessage = (roomId: string, content: string) => {
-    console.log("[useChatWebSocket] sendMessage 호출:", { roomId, content });
-    console.log("[useChatWebSocket] WebSocket 연결 상태:", {
-      isConnected,
-    });
+  const sendMessage = useCallback(
+    (roomId: string, content: string) => {
+      if (!isConnected) {
+        console.error("[Chat] WebSocket이 연결되지 않았습니다.");
+        return false;
+      }
 
-    const success = publish(
-      "/app/chat/send",
-      JSON.stringify({
-        roomId,
-        content,
-      })
-    );
+      const success = publish(
+        "/app/chat/send",
+        JSON.stringify({
+          roomId,
+          content,
+        })
+      );
 
-    if (success) {
-      console.log("[useChatWebSocket] 메시지 전송 성공:", { roomId, content });
-    } else {
-      console.error("[useChatWebSocket] 메시지 전송 실패");
-    }
+      if (success) {
+        console.log("[Chat] 메시지 전송 성공:", { roomId, content });
+      } else {
+        console.error("[Chat] 메시지 전송 실패");
+      }
 
-    return success;
-  };
+      return success;
+    },
+    [isConnected, publish]
+  );
 
   // 읽음 처리 전송
-  const markAsRead = (roomId: string) => {
-    return publish("/app/chat/mark-read", JSON.stringify({ roomId }));
-  };
+  const markAsRead = useCallback(
+    (roomId: string) => {
+      return publish("/app/chat/mark-read", JSON.stringify({ roomId }));
+    },
+    [publish]
+  );
 
   // 콜백 등록 함수
-  const setOnMessageReceived = (
-    callback: ((roomId: string) => void) | null
-  ) => {
-    onMessageReceivedRef.current = callback;
-  };
+  const setOnMessageReceived = useCallback(
+    (callback: ((roomId: string) => void) | null) => {
+      onMessageReceivedRef.current = callback;
+    },
+    []
+  );
 
   return {
     wsConnected: isConnected,
@@ -146,3 +152,4 @@ export function useChatWebSocket({
     setOnMessageReceived,
   };
 }
+

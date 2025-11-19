@@ -34,6 +34,7 @@ function ProtectedLayout() {
     }));
   }, [chatRoomsData]);
 
+  // 일반 채팅 WebSocket 구독
   const { wsConnected, sendMessage, markAsRead, setOnMessageReceived } =
     useChatWebSocket({
       currentUserId,
