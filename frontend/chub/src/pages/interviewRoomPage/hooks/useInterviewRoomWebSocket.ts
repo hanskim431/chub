@@ -527,18 +527,118 @@ export function useInterviewRoomWebSocket({
           }
           case "webrtc-answer": {
             // Answer 수신 (상대방이 answer를 보냈을 때)
+            console.log(
+              "[WebRTC] ========== webrtc-answer 이벤트 수신 =========="
+            );
+            console.log("[WebRTC] 전체 메시지:", wsMessage);
+            console.log("[WebRTC] 메시지 데이터:", wsMessage.data);
+            console.log("[WebRTC] 메시지 데이터 타입:", typeof wsMessage.data);
+
             try {
               const data = wsMessage.data as any;
-              if (pcRef.current && data.answer) {
-                console.log("[WebRTC] Answer 수신");
-                // 원격 answer 설정
-                await pcRef.current.setRemoteDescription(
-                  new RTCSessionDescription(data.answer)
+
+              // base64 인코딩된 문자열인지 확인 및 파싱
+              let parsedData = data;
+              if (typeof data === "string") {
+                try {
+                  // base64 인코딩된 문자열인지 확인
+                  let jsonString = data;
+                  if (/^[A-Za-z0-9+/=]+$/.test(data) && data.length > 20) {
+                    try {
+                      jsonString = atob(data);
+                      console.log("[WebRTC] Answer base64 디코딩 완료");
+                    } catch (base64Error) {
+                      console.log(
+                        "[WebRTC] Answer base64 디코딩 실패, 원본 문자열 사용"
+                      );
+                    }
+                  }
+                  parsedData = JSON.parse(jsonString);
+                  console.log(
+                    "[WebRTC] Answer 문자열 데이터 파싱 완료:",
+                    parsedData
+                  );
+                } catch (e) {
+                  console.error(
+                    "[WebRTC] Answer 데이터 파싱 실패:",
+                    e,
+                    "원본 데이터:",
+                    data?.substring(0, 100)
+                  );
+                  callbacksRef.current.onError?.(
+                    "Answer 데이터 파싱에 실패했습니다."
+                  );
+                  break;
+                }
+              } else {
+                console.log(
+                  "[WebRTC] Answer 데이터가 이미 객체입니다:",
+                  parsedData
                 );
-                callbacksRef.current.onWebRTCAnswer?.(data.answer);
               }
+
+              // answer가 직접 data에 있는지, 또는 data.answer에 있는지 확인
+              let answerData = parsedData?.answer;
+
+              // 만약 data.answer가 없고 data 자체가 answer 형식이면
+              if (!answerData && parsedData?.type && parsedData?.sdp) {
+                console.log("[WebRTC] data 자체가 answer 형식입니다.");
+                answerData = parsedData;
+              }
+
+              if (!pcRef.current) {
+                console.error(
+                  "[WebRTC] pcRef.current가 null입니다. WebRTC가 초기화되지 않았습니다."
+                );
+                callbacksRef.current.onError?.(
+                  "WebRTC 연결이 초기화되지 않았습니다."
+                );
+                break;
+              }
+
+              if (!answerData) {
+                console.error("[WebRTC] answer 데이터를 찾을 수 없습니다:", {
+                  parsedData,
+                  hasAnswer: !!parsedData?.answer,
+                  hasType: !!parsedData?.type,
+                  hasSdp: !!parsedData?.sdp,
+                });
+                callbacksRef.current.onError?.("Answer 데이터가 없습니다.");
+                break;
+              }
+
+              console.log(
+                "[WebRTC] ========== Answer 수신, Remote Description 설정 =========="
+              );
+              console.log("[WebRTC] PC 상태:", {
+                connectionState: pcRef.current.connectionState,
+                signalingState: pcRef.current.signalingState,
+                iceConnectionState: pcRef.current.iceConnectionState,
+              });
+              console.log("[WebRTC] Answer 데이터:", {
+                type: answerData.type,
+                sdp: answerData.sdp
+                  ? `${answerData.sdp.substring(0, 50)}...`
+                  : "없음",
+              });
+
+              // 원격 answer 설정
+              await pcRef.current.setRemoteDescription(
+                new RTCSessionDescription(answerData)
+              );
+              console.log(
+                "[WebRTC] ========== Remote Description 설정 완료 =========="
+              );
+              console.log("[WebRTC] 설정 후 PC 상태:", {
+                connectionState: pcRef.current.connectionState,
+                signalingState: pcRef.current.signalingState,
+                iceConnectionState: pcRef.current.iceConnectionState,
+              });
+
+              callbacksRef.current.onWebRTCAnswer?.(answerData);
             } catch (error) {
-              console.error("[WebRTC] Answer 처리 실패:", error);
+              console.error("[WebRTC] ========== Answer 처리 실패 ==========");
+              console.error("[WebRTC] 에러:", error);
               callbacksRef.current.onError?.(
                 "WebRTC 연결 설정에 실패했습니다."
               );
