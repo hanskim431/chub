@@ -34,7 +34,10 @@ dependencies {
 	// WebSocket
 	implementation 'org.springframework.boot:spring-boot-starter-websocket'
 
-	// WebFlux (WebClient, Reactor Netty)
+    // Actuator
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
+    // WebFlux (WebClient, Reactor Netty)
 	implementation 'org.springframework.boot:spring-boot-starter-webflux'
 
 	// OkHttp
