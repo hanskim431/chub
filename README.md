@@ -81,8 +81,9 @@ JWT 기반 사용자 인증과 userId 매핑을 통해 재연결 시 이전 세�
 **STT(Speech-to-Text) 기능**으로 음성 질문과 답변을 **자동으로 텍스트로 변환**합니다.  
 **변환된 질문 & 답변을 저장**하여 면접 후 언제든지 복기하고 자신의 답변을 분석할 수 있어요.
 
-<img src="docs/interview.png" width="700" alt="인터뷰" />
-
+<p align="center">
+  <img src="docs/interviewing.gif" width="70%" alt="인터뷰" />
+</p>
 
 ### 💬 실시간 채팅 시스템
 > **"면접 중에도, 면접 전후로도 소통할 수 있어요!"**
