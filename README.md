@@ -61,7 +61,7 @@ JWT 기반 사용자 인증과 userId 매핑을 통해 재연결 시 이전 세�
 이를 통해 MongoDB 원자적 업데이트로 동시 접근 시 데이터 일관성을 보장하고, countedAt 체크로 불필요한 DB 쿼리를 스킵하여 채팅방 목록 조회를 O(1)의 시간 복잡도로 개선했습니다.
 
 
-[Wiki로 자세히 보기](https://lab.ssafy.com/s13-final/S13P31A707/-/wikis/Lazy-Loading-%EA%B8%B0%EB%B0%98-%EB%AF%B8%EC%9D%BD%EC%9D%8C-%EC%B6%94%EC%A0%81%EC%9C%BC%EB%A1%9C-%EB%B9%A0%EB%A5%B8-%EC%B1%84%ED%8C%85-%ED%99%98%EA%B2%BD-%EA%B5%AC%EC%B6%95)
+[Wiki로 자세히 보기](https://www.notion.so/MongoDB-2b5656e282d88012a9c5e291f07e5d40)
 <br/>
 
 
